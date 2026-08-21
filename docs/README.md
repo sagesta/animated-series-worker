@@ -28,6 +28,7 @@ This folder is the authoritative build specification for Animated Series Studio.
 | Document | Answers |
 | --- | --- |
 | [Implementation plan](IMPLEMENTATION_PLAN.md) | In what order will the full system be built and gated? |
+| [Master build backlog](BUILD_BACKLOG.md) | What work is stacked, what is next, and what proof closes each item? |
 | [Test plan](TEST_PLAN.md) | What must be proven before money, assets, or releases are trusted? |
 | [Cost model](COST_MODEL.md) | How are episode cost, storage, retries, and multiple GPUs forecast and measured? |
 | [Traceability](TRACEABILITY.md) | Where is every requirement designed and tested? |

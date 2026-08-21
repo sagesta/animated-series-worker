@@ -4,6 +4,20 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-21 (living build backlog and ComfyUI reliability gate)
+
+- Added one master build ledger that retains every accepted capability, production risk, fix, dependency, status, and exit proof instead of relying only on broad phases.
+- Expanded the immediate implementation stack with five explicit ComfyUI packages: allowlisted workflow compilation, exact runtime/model/node preflight, headless progress/error integration, output verification and bounded retry/QC, and update qualification with rollback.
+- Added a governance rule requiring future work to update the master ledger without silently dropping unfinished items.
+
+User impact: the complete path from the current version-0.3.0 foundation to writing, character/voice production, safe cloud generation, LTX video, editing, multiple GPUs, full episodes, and release is now visible in one maintained queue. This does not make ComfyUI or media generation available yet.
+
+Migration impact: none. No application schema, project, credential, provider resource, model, workflow, or media file changed.
+
+Documentation impact: added `docs/BUILD_BACKLOG.md` and linked its stacking rules from the documentation map, implementation plan, change-control policy, and repository working rules.
+
+Rollback: revert this documentation change. Version 0.3.0 application behavior and all user projects remain unchanged.
+
 ### Changed — 2026-08-21 (writing providers, external skills, and in-app media review design)
 
 - Locked OpenAI Responses and Anthropic Messages as the first bring-your-own-key writing adapters behind a provider-neutral creative contract; provider conversations cannot become the canonical story database.

@@ -7,6 +7,7 @@ These rules apply to every human or coding agent working inside this repository.
 - Read `docs/README.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/CHANGE_CONTROL.md` before making architectural or product changes.
 - Never describe a planned capability as implemented. Update `README.md` and `docs/STATUS.md` when capability status changes.
 - Requirement IDs in `docs/PRD.md` are authoritative. New behavior needs a requirement or an explicit non-requirement decision.
+- Add every accepted capability, newly discovered production risk, and required fix to `docs/BUILD_BACKLOG.md`; never silently drop an unfinished item when priorities change.
 - Existing creative assets and user projects are never silently migrated, overwritten, regenerated, or deleted.
 
 ## Isolation from upstream
@@ -27,6 +28,7 @@ Every code or configuration change must update, in the same change:
 4. `docs/SOURCES.md` if a model, license, provider, price, or external API assumption changed.
 5. `CHANGELOG.md` with user-visible impact, migration impact, and rollback notes.
 6. Tests that prove the documented behavior.
+7. `docs/BUILD_BACKLOG.md` when work is added, split, reprioritized, completed, blocked, superseded, or removed.
 
 “Documentation not needed” is allowed only for formatting-only changes, and the change description must say why behavior is unaffected.
 

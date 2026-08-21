@@ -275,6 +275,8 @@ Do not:
 
 ## 15. First implementation backlog
 
+This is the delivery-order summary. The granular, append-only work ledger is [BUILD_BACKLOG.md](BUILD_BACKLOG.md); new accepted features, risks, and fixes are added there without removing unfinished earlier work.
+
 | Order | Work package | Current state | Output |
 | --- | --- | --- | --- |
 | 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
@@ -289,6 +291,11 @@ Do not:
 | 10 | `VIEW-001` local media review | Not started | Secure gallery, audio/video player, comparisons, proxies |
 | 11 | `WORKER-001` gateway/watchdog | Not started | Secure local GPU smoke worker |
 | 12 | `CLOUD-001` RunPod lifecycle | In progress — API v2 account/price reads and local limits pass mocked tests; every mutating lifecycle method remains locked | One-click create/reconcile/terminate |
-| 13 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
-| 14 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
-| 15 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |
+| 13 | `COMFY-001` workflow registry/compiler | Not started | Only approved, versioned, hash-locked workflows can run |
+| 14 | `COMFY-002` compatibility/preflight | Not started | Exact runtime/model/node inventory and cheap smoke pass |
+| 15 | `COMFY-003` headless execution bridge | Not started | Plain-language queue/progress/preview/error states |
+| 16 | `COMFY-004` output verification/retry/QC | Not started | Corrupt or unsafe output and wasteful retry paths fail safely |
+| 17 | `COMFY-005` update qualification/rollback | Not started | Failed candidate cannot replace the last working production pin |
+| 18 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
+| 19 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
+| 20 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |

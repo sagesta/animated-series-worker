@@ -32,6 +32,14 @@ Future features and fixes must not make this documentation stale. Documentation,
 
 No behavioral code change is complete at step 6.
 
+## 3.1 Backlog intake and stacking
+
+- Every accepted new capability, discovered production risk, or required fix is added to [BUILD_BACKLOG.md](BUILD_BACKLOG.md) with a stable ID, phase, status, dependency, and exit proof.
+- New work does not silently replace unfinished work. Priority may change, but removed or superseded work requires a recorded reason and retains history.
+- A broad item is split into child work packages when implementation evidence makes the split useful.
+- “Documented” and “implemented” remain different states. Only the named test or release evidence can move an item to `Verified`.
+- The backlog, implementation plan, status, traceability, and changelog are reconciled whenever an item's scope or completion claim changes.
+
 ## 4. Documentation impact map
 
 | Changed area | Documents to inspect/update |
