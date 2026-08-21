@@ -1,0 +1,12 @@
+{
+  "name": "animated-series-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first animated-series production studio with temporary cloud GPU workers",
+  "scripts": {
+    "docs:check": "node scripts/check-docs.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

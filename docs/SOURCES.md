@@ -1,0 +1,76 @@
+# Verified external sources and assumptions
+
+Last verified: 2026-08-21
+
+External models, APIs, prices, licenses, and platform recommendations can change. These links support the current baseline; implementation and every relevant update must reverify exact versions and terms. This document is technical evidence, not legal advice.
+
+## LTX
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Open-source overview | LTX-2.5 supports text/image/video inputs, synchronized audio/video, and native multi-shot positioning in the current documentation. | [LTX open-source overview](https://docs.ltx.io/open-source-model/getting-started/overview) |
+| ComfyUI | LTX documents ready-made ComfyUI templates and automatic model downloads; current prerequisites list CUDA GPU with 32GB+ VRAM, 100GB+ storage, and Python 3.12+. | [Using ComfyUI with LTX](https://docs.ltx.io/open-source-model/integration-tools/comfy-ui) |
+| Hardware | Current open-source requirements list 32GB minimum VRAM and recommend A100/H100 80GB class hardware plus larger storage headroom. | [LTX system requirements](https://docs.ltx.io/open-source-model/getting-started/system-requirements) |
+| Pipelines | Official pipelines include production/draft text/image-to-video, audio+image-to-video, keyframes, retake, and lip-dub/re-voice paths. | [LTX pipelines overview](https://github.com/Lightricks/LTX-2/blob/main/packages/ltx-pipelines/README.md), [pipeline details](https://github.com/Lightricks/LTX-2/blob/main/packages/ltx-pipelines/docs/pipelines.md) |
+| Audio conditioning | The A2V pipeline is documented for video generation conditioned on input audio and optional image conditioning. | [LTX PyTorch API](https://docs.ltx.io/open-source-model/integration-tools/pytorch-api) |
+| License | The current LTX-2 community license and model card include commercial-use conditions tied to organization revenue; this must be rechecked for the user's entity and exact model files before monetized release. | [LTX-2 license](https://github.com/Lightricks/LTX-2/blob/main/LICENSE.md), [LTX-2.5 model card](https://huggingface.co/Lightricks/LTX-2.5) |
+
+Design consequence: version 1 uses only LTX video, but pins exact open-source model/workflow versions and requires a license check. Hosted LTX API capabilities are not assumed to exist identically in the open-source worker.
+
+## Qwen image and voice
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Qwen-Image | Official repository documents image generation/editing, multi-image input in later edit releases, improved character consistency, native ComfyUI support, and Apache-2.0 licensing. | [Qwen-Image official repository](https://github.com/QwenLM/Qwen-Image) |
+| Qwen-Image ComfyUI | Official ComfyUI documentation includes a native Qwen-Image workflow and identifies the open model/license. | [ComfyUI Qwen-Image tutorial source](https://github.com/Comfy-Org/docs/blob/main/tutorials/image/qwen/qwen-image.mdx) |
+| Qwen3-TTS | Official repository documents 0.6B/1.7B models, voice design, custom voices, reusable voice-clone prompts, multiple languages, Python 3.12 guidance, and Apache-2.0 licensing. | [Qwen3-TTS official repository](https://github.com/QwenLM/Qwen3-TTS) |
+
+Design consequence: Qwen families are initial defaults behind adapters. Human benchmarks still decide exact checkpoints/quantization and acceptable recurring identity.
+
+## ComfyUI
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Workflow server | ComfyUI's server accepts complete queued workflows and communicates progress through HTTP/WebSocket mechanisms. | [ComfyUI server overview](https://docs.comfy.org/development/comfyui-server/comms_overview), [server messages](https://docs.comfy.org/development/comfyui-server/comms_messages) |
+| Workflow format | Official documentation describes API-format workflows as JSON node graphs and asynchronous job handling. | [ComfyUI API overview](https://docs.comfy.org/development/cloud/overview) |
+
+Design consequence: ComfyUI is a loopback-only worker engine behind the studio gateway; its native public/cloud API is not the studio security boundary.
+
+## RunPod
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Pod lifecycle/API | RunPod documents creating, starting, stopping, and terminating Pods through console/CLI/REST, including deployment from templates. | [Manage Pods](https://docs.runpod.io/pods/manage-pods), [Create Pod API](https://docs.runpod.io/api-reference/pods/POST/pods) |
+| Templates | Custom templates can preinstall dependencies/models so repeated workers do not require manual setup. | [Custom Pod templates](https://docs.runpod.io/pods/templates/create-custom-template), [Manage templates](https://docs.runpod.io/pods/templates/manage-templates) |
+| Persistent storage | Network volumes persist independently of compute and can be attached to new Pods; current published first-terabyte price is $0.07/GB/month. | [Network volumes](https://docs.runpod.io/storage/network-volumes), [storage types](https://docs.runpod.io/pods/storage/types) |
+| Stop/terminate detail | Current Pod docs state stopped Pods preserve volume-disk data and still incur storage; Pods with a network volume are terminated rather than stopped while the network volume persists. | [Manage Pods](https://docs.runpod.io/pods/manage-pods) |
+| Scale to zero | RunPod documents configurations with zero minimum workers and idle timeout for no idle compute usage; this remains a future benchmark decision. | [RunPod scale-to-zero guidance](https://docs.runpod.io/flash/configuration/best-practices) |
+
+Design consequence: version 1 creates/terminates temporary Pods from a pinned template and keeps only a model cache on a network volume. Current prices are refreshed at setup/estimate time.
+
+## YouTube delivery
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Upload settings | Current YouTube guidance lists MP4, H.264, progressive scan, 4:2:0, same recorded frame rate, AAC-LC/other accepted audio at 48kHz, BT.709 for SDR, and an 8 Mbps reference bitrate for 1080p standard frame rates. | [YouTube recommended upload encoding settings](https://support.google.com/youtube/answer/1722171?hl=en) |
+
+Design consequence: default delivery is a versioned 1080p/24fps SDR H.264/AAC profile with technical QC. The platform settings are rechecked before release changes.
+
+## Upstream skills
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Project/source | Upstream provides outline, character, art, script, storyboard, and shot-recipe skills for AI short-drama production and is Apache-2.0 at the pinned commit. | [shuohao-skills repository](https://github.com/eternityspring/shuohao-skills), pinned locally at `4cff5ae3a4a2d2b5d13161f5a2378c5910be7cad` |
+
+Local inspection at the pin established the H3-specific storyboard, 2–5 second cut gate, up-to-15-second segments, Chinese-first fields, and self-test behavior. Those repository facts are preserved through the submodule lock and compatibility suite rather than web assumptions.
+
+## Items requiring a future exact review
+
+- Selected GPU inventory and live hourly pricing.
+- Exact Qwen/LTX model file licenses, hashes, and distribution obligations.
+- ComfyUI and every custom-node license/security state.
+- FFmpeg build configuration and redistribution obligations.
+- Worker base image/CUDA/NVIDIA component licenses.
+- Music, sound, font, reference image, likeness, and voice permissions.
+- RunPod data region, privacy, billing, retention, and account limits.
+- Current YouTube delivery/policy requirements before publishing.

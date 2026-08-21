@@ -1,0 +1,239 @@
+# Non-technical user experience specification
+
+## 1. Experience goal
+
+The creator should feel that they are operating a production studio, not administering AI infrastructure. Normal screens use story language—character, scene, voice, shot, take, approve, cost—not model nodes, ports, containers, or command lines.
+
+The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
+
+## 2. Navigation
+
+Primary navigation:
+
+1. **Home** — projects, blocked decisions, active work, spend.
+2. **Story** — outline, acts/sequences, scripts, episode status.
+3. **World** — style, characters, voices, locations, props, wardrobe.
+4. **Storyboard** — scenes, shots, timing, production method.
+5. **Generate** — ready queue, estimates, cloud session.
+6. **Review** — images, voice lines, video takes, retakes.
+7. **Edit & Export** — timeline, sound, captions, QC, delivery.
+8. **Settings** — cloud connection, storage, budgets, backups, expert mode.
+
+The currently open project and production unit are always visible. Switching projects requires an explicit action so the user does not unknowingly work in the wrong series.
+
+## 3. First-run setup
+
+### Step 1: Welcome
+
+Explain in one page:
+
+- Creative work stays on this computer.
+- A rented GPU is created only when generation is requested.
+- Compute stops when the worker is terminated; persistent model storage has a separate small charge.
+- The first target is a short pilot, not a full season.
+
+### Step 2: Storage
+
+- Choose a local project folder.
+- Check free space and write permissions.
+- Choose or postpone a backup location.
+- Explain approximate local media growth without pretending to know final size.
+
+### Step 3: Cloud account
+
+- Link to provider account creation.
+- Accept the API key into a masked field.
+- Store it in the operating-system credential vault.
+- Test account access without displaying or saving the key in logs.
+
+### Step 4: Spending guardrails
+
+- Default hard session budget.
+- Default maximum runtime.
+- Idle termination delay.
+- Maximum simultaneous GPUs, initially one.
+- Confirmation rule for batches over the normal amount.
+
+### Step 5: Prepared studio check
+
+The setup creates or verifies the provider template, persistent model cache, worker image, and compatibility. Show checks as:
+
+- Cloud account connected.
+- Model storage ready.
+- Studio image available.
+- Automatic shutdown tested.
+- Ready for a small test generation.
+
+Technical details are available under `Show details` but are never the only explanation.
+
+## 4. Project creation wizard
+
+### Screen 1: What are you making?
+
+- `Series` — seasons and episodes.
+- `One-off film` — sequences and scenes.
+
+### Screen 2: Creative basics
+
+- Title and working code.
+- Primary language.
+- Target episode/film duration.
+- Aspect ratio and delivery profile.
+- Visual direction: 2D, 3D-look, mixed, or undecided.
+
+The visual direction is a style brief, not a claim that a true 3D rig will be created.
+
+### Screen 3: Starting material
+
+- Import a novel/source document.
+- Import existing upstream JSON/reports.
+- Start from an original idea.
+- Import an existing studio project.
+
+### Screen 4: Pilot definition
+
+Choose a representative 30–90 second scene containing the hardest expected elements: recurring character, dialogue, movement, location, and camera. The app explains that approving this test protects the larger budget.
+
+## 5. Bible-room experience
+
+Each character/location/style/voice uses the same pattern:
+
+1. Facts and creative brief.
+2. Generated candidates.
+3. Side-by-side comparison.
+4. Required consistency checks.
+5. Approval note.
+6. Lock version.
+
+The page displays `Draft`, `Approved`, `Locked`, or `Stale` clearly. A lock button explains which downstream work will rely on it.
+
+Changing a lock opens an impact preview:
+
+> “This creates Character Maya version 4. Version 3 remains unchanged. Seven storyboard frames, three voice-driven shots, and one approved episode currently use version 3. Nothing will be regenerated automatically.”
+
+Choices are `Create new version`, `Cancel`, and—only where safe—`Create and review impact`.
+
+## 6. Storyboard experience
+
+The storyboard shows one card per shot:
+
+- Keyframe/reference image.
+- Story purpose.
+- Who/what is on screen.
+- Dialogue or audio.
+- Duration and camera intent.
+- Production method.
+- Required locks and warnings.
+- Estimated generation difficulty.
+
+The user can switch between visual board, scene list, and continuity table. ComfyUI workflow fields are absent from the default view.
+
+The app recommends inexpensive production methods where valid:
+
+- `Hold with gentle camera move`.
+- `Reuse approved loop`.
+- `Animate with LTX`.
+- `Animate to approved voice`.
+- `Retake only this section`.
+
+Recommendations never silently change story or approval state.
+
+## 7. Generate screen
+
+Before a batch starts, show:
+
+```text
+Ready shots:             18
+Expected attempts:       estimate, not a guarantee
+Estimated GPU range:     based on measured pilot data
+Hard spending limit:     user-selected
+Maximum running GPUs:    1–3
+Automatic shutdown:      after queue + sync + idle grace
+Missing approvals:       0
+```
+
+Primary button: **Start generation**.
+
+Progress messages:
+
+- Looking for a compatible GPU.
+- Starting the prepared studio.
+- Verifying models and automatic shutdown.
+- Generating shot 4 of 18.
+- Downloading and checking results.
+- No jobs remaining; shutting down GPU.
+- GPU terminated; compute billing stopped.
+
+A persistent **Stop GPU now** button explains whether the current partial output may be lost. Emergency stop prioritizes ending spend; the queue remains recoverable.
+
+## 8. Review screen
+
+- Grid or focused view of pending takes.
+- A/B comparison synchronized to the same audio and time.
+- Plain review tags: identity, movement, framing, continuity, mouth, hands, artifacts, audio, other.
+- Actions: `Approve`, `Reject`, `Retake`, `Repair mouth`, `Repair section`, `Return to storyboard`.
+- Retake form defaults to preserving approved inputs and asks what should change.
+- Cost and technical data are in a collapsible panel.
+
+Bulk approval is available only for low-risk assets after individual inspection and is never the default for final dialogue close-ups.
+
+## 9. Edit and export
+
+The timeline initially assembles itself from approved shot order. The creator can:
+
+- Trim within safe handles.
+- Replace a take.
+- Adjust shot duration where the production method permits.
+- Move dialogue, ambience, effects, and music levels.
+- Review captions.
+- Insert title/end cards.
+
+Export readiness is a checklist:
+
+- All required shots approved.
+- No stale locked dependencies.
+- Dialogue and captions complete.
+- Rights records complete or explicitly waived with a warning.
+- Technical QC passed.
+- Final human review signed.
+
+The app creates a video, captions, manifest, and QC report. Public upload remains outside version 1.
+
+## 10. Error language
+
+Every error answers:
+
+1. What happened?
+2. Was money still being spent?
+3. Is any work lost?
+4. What safe action can the user take now?
+
+Example:
+
+> “The cloud worker stopped responding. Its hard shutdown deadline is still active and will end compute by 14:35. Your project and queued shots are safe locally. We will check whether this worker still exists before starting another one.”
+
+Never show only a stack trace, provider code, or “unknown error.” Expert details can accompany the plain explanation.
+
+## 11. Accessibility and calm operation
+
+- Keyboard access and visible focus for all primary actions.
+- Labels in addition to color for status.
+- Captions/transcripts for generated audio previews.
+- No flashing progress animations.
+- Long operations may run in the background with clear notifications.
+- Spend notifications are factual, not alarming; hard limits remain prominent.
+- A `Pause after current job` control allows a calm stop without abandoning verified work.
+
+## 12. Usability acceptance
+
+A representative non-technical user must be able to:
+
+- Create a project and define a pilot.
+- Connect the provider using the guided steps.
+- Approve a character image and voice.
+- Queue and review a shot.
+- Confirm the cloud worker terminated.
+- Restore a test backup.
+- Understand a stale-dependency impact message.
+
+No facilitator may use a terminal or cloud console during the acceptance session.

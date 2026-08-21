@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "name": "shuohao-skills",
+  "source": "https://github.com/eternityspring/shuohao-skills.git",
+  "path": "vendor/shuohao-skills",
+  "commit": "4cff5ae3a4a2d2b5d13161f5a2378c5910be7cad",
+  "verifiedOn": "2026-08-21",
+  "verification": {
+    "skillSelfTests": 6,
+    "reportSelfTests": 1,
+    "studioContractTests": 0,
+    "note": "Studio contract tests will be added with the upstream adapter implementation."
+  },
+  "consumedCapabilities": [
+    "novel-outline",
+    "novel-characters",
+    "novel-art",
+    "novel-script",
+    "novel-storyboard",
+    "shot-recipes",
+    "combined-report"
+  ]
+}

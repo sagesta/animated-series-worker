@@ -1,0 +1,43 @@
+# Local application state
+.studio/
+data/
+projects/
+exports/
+backups/
+logs/
+tmp/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Dependencies and builds
+node_modules/
+dist/
+build/
+release/
+.venv/
+__pycache__/
+*.pyc
+
+# Generated media and models
+models/
+cache/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.mp4
+*.mov
+*.wav
+*.flac
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
