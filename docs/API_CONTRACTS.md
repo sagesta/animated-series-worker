@@ -27,6 +27,8 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `projects.listBackups()` | `studio:projects:list-backups` | Return completed backup generations that currently pass manifest, inventory, identity, size, and SHA-256 verification |
 | `projects.backup(projectId)` | `studio:projects:backup` | Checkpoint/integrity-check SQLite, copy and flush canonical files, verify the copy, then atomically expose a completed backup |
 | `projects.restore(backupId)` | `studio:projects:restore` | Re-verify and restore into an absent canonical project folder without overwriting existing work |
+| `projects.getMigrationPreview(projectId)` | `studio:projects:get-migration-preview` | Return the exact current-format change, scope, expected timestamp, backup requirement, and no-data-loss expectation, or `null` when current |
+| `projects.migrate(input)` | `studio:projects:migrate` | Refuse a stale preview, verify a pre-migration backup, activate the v1→v2 manifest/SQLite change, and return the retained backup plus updated project |
 | `support.recordRendererError(input)` | `studio:support:record-renderer-error` | Record a bounded renderer-boundary failure only after structured secret/path redaction |
 | `support.createBundle()` | `studio:support:create-bundle` | Flush recent safe events, re-redact/re-validate them, run the known-secret scan, and save a local-only support JSON without project content or provider payloads |
 | `cloud.getStatus()` | `studio:cloud:get-status` | Read opaque RunPod connection, last account check, price catalogue, setup checklist, and saved local limits |

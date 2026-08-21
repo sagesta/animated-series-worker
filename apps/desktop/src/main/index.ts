@@ -23,6 +23,9 @@ import {
   IPC_CHANNELS,
   ProjectBackupSummarySchema,
   ProjectDetailsSchema,
+  ProjectMigrationInputSchema,
+  ProjectMigrationPreviewSchema,
+  ProjectMigrationResultSchema,
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
   RendererErrorInputSchema,
@@ -309,6 +312,51 @@ function registerIpcHandlers(): void {
       })
       throw new Error(
         'The project could not be restored safely. Existing project files were not overwritten.'
+      )
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.projectsGetMigrationPreview, (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const projectId = UlidSchema.parse(unknownProjectId)
+      return ProjectMigrationPreviewSchema.nullable().parse(
+        requireStore().getMigrationPreview(projectId)
+      )
+    } catch {
+      throw new Error('The project format update could not be previewed safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.projectsMigrate, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const correlationId = randomUUID()
+    try {
+      const input = ProjectMigrationInputSchema.parse(unknownInput)
+      const result = ProjectMigrationResultSchema.parse(await requireStore().migrateProject(input))
+      await requireDiagnostics().record({
+        correlationId,
+        level: 'info',
+        area: 'project',
+        eventName: 'project.migration.completed',
+        message: 'A project format update completed after verified backup.',
+        context: {
+          projectId: result.project.manifest.id,
+          migrationId: result.migrationId,
+          backupId: result.backup.backupId
+        }
+      })
+      return result
+    } catch {
+      recordDiagnostic({
+        correlationId,
+        level: 'error',
+        area: 'project',
+        eventName: 'project.migration.failed',
+        message: 'A project format update failed and automatic rollback was attempted.'
+      })
+      throw new Error(
+        'The project format update could not finish safely. The verified recovery copy was retained.'
       )
     }
   })

@@ -64,7 +64,7 @@ export function buildProjectManifest(
   const folderName = `${code.toLowerCase()}-${id.toLowerCase()}`
 
   return ProjectManifestSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 2,
     id,
     code,
     type: parsed.type,
@@ -79,6 +79,10 @@ export function buildProjectManifest(
     budgetPolicyId: 'local-safe-default-v1',
     folderName,
     cloudGpuState: 'not-configured',
+    lifecycle: {
+      archivedAt: null,
+      statusBeforeArchive: null
+    },
     safeCheckpoint: {
       label: 'Project created safely',
       createdAt: now

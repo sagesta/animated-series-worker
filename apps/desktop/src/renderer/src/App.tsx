@@ -3,6 +3,7 @@ import {
   type CloudConnectionStatus,
   type ProjectBackupSummary,
   type ProjectDetails,
+  type ProjectMigrationPreview,
   type ProjectSummary,
   type SupportBundleSummary,
   type SystemStatus,
@@ -354,18 +355,112 @@ function ProjectBackupPanel({ project }: { project: ProjectDetails }): JSX.Eleme
   )
 }
 
+function ProjectMigrationPanel({
+  project,
+  onUpdated
+}: {
+  project: ProjectDetails
+  onUpdated(project: ProjectDetails): void
+}): JSX.Element | null {
+  const [preview, setPreview] = useState<ProjectMigrationPreview | null>()
+  const [updating, setUpdating] = useState(false)
+  const [message, setMessage] = useState<string>()
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.projects
+      .getMigrationPreview(project.manifest.id)
+      .then((result) => {
+        if (!cancelled) setPreview(result)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFailed(true)
+          setMessage('The project format could not be checked. No project file was changed.')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [project.manifest.id, project.manifest.updatedAt])
+
+  if (preview === null && !message) {
+    return null
+  }
+  if (preview === undefined && !message) {
+    return null
+  }
+
+  const migrate = async (): Promise<void> => {
+    if (!preview) return
+    setUpdating(true)
+    setFailed(false)
+    setMessage('Creating a verified backup before changing the project format…')
+    try {
+      const result = await window.studio.projects.migrate({
+        projectId: preview.projectId,
+        expectedUpdatedAt: preview.expectedUpdatedAt
+      })
+      onUpdated(result.project)
+    } catch {
+      setFailed(true)
+      setMessage(
+        'The format update did not finish. The recovery backup was retained and existing creative files were not replaced.'
+      )
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  return (
+    <section className="migration-card" aria-labelledby="migration-title">
+      <div>
+        <p className="eyebrow">Safe project update</p>
+        <h2 id="migration-title">This older project needs a small format update</h2>
+        <p>
+          The update adds reversible archive history. It changes one metadata file, expects no data
+          loss, and creates a verified backup first.
+        </p>
+        {preview && (
+          <ul>
+            {preview.changes.map((change) => (
+              <li key={change}>{change}</li>
+            ))}
+          </ul>
+        )}
+        {message && (
+          <div className={`safety-feedback ${failed ? 'error' : ''}`} role="status">
+            {message}
+          </div>
+        )}
+      </div>
+      <button
+        className="button button-primary"
+        disabled={updating || !preview}
+        onClick={() => void migrate()}
+      >
+        {updating ? 'Updating safely…' : 'Back up and update project'}
+      </button>
+    </section>
+  )
+}
+
 interface ProjectOverviewProps {
   project: ProjectDetails
   cloudStatus?: CloudConnectionStatus
   onNavigate(page: Page): void
   onLibrary(): void
+  onProjectUpdated(project: ProjectDetails): void
 }
 
 function ProjectOverview({
   project,
   cloudStatus,
   onNavigate,
-  onLibrary
+  onLibrary,
+  onProjectUpdated
 }: ProjectOverviewProps): JSX.Element {
   const { manifest, workspacePath } = project
 
@@ -390,6 +485,8 @@ function ProjectOverview({
           Start story planning <span>→</span>
         </button>
       </section>
+
+      <ProjectMigrationPanel project={project} onUpdated={onProjectUpdated} />
 
       <section className="health-grid">
         <article className="health-card">
@@ -852,6 +949,14 @@ export function App(): JSX.Element {
     setPage('home')
   }
 
+  const projectUpdated = (project: ProjectDetails): void => {
+    setActiveProject(project)
+    setProjects((current) =>
+      current.map((item) => (item.id === project.manifest.id ? toSummary(project) : item))
+    )
+    setError(undefined)
+  }
+
   const goToLibrary = (): void => {
     setActiveProject(undefined)
     setPage('home')
@@ -888,6 +993,7 @@ export function App(): JSX.Element {
           cloudStatus={cloudStatus}
           onNavigate={setPage}
           onLibrary={goToLibrary}
+          onProjectUpdated={projectUpdated}
         />
       )
     }

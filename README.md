@@ -76,7 +76,7 @@ node scripts/check-docs.mjs
 | Architecture and contracts | Baseline documented |
 | Upstream dependency | Pinned and verified |
 | Desktop application | Local projects plus guided secure RunPod account connection; unsigned test installer; production setup incomplete |
-| Series/film project storage | Create/list/open plus verified full backup/non-overwriting restore and single-writer protection implemented and locally tested; migrations, incremental archives, and clean-machine recovery remain |
+| Series/film project storage | Create/list/open, schema-2/backward-compatible schema-1 data, guided backed-up v1→v2 migration with rollback tests, verified full backup/non-overwriting restore, and single-writer protection implemented; archive/future migrations, incremental archives, and clean-machine recovery remain |
 | Diagnostics and support | Structured pre-write redaction and local-only support JSON implemented/tested; broader worker/skill coverage, retention, and packaged scan remain |
 | RunPod provider | API v2 account validation and price reads implemented; Pod/storage/template creation and termination not implemented |
 | Writing providers and external skills | OpenAI/Anthropic and enforced skill-runtime architecture documented; not implemented |

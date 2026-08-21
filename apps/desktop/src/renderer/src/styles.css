@@ -1100,6 +1100,43 @@ p {
   border-radius: 13px;
 }
 
+.migration-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 20px;
+  padding: 22px 24px;
+  background: #fff8ea;
+  border: 1px solid #ecd8a7;
+  border-radius: 13px;
+}
+
+.migration-card > div {
+  min-width: 0;
+}
+
+.migration-card h2 {
+  margin: 3px 0 7px;
+  font-size: 16px;
+}
+
+.migration-card p:not(.eyebrow),
+.migration-card li {
+  color: #786b51;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.migration-card ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.migration-card .button {
+  flex: 0 0 auto;
+}
+
 .project-safety-card > div {
   min-width: 0;
 }

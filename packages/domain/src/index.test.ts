@@ -35,10 +35,14 @@ describe('project manifest', () => {
     })
 
     expect(manifest.type).toBe('series')
+    expect(manifest.schemaVersion).toBe(2)
     expect(manifest.code).toBe('THE-LANTERN-KEEPERS')
     expect(manifest.cloudGpuState).toBe('not-configured')
     expect(manifest.deliveryProfileId).toBe('youtube-1080p24-v1')
     expect(manifest.safeCheckpoint.createdAt).toBe('2026-08-21T12:00:00.000Z')
+    if (manifest.schemaVersion === 2) {
+      expect(manifest.lifecycle).toEqual({ archivedAt: null, statusBeforeArchive: null })
+    }
     expect(manifest.folderName).toMatch(/^the-lantern-keepers-[0-9a-hjkmnp-tv-z]{26}$/)
   })
 

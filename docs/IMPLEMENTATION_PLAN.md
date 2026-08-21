@@ -58,10 +58,10 @@ flowchart LR
 ### Current checkpoint — version 0.3.0
 
 - `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
-- `DATA-001` is in progress: series/film create, list, open, schema-1 manifest, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, startup reconciliation, verified full backup/restore, tamper refusal, and live/stale single-writer handling are implemented and tested.
+- `DATA-001` is in progress: series/film create, list, open, current schema-2/backward-compatible schema-1 manifests, a guided v1→v2 preview with automatic verified backup and rollback at four injected failure points, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, startup reconciliation, verified full backup/restore, tamper refusal, and live/stale single-writer handling are implemented and tested.
 - `SEC-001` is in progress: the RunPod key is validated before save, encrypted through Electron asynchronous `safeStorage`/Windows DPAPI outside projects, never returned after submission, removable explicitly, and covered by plaintext non-leakage tests. Structured flushed diagnostics, protected-field/known-provider-secret/private-path redaction, renderer-boundary capture, and a local-only support JSON with a plain-language Settings flow are implemented and tested; broader worker/skill patterns, retention, and packaged scans remain.
 - `CLOUD-001` has an intentionally early read-only foundation: API v2 account validation, aggregate existing-Pod/rate warning, GPU catalogue pricing, local guardrail defaults, and setup progress are implemented. No provider mutation or paid operation exists.
-- Phase 1 is **not complete**. Broader diagnostic coverage/retention and packaged secret scans, interruption tests, real migration preview/rollback, incremental/release archives, clean-machine restore/usability evidence, and a signed installer remain.
+- Phase 1 is **not complete**. Archive UI, future-migration registry/upgrade breadth, broader non-migration interruption tests, broader diagnostic coverage/retention and packaged secret scans, incremental/release archives, clean-machine restore/usability evidence, and a signed installer remain.
 
 ### Build
 
@@ -288,7 +288,7 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 | Order | Work package | Current state | Output |
 | --- | --- | --- | --- |
 | 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
-| 2 | `DATA-001` project store | In progress — verified full backup/restore and single-writer protection pass; migrations and recovery breadth remain | Series/film create/open, files, SQLite, migrations, recovery |
+| 2 | `DATA-001` project store | In progress — verified full backup/restore, writer lock, and guided v1→v2 migration rollback matrix pass; archive/future migration/recovery breadth remain | Series/film create/open, files, SQLite, migrations, recovery |
 | 3 | `SEC-001` credential/logging | In progress — protected RunPod vault plus local redacted diagnostics/support file pass; broader provider/worker/skill and packaged scans remain | Vault adapter and redacted diagnostics |
 | 4 | `WRITE-001` provider-neutral creative writing | Not started | Protected OpenAI/Anthropic accounts and structured story/character/script drafts |
 | 5 | `SKILL-001` external-skill runtime | Not started | Safe install, routing, required execution, validation, and receipts |

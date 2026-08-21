@@ -48,6 +48,9 @@ erDiagram
 | `language` | Primary story/dialogue language |
 | `deliveryProfileId` | Pinned resolution/frame-rate/audio/export profile |
 | `budgetPolicyId` | Default estimates, hard caps, and worker limit |
+| `schemaVersion` | Current canonical project-manifest version; version 2 is written by new projects |
+| `lifecycle.archivedAt` | Archive timestamp or `null` |
+| `lifecycle.statusBeforeArchive` | Reversible pre-archive state or `null` |
 | `createdAt`, `updatedAt` | Audit timestamps |
 
 Series projects use seasons and episodes. Film projects can use a single implicit production plus sequences; both converge on scenes and shots.
@@ -373,3 +376,11 @@ Every schema has a positive integer version. Migration procedure:
 7. Retain rollback metadata until a later verified backup.
 
 No migration rewrites approved media or historical manifests merely to use a new default.
+
+Current implemented migration:
+
+- New projects write manifest schema 2 with empty reversible lifecycle fields.
+- Schema-1 projects and backups remain readable; opening one shows a v1→v2 preview rather than silently changing it.
+- Approval checks the preview timestamp, checkpoints/integrity-checks SQLite, creates and verifies a complete v1 backup, then atomically activates the validated v2 manifest and matching SQLite migration/hash record.
+- The migration adds only lifecycle metadata and a new safe-checkpoint timestamp; it preserves existing project identity, production settings, creative files, and prior backup bytes.
+- Injected failures after backup, before manifest activation, after activation, and after database commit restore the original manifest bytes and schema history while retaining the verified backup.

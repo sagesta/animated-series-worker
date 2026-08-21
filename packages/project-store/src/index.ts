@@ -15,6 +15,10 @@ import { DatabaseSync } from 'node:sqlite'
 import {
   ProjectDetailsSchema,
   ProjectManifestSchema,
+  ProjectManifestV2Schema,
+  ProjectMigrationInputSchema,
+  ProjectMigrationPreviewSchema,
+  ProjectMigrationResultSchema,
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
   UlidSchema,
@@ -22,6 +26,9 @@ import {
   type ProjectBackupSummary,
   type ProjectDetails,
   type ProjectManifest,
+  type ProjectMigrationInput,
+  type ProjectMigrationPreview,
+  type ProjectMigrationResult,
   type ProjectRestoreResult,
   type ProjectSummary
 } from '@studio/contracts'
@@ -63,23 +70,35 @@ export interface ProjectStoreOptions {
   catalogPath?: string
   backupRoot?: string
   studioVersion?: string
+  migrationFailureInjector?: (point: ProjectMigrationFailurePoint) => void
 }
 
-function atomicWriteJson(filePath: string, value: unknown): { json: string; sha256: string } {
-  const json = `${JSON.stringify(value, null, 2)}\n`
+export type ProjectMigrationFailurePoint =
+  | 'after-backup'
+  | 'before-manifest-activation'
+  | 'after-manifest-activation'
+  | 'after-database-commit'
+
+function atomicWriteText(filePath: string, text: string): string {
   const temporaryPath = `${filePath}.${randomUUID()}.tmp`
-  const sha256 = createHash('sha256').update(json).digest('hex')
+  const sha256 = createHash('sha256').update(text).digest('hex')
   mkdirSync(dirname(filePath), { recursive: true })
 
   const fileDescriptor = openSync(temporaryPath, 'wx')
   try {
-    writeFileSync(fileDescriptor, json, 'utf8')
+    writeFileSync(fileDescriptor, text, 'utf8')
     fsyncSync(fileDescriptor)
   } finally {
     closeSync(fileDescriptor)
   }
 
   renameSync(temporaryPath, filePath)
+  return sha256
+}
+
+function atomicWriteJson(filePath: string, value: unknown): { json: string; sha256: string } {
+  const json = `${JSON.stringify(value, null, 2)}\n`
+  const sha256 = atomicWriteText(filePath, json)
   return {
     json,
     sha256
@@ -113,6 +132,7 @@ export class ProjectStore {
   private catalog!: DatabaseSync
   private readonly backupService: ProjectBackupService
   private readonly writerLock: WorkspaceWriterLock
+  private readonly migrationFailureInjector?: ProjectStoreOptions['migrationFailureInjector']
   private operationInProgress = false
   private closed = false
 
@@ -122,6 +142,7 @@ export class ProjectStore {
       options.catalogPath ?? join(this.workspaceRoot, '.studio', 'catalog.sqlite')
     )
     this.backupRoot = resolve(options.backupRoot ?? join(this.workspaceRoot, '.studio', 'backups'))
+    this.migrationFailureInjector = options.migrationFailureInjector
 
     mkdirSync(this.workspaceRoot, { recursive: true })
     mkdirSync(dirname(this.catalogPath), { recursive: true })
@@ -261,6 +282,103 @@ export class ProjectStore {
     })
   }
 
+  getMigrationPreview(projectId: string): ProjectMigrationPreview | null {
+    const project = this.openProject(projectId)
+    if (project.manifest.schemaVersion !== 1) {
+      return null
+    }
+
+    return ProjectMigrationPreviewSchema.parse({
+      migrationId: 'project-manifest-v1-to-v2',
+      projectId: project.manifest.id,
+      projectTitle: project.manifest.title,
+      expectedUpdatedAt: project.manifest.updatedAt,
+      fromVersion: 1,
+      toVersion: 2,
+      backupRequired: true,
+      dataLossExpected: false,
+      filesChanged: 1,
+      changes: [
+        'Add reversible archive and unarchive history fields.',
+        'Keep every existing project setting, file, and approval unchanged.',
+        'Create and verify a complete recovery backup before activation.'
+      ]
+    })
+  }
+
+  async migrateProject(input: ProjectMigrationInput): Promise<ProjectMigrationResult> {
+    const safeInput = ProjectMigrationInputSchema.parse(input)
+    return this.runExclusiveOperation(async () => {
+      const project = this.openProject(safeInput.projectId)
+      if (project.manifest.schemaVersion !== 1) {
+        throw new Error('This project does not need the selected format update.')
+      }
+      if (project.manifest.updatedAt !== safeInput.expectedUpdatedAt) {
+        throw new Error('The project changed after the update preview. Review it again first.')
+      }
+
+      const manifestPath = join(project.workspacePath, 'project.json')
+      const originalText = readFileSync(manifestPath, 'utf8')
+      const originalSha256 = createHash('sha256').update(originalText).digest('hex')
+      this.assertProjectDatabaseHealthy(project.workspacePath, true)
+      const backup = await this.backupService.create(project.workspacePath, project.manifest)
+      this.injectMigrationFailure('after-backup')
+
+      const migratedAt = new Date().toISOString()
+      const migratedManifest = ProjectManifestV2Schema.parse({
+        ...project.manifest,
+        schemaVersion: 2,
+        lifecycle:
+          project.manifest.status === 'archived'
+            ? {
+                archivedAt: project.manifest.updatedAt,
+                statusBeforeArchive: 'development'
+              }
+            : { archivedAt: null, statusBeforeArchive: null },
+        safeCheckpoint: {
+          label: 'Project format updated safely',
+          createdAt: migratedAt
+        },
+        updatedAt: migratedAt
+      })
+
+      let manifestActivated = false
+      let databaseMigrated = false
+      try {
+        this.injectMigrationFailure('before-manifest-activation')
+        const { sha256 } = atomicWriteJson(manifestPath, migratedManifest)
+        manifestActivated = true
+        this.injectMigrationFailure('after-manifest-activation')
+        this.applyProjectSchemaMigration(project.workspacePath, migratedAt, sha256)
+        databaseMigrated = true
+        this.injectMigrationFailure('after-database-commit')
+        this.indexManifest(migratedManifest, project.workspacePath, sha256)
+
+        return ProjectMigrationResultSchema.parse({
+          migrationId: 'project-manifest-v1-to-v2',
+          migratedAt,
+          backup,
+          project: { manifest: migratedManifest, workspacePath: project.workspacePath }
+        })
+      } catch (error) {
+        try {
+          if (databaseMigrated) {
+            this.rollbackProjectSchemaMigration(project.workspacePath, originalSha256)
+          }
+          if (manifestActivated) {
+            atomicWriteText(manifestPath, originalText)
+          }
+          this.indexManifest(project.manifest, project.workspacePath, originalSha256)
+        } catch {
+          throw new Error(
+            `The format update failed and needs recovery from verified backup ${backup.backupId}.`
+          )
+        }
+        throw error
+      }
+    })
+  }
+
   listProjects(): ProjectSummary[] {
     this.reconcile()
     const rows = this.catalog
@@ -385,6 +503,51 @@ export class ProjectStore {
     }
   }
 
+  private injectMigrationFailure(point: ProjectMigrationFailurePoint): void {
+    this.migrationFailureInjector?.(point)
+  }
+
+  private applyProjectSchemaMigration(
+    workspacePath: string,
+    migratedAt: string,
+    manifestSha256: string
+  ): void {
+    const database = new DatabaseSync(join(workspacePath, 'project.sqlite'))
+    try {
+      database.exec('BEGIN IMMEDIATE')
+      database
+        .prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')
+        .run(migratedAt)
+      database
+        .prepare('UPDATE project_metadata SET manifest_sha256 = ? WHERE project_id = ?')
+        .run(manifestSha256, this.readManifest(workspacePath).id)
+      database.exec('COMMIT')
+    } catch (error) {
+      database.exec('ROLLBACK')
+      throw error
+    } finally {
+      database.close()
+    }
+  }
+
+  private rollbackProjectSchemaMigration(workspacePath: string, manifestSha256: string): void {
+    const projectId = this.readManifest(workspacePath).id
+    const database = new DatabaseSync(join(workspacePath, 'project.sqlite'))
+    try {
+      database.exec('BEGIN IMMEDIATE')
+      database.prepare('DELETE FROM schema_migrations WHERE version = 2').run()
+      database
+        .prepare('UPDATE project_metadata SET manifest_sha256 = ? WHERE project_id = ?')
+        .run(manifestSha256, projectId)
+      database.exec('COMMIT')
+    } catch (error) {
+      database.exec('ROLLBACK')
+      throw error
+    } finally {
+      database.close()
+    }
+  }
+
   private readManifest(workspacePath: string): ProjectManifest {
     const resolvedWorkspace = resolve(workspacePath)
     if (!isInside(this.workspaceRoot, resolvedWorkspace)) {
@@ -426,6 +589,14 @@ export class ProjectStore {
            VALUES (1, ?)`
         )
         .run(manifest.createdAt)
+      if (manifest.schemaVersion === 2) {
+        database
+          .prepare(
+            `INSERT INTO schema_migrations (version, applied_at)
+             VALUES (2, ?)`
+          )
+          .run(manifest.createdAt)
+      }
       database
         .prepare(
           `INSERT INTO project_metadata

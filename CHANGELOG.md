@@ -4,6 +4,22 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-21 (guided project schema migration and rollback)
+
+- Made project-manifest schema 2 the current format for new projects, adding reversible `lifecycle.archivedAt` and `lifecycle.statusBeforeArchive` fields without changing creative content.
+- Kept schema-1 projects and backups readable. Opening an older project now shows a plain-language one-file/no-data-loss preview and does not change it until the creator chooses `Back up and update project`.
+- Added timestamp-bound stale-preview refusal, SQLite checkpoint/integrity validation, a mandatory verified schema-1 backup, atomic schema-2 manifest activation, matching SQLite migration/hash history, and catalog update.
+- Added automatic rollback that restores the exact original manifest bytes and removes the schema-2 database record after injected failures following backup, before activation, after manifest activation, and after database commit. The verified recovery backup remains.
+- Added typed migration IPC/preload contracts, redacted diagnostic events, the project-overview migration card, and six new automated cases; the full suite increases from 31 to 37 tests.
+
+User impact: existing projects remain visible and usable. When an older project needs the new reversible lifecycle format, the creator sees exactly what changes and can approve one safe in-app update without a terminal. The operation creates no network request, GPU, generation job, or charge.
+
+Migration impact: new projects write manifest schema 2 and record project-database schema versions 1 and 2. Existing schema-1 projects change only after explicit approval and a verified backup; identity, production settings, files, and prior backup bytes are retained. A legacy archived project conservatively records its prior state as `development` because schema 1 did not preserve that history.
+
+Documentation impact: README, architecture, domain model, API/UX/security contracts, implementation plan/backlog, tests, traceability, status, decisions, and changelog now record the schema-2 format, backward read boundary, exact migration, failure matrix, and remaining future-migration/archive/clean-machine gates.
+
+Rollback: revert this feature commit only after closing the app and first creating a current verified backup. The prior build reads schema 1 only, so a project already promoted to schema 2 must be restored from its retained pre-migration backup before using that older build; do not manually edit `schemaVersion`.
+
 ### Added — 2026-08-21 (redacted diagnostics and local support file)
 
 - Added `packages/support-diagnostics` with bounded structured events, correlation IDs, flushed JSONL writes, protected-field removal, known RunPod/OpenAI/Anthropic/Bearer secret patterns, configured private-path replacement, and a second redaction/contract pass during support-file creation.

@@ -8,6 +8,9 @@ import {
   IPC_CHANNELS,
   ProjectBackupSummarySchema,
   ProjectDetailsSchema,
+  ProjectMigrationInputSchema,
+  ProjectMigrationPreviewSchema,
+  ProjectMigrationResultSchema,
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
   RendererErrorInputSchema,
@@ -54,6 +57,18 @@ const studioApi: StudioApi = {
       const safeBackupId = UlidSchema.parse(backupId)
       return ProjectRestoreResultSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.projectsRestore, safeBackupId)
+      )
+    },
+    async getMigrationPreview(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return ProjectMigrationPreviewSchema.nullable().parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.projectsGetMigrationPreview, safeProjectId)
+      )
+    },
+    async migrate(input) {
+      const safeInput = ProjectMigrationInputSchema.parse(input)
+      return ProjectMigrationResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.projectsMigrate, safeInput)
       )
     }
   },

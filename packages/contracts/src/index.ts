@@ -55,31 +55,65 @@ export const CreateProjectInputSchema = z
 export type CreateProjectInput = z.input<typeof CreateProjectInputSchema>
 export type ParsedCreateProjectInput = z.output<typeof CreateProjectInputSchema>
 
-export const ProjectManifestSchema = z
+const ProjectManifestFields = {
+  id: UlidSchema,
+  code: ProjectCodeSchema,
+  type: ProjectTypeSchema,
+  title: z.string().min(2).max(120),
+  status: ProjectStatusSchema,
+  language: z.string().min(2).max(40),
+  targetDurationMinutes: z.number().int().min(1).max(240),
+  visualDirection: VisualDirectionSchema,
+  sourceMode: SourceModeSchema,
+  pilotBrief: z.string().max(4000),
+  deliveryProfileId: z.string().min(1),
+  budgetPolicyId: z.string().min(1),
+  folderName: z.string().min(1).max(100),
+  cloudGpuState: z.literal('not-configured'),
+  safeCheckpoint: z.object({
+    label: z.string().min(1).max(120),
+    createdAt: z.string().datetime({ offset: true })
+  }),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true })
+}
+
+export const ProjectManifestV1Schema = z
   .object({
     schemaVersion: z.literal(1),
-    id: UlidSchema,
-    code: ProjectCodeSchema,
-    type: ProjectTypeSchema,
-    title: z.string().min(2).max(120),
-    status: ProjectStatusSchema,
-    language: z.string().min(2).max(40),
-    targetDurationMinutes: z.number().int().min(1).max(240),
-    visualDirection: VisualDirectionSchema,
-    sourceMode: SourceModeSchema,
-    pilotBrief: z.string().max(4000),
-    deliveryProfileId: z.string().min(1),
-    budgetPolicyId: z.string().min(1),
-    folderName: z.string().min(1).max(100),
-    cloudGpuState: z.literal('not-configured'),
-    safeCheckpoint: z.object({
-      label: z.string().min(1).max(120),
-      createdAt: z.string().datetime({ offset: true })
-    }),
-    createdAt: z.string().datetime({ offset: true }),
-    updatedAt: z.string().datetime({ offset: true })
+    ...ProjectManifestFields
   })
   .strict()
+export type ProjectManifestV1 = z.infer<typeof ProjectManifestV1Schema>
+
+export const ProjectPreArchiveStatusSchema = z.enum([
+  'development',
+  'production',
+  'paused',
+  'completed'
+])
+
+export const ProjectLifecycleSchema = z
+  .object({
+    archivedAt: z.string().datetime({ offset: true }).nullable(),
+    statusBeforeArchive: ProjectPreArchiveStatusSchema.nullable()
+  })
+  .strict()
+export type ProjectLifecycle = z.infer<typeof ProjectLifecycleSchema>
+
+export const ProjectManifestV2Schema = z
+  .object({
+    schemaVersion: z.literal(2),
+    ...ProjectManifestFields,
+    lifecycle: ProjectLifecycleSchema
+  })
+  .strict()
+export type ProjectManifestV2 = z.infer<typeof ProjectManifestV2Schema>
+
+export const ProjectManifestSchema = z.discriminatedUnion('schemaVersion', [
+  ProjectManifestV1Schema,
+  ProjectManifestV2Schema
+])
 export type ProjectManifest = z.infer<typeof ProjectManifestSchema>
 
 export const ProjectSummarySchema = z
@@ -165,6 +199,40 @@ export const ProjectRestoreResultSchema = z
   })
   .strict()
 export type ProjectRestoreResult = z.infer<typeof ProjectRestoreResultSchema>
+
+export const ProjectMigrationPreviewSchema = z
+  .object({
+    migrationId: z.literal('project-manifest-v1-to-v2'),
+    projectId: UlidSchema,
+    projectTitle: z.string().min(2).max(120),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    fromVersion: z.literal(1),
+    toVersion: z.literal(2),
+    backupRequired: z.literal(true),
+    dataLossExpected: z.literal(false),
+    filesChanged: z.literal(1),
+    changes: z.array(z.string().min(1).max(180)).min(1).max(10)
+  })
+  .strict()
+export type ProjectMigrationPreview = z.infer<typeof ProjectMigrationPreviewSchema>
+
+export const ProjectMigrationInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    expectedUpdatedAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ProjectMigrationInput = z.infer<typeof ProjectMigrationInputSchema>
+
+export const ProjectMigrationResultSchema = z
+  .object({
+    migrationId: z.literal('project-manifest-v1-to-v2'),
+    migratedAt: z.string().datetime({ offset: true }),
+    backup: ProjectBackupSummarySchema,
+    project: ProjectDetailsSchema
+  })
+  .strict()
+export type ProjectMigrationResult = z.infer<typeof ProjectMigrationResultSchema>
 
 export const SupportContextValueSchema = z.union([
   z.string().max(500),
@@ -367,6 +435,8 @@ export const IPC_CHANNELS = {
   projectsListBackups: 'studio:projects:list-backups',
   projectsBackup: 'studio:projects:backup',
   projectsRestore: 'studio:projects:restore',
+  projectsGetMigrationPreview: 'studio:projects:get-migration-preview',
+  projectsMigrate: 'studio:projects:migrate',
   supportRecordRendererError: 'studio:support:record-renderer-error',
   supportCreateBundle: 'studio:support:create-bundle',
   cloudGetStatus: 'studio:cloud:get-status',
@@ -387,6 +457,8 @@ export interface StudioApi {
     listBackups(): Promise<ProjectBackupSummary[]>
     backup(projectId: string): Promise<ProjectBackupSummary>
     restore(backupId: string): Promise<ProjectRestoreResult>
+    getMigrationPreview(projectId: string): Promise<ProjectMigrationPreview | null>
+    migrate(input: ProjectMigrationInput): Promise<ProjectMigrationResult>
   }
   support: {
     recordRendererError(input: RendererErrorInput): Promise<void>

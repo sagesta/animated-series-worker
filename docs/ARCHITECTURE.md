@@ -127,16 +127,17 @@ The current source implements `apps/desktop` plus `packages/contracts`, `package
 The local project store currently provides:
 
 - A rebuildable global catalog at `projects/.studio/catalog.sqlite`.
-- A schema-1 `project.json` plus `project.sqlite` inside every identity-scoped project folder.
+- A current schema-2 `project.json` plus `project.sqlite` inside every identity-scoped project folder, with backward-compatible schema-1 read/migration support.
 - Temporary-file write, flush, SHA-256, atomic rename, then catalog transaction.
 - Startup reconciliation that indexes valid manifests and preserves invalid/unrecognized folders for later recovery.
 - One live writer per workspace, with token-matched release and preserved stale-lock evidence.
 - SQLite checkpoint/integrity check plus flushed, SHA-256-inventoried full backups outside project folders.
 - Non-overwriting restore through a verified temporary copy and atomic project-folder activation.
+- Explicit v1→v2 migration preview, mandatory verified backup, stale-preview refusal, atomic manifest activation, matching SQLite history/hash update, and rollback after injected pre/post-activation/database failures.
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Migration preview/rollback, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
+Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
 
 ## 6. Local component responsibilities
 

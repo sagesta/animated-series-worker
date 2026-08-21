@@ -142,7 +142,7 @@ The UI must never say “Backed up” before verification.
 
 ## 9. Restore drill
 
-Current implementation boundary: Settings lists only backup generations that pass current verification. Restore always targets the canonical project folder only when it is absent, copies through an isolated temporary folder, re-verifies every file and the SQLite database, atomically activates the completed copy, rebuilds the catalog entry, and leaves the backup intact. It never overwrites a project already in the library. Representative-media playback, explicit post-restore activation confirmation, schema migration, and clean-machine AT-030 evidence remain planned.
+Current implementation boundary: Settings lists only backup generations that pass current verification. Restore always targets the canonical project folder only when it is absent, copies through an isolated temporary folder, re-verifies every file and the SQLite database, atomically activates the completed copy, rebuilds the catalog entry, and leaves the backup intact. It never overwrites a project already in the library. A restored schema-1 project remains usable and receives the same explicit v1→v2 preview/backup/migration path. Representative-media playback, explicit post-restore activation confirmation, future schema-migration breadth, and clean-machine AT-030 evidence remain planned.
 
 Restore is tested, not assumed:
 

@@ -108,10 +108,26 @@ const verifiedFilmBackup: ProjectBackupSummary = {
   verificationState: 'verified'
 }
 
+const migratedFilm: ProjectDetails = {
+  ...createdFilm,
+  manifest: {
+    ...createdFilm.manifest,
+    schemaVersion: 2,
+    lifecycle: { archivedAt: null, statusBeforeArchive: null },
+    safeCheckpoint: {
+      label: 'Project format updated safely',
+      createdAt: '2026-08-21T16:00:00.000Z'
+    },
+    updatedAt: '2026-08-21T16:00:00.000Z'
+  }
+}
+
 let createProject: ReturnType<typeof vi.fn<StudioApi['projects']['create']>>
 let listBackups: ReturnType<typeof vi.fn<StudioApi['projects']['listBackups']>>
 let backupProject: ReturnType<typeof vi.fn<StudioApi['projects']['backup']>>
 let restoreProject: ReturnType<typeof vi.fn<StudioApi['projects']['restore']>>
+let getMigrationPreview: ReturnType<typeof vi.fn<StudioApi['projects']['getMigrationPreview']>>
+let migrateProject: ReturnType<typeof vi.fn<StudioApi['projects']['migrate']>>
 let createSupportBundle: ReturnType<typeof vi.fn<StudioApi['support']['createBundle']>>
 let connectCloud: ReturnType<typeof vi.fn<StudioApi['cloud']['connect']>>
 
@@ -123,6 +139,15 @@ beforeEach(() => {
     backupId: verifiedFilmBackup.backupId,
     restoredAt: '2026-08-21T14:00:00.000Z',
     project: createdFilm
+  })
+  getMigrationPreview = vi
+    .fn<StudioApi['projects']['getMigrationPreview']>()
+    .mockResolvedValue(null)
+  migrateProject = vi.fn<StudioApi['projects']['migrate']>().mockResolvedValue({
+    migrationId: 'project-manifest-v1-to-v2',
+    migratedAt: '2026-08-21T16:00:00.000Z',
+    backup: verifiedFilmBackup,
+    project: migratedFilm
   })
   createSupportBundle = vi.fn<StudioApi['support']['createBundle']>().mockResolvedValue({
     bundleId: '00000000-0000-4000-8000-000000000001',
@@ -145,7 +170,9 @@ beforeEach(() => {
       open: vi.fn(),
       listBackups,
       backup: backupProject,
-      restore: restoreProject
+      restore: restoreProject,
+      getMigrationPreview,
+      migrate: migrateProject
     },
     support: {
       recordRendererError: vi.fn().mockResolvedValue(undefined),
@@ -257,5 +284,44 @@ describe('desktop project foundation', () => {
     await waitFor(() => expect(createSupportBundle).toHaveBeenCalledTimes(1))
     expect(await screen.findByText(/redaction check passed/i)).toBeTruthy()
     expect(screen.getByText('C:\\Studio\\support\\support-safe.json')).toBeTruthy()
+  })
+
+  it('previews, backs up, and updates an older project format from the overview', async () => {
+    const user = userEvent.setup()
+    getMigrationPreview.mockResolvedValueOnce({
+      migrationId: 'project-manifest-v1-to-v2',
+      projectId: createdFilm.manifest.id,
+      projectTitle: createdFilm.manifest.title,
+      expectedUpdatedAt: createdFilm.manifest.updatedAt,
+      fromVersion: 1,
+      toVersion: 2,
+      backupRequired: true,
+      dataLossExpected: false,
+      filesChanged: 1,
+      changes: [
+        'Add reversible archive and unarchive history fields.',
+        'Keep every existing project setting, file, and approval unchanged.',
+        'Create and verify a complete recovery backup before activation.'
+      ]
+    })
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: /start a production/i }))
+    await user.click(screen.getByRole('button', { name: /one-off film/i }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(screen.getByLabelText('Production title'), 'The Last Kite')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: /start from an idea/i }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Create production' }))
+
+    await user.click(await screen.findByRole('button', { name: 'Back up and update project' }))
+    await waitFor(() =>
+      expect(migrateProject).toHaveBeenCalledWith({
+        projectId: createdFilm.manifest.id,
+        expectedUpdatedAt: createdFilm.manifest.updatedAt
+      })
+    )
+    expect(await screen.findByText('Project format updated safely')).toBeTruthy()
   })
 })

@@ -10,9 +10,14 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ProjectManifestSchema } from '@studio/contracts'
-import { PROJECT_DIRECTORIES, ProjectStore } from './index'
+import {
+  ProjectManifestSchema,
+  ProjectManifestV1Schema,
+  type ProjectDetails
+} from '@studio/contracts'
+import { PROJECT_DIRECTORIES, ProjectStore, type ProjectMigrationFailurePoint } from './index'
 
 const temporaryRoots: string[] = []
 
@@ -32,6 +37,27 @@ function input(title: string, type: 'series' | 'film') {
     sourceMode: 'original' as const,
     pilotBrief: ''
   }
+}
+
+function downgradeProjectToV1(project: ProjectDetails): string {
+  const legacyCandidate = JSON.parse(JSON.stringify(project.manifest)) as Record<string, unknown>
+  legacyCandidate.schemaVersion = 1
+  delete legacyCandidate.lifecycle
+  const legacyManifest = ProjectManifestV1Schema.parse(legacyCandidate)
+  const manifestText = `${JSON.stringify(legacyManifest, null, 2)}\n`
+  const manifestSha256 = createHash('sha256').update(manifestText).digest('hex')
+  writeFileSync(join(project.workspacePath, 'project.json'), manifestText, 'utf8')
+
+  const database = new DatabaseSync(join(project.workspacePath, 'project.sqlite'))
+  try {
+    database.prepare('DELETE FROM schema_migrations WHERE version = 2').run()
+    database
+      .prepare('UPDATE project_metadata SET manifest_sha256 = ? WHERE project_id = ?')
+      .run(manifestSha256, legacyManifest.id)
+  } finally {
+    database.close()
+  }
+  return manifestText
 }
 
 afterEach(() => {
@@ -204,4 +230,87 @@ describe('ProjectStore', () => {
     expect(() => new ProjectStore({ workspaceRoot })).toThrow(/already being opened/i)
     expect(readdirSync(studioDirectory)).toContain('writer.lock')
   })
+
+  it('previews, backs up, and applies the project-manifest v1-to-v2 migration', async () => {
+    const root = createRoot()
+    const workspaceRoot = join(root, 'projects')
+    const backupRoot = join(root, 'backups')
+    const store = new ProjectStore({ workspaceRoot, backupRoot, studioVersion: 'test' })
+    const project = store.createProject(input('Legacy Lanterns', 'series'))
+    downgradeProjectToV1(project)
+    store.reconcile()
+
+    const preview = store.getMigrationPreview(project.manifest.id)
+    expect(preview).toMatchObject({ fromVersion: 1, toVersion: 2, backupRequired: true })
+    const result = await store.migrateProject({
+      projectId: project.manifest.id,
+      expectedUpdatedAt: preview!.expectedUpdatedAt
+    })
+
+    expect(result.project.manifest.schemaVersion).toBe(2)
+    if (result.project.manifest.schemaVersion === 2) {
+      expect(result.project.manifest.lifecycle).toEqual({
+        archivedAt: null,
+        statusBeforeArchive: null
+      })
+    }
+    expect(result.backup.verificationState).toBe('verified')
+    expect(store.getMigrationPreview(project.manifest.id)).toBeNull()
+
+    const database = new DatabaseSync(join(project.workspacePath, 'project.sqlite'))
+    try {
+      const row = database
+        .prepare('SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 2')
+        .get() as unknown as { count: number }
+      expect(row.count).toBe(1)
+    } finally {
+      database.close()
+    }
+    store.close()
+  })
+
+  it.each<ProjectMigrationFailurePoint>([
+    'after-backup',
+    'before-manifest-activation',
+    'after-manifest-activation',
+    'after-database-commit'
+  ])('rolls back the project migration after injected failure at %s', async (failurePoint) => {
+    const root = createRoot()
+    const workspaceRoot = join(root, 'projects')
+    const backupRoot = join(root, 'backups')
+    const store = new ProjectStore({
+      workspaceRoot,
+      backupRoot,
+      studioVersion: 'test',
+      migrationFailureInjector: (point) => {
+        if (point === failurePoint) throw new Error(`Injected failure: ${point}`)
+      }
+    })
+    const project = store.createProject(input(`Rollback ${failurePoint}`, 'film'))
+    const originalText = downgradeProjectToV1(project)
+    store.reconcile()
+    const preview = store.getMigrationPreview(project.manifest.id)!
+
+    await expect(
+      store.migrateProject({
+        projectId: project.manifest.id,
+        expectedUpdatedAt: preview.expectedUpdatedAt
+      })
+    ).rejects.toThrow(/Injected failure/)
+
+    expect(readFileSync(join(project.workspacePath, 'project.json'), 'utf8')).toBe(originalText)
+    expect(store.openProject(project.manifest.id).manifest.schemaVersion).toBe(1)
+    expect(await store.listBackups()).toHaveLength(1)
+    const database = new DatabaseSync(join(project.workspacePath, 'project.sqlite'))
+    try {
+      const row = database
+        .prepare('SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 2')
+        .get() as unknown as { count: number }
+      expect(row.count).toBe(0)
+    } finally {
+      database.close()
+    }
+    store.close()
+  })
 })
+import { createHash } from 'node:crypto'
