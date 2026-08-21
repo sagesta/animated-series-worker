@@ -1,6 +1,6 @@
 # Master build backlog
 
-Last updated: 2026-08-21
+Last updated: 2026-08-22
 
 ## 1. Purpose
 
@@ -30,7 +30,7 @@ The detailed phase order remains authoritative in [IMPLEMENTATION_PLAN.md](IMPLE
 
 ## 4. Current verified checkpoint
 
-The current source provides a working local Windows shell, isolated series/film projects, verified backup/non-overwriting restore, single-writer protection, protected RunPod/OpenAI/Anthropic/Gemini keys, read-only RunPod checks, a controlled stable writing-model catalogue, and provider-neutral local writing proposals. It cannot yet provision a GPU, run ComfyUI, generate media, execute an external creative skill, promote proposals into versioned canon, or assemble an episode.
+The current source provides a working local Windows shell, isolated series/film projects, immutable Audience & Creative Direction revisions, verified backup/non-overwriting restore, single-writer protection, protected RunPod/OpenAI/Anthropic/Gemini keys, read-only RunPod checks, a controlled stable writing-model catalogue, and provider-neutral local writing proposals with exact direction lineage. It cannot yet provision a GPU, run ComfyUI, generate media, execute an external creative skill, promote proposals into versioned canon, or assemble an episode.
 
 ## 5. Master work stack
 
@@ -39,6 +39,7 @@ The current source provides a working local Windows shell, isolated series/film 
 | 1 | FOUND-001 desktop foundation completion | 1 | In progress | Stable packaged shell, structured safe errors, support diagnostics, and responsive non-technical UI | Clean-machine launch, accessibility, interruption, and signed-package evidence |
 | 2 | DATA-001 durable project store | 1 | In progress — full verified backup/restore, writer lock, and guided v1→v2 rollback matrix pass locally | Atomic files, single-writer protection, migrations, archive, backup, restore, and reconciliation | Archive/future-migration breadth, incremental/release policy, and clean-machine restore pass |
 | 3 | SEC-001 complete credential and logging boundary | 1–2 | In progress — RunPod/OpenAI/Anthropic/Gemini vaults and local redacted diagnostics/support JSON pass | Protected provider credentials and redacted logs/support bundles | Broader provider/worker/skill secret scans, retention, and clean-machine persistence/upgrade tests pass |
+| 3A | DIRECTION-001 audience and creative compass | 1–7 | In progress — guided creation/revision, immutable project sidecars, stale-screen refusal, old-project compatibility, and schema-2 writing context lineage pass | Use one project-owned audience/niche/tone/theme/promise/setting/boundary/format/style/positioning/differentiation version across every relevant compiler without making it canon or policy authority | Complete upstream/canon/image/voice/video/thumbnail/release pins, dependency impact, cross-project/policy denial, and AT-059 |
 | 4 | WRITE-001 provider-neutral writing | 2 | In progress — protected three-provider setup, controlled catalogue, structured adapters, context preview, paid-call confirmation, and local proposal lineage pass mocked tests | Guided GPT/Claude/Gemini connection plus structured story, character, world, script, rewrite, and continuity jobs | Live provider/account switching, actual cost benchmark, canon promotion, and full AT-036/AT-039 pass |
 | 5 | SKILL-001 external creative-skill runtime | 2 | Ready | Safe install, inspection, task routing, required-use enforcement, permissions, validation, and receipts | AT-037 plus extension security suite pass |
 | 6 | UP-001 pinned upstream adapter runner | 2 | Planned | Invoke supported shuohao-skills without editing the submodule and preserve exact source evidence | AT-005, AT-006, and update rollback pass |
@@ -107,8 +108,8 @@ This gate makes workflow execution dependable; it does not claim that generative
 Unless a safety defect changes priority, implementation proceeds in this order:
 
 1. Finish DATA-001 and SEC-001 reliability foundations.
-2. Implement WRITE-001 and SKILL-001 so story/character/script development becomes useful inside the app, then add the local YT-PROFILE-001/IDEA-001 records without granting them production authority.
-3. Implement UP-001/UP-002 and CONT-001 so creative facts and dependencies are durable before media multiplication.
+2. Finish DIRECTION-001 compiler/impact contracts while implementing WRITE-001 and SKILL-001 so story/character/script development becomes useful inside the app, then add the local YT-PROFILE-001/IDEA-001 records without granting them production authority.
+3. Implement UP-001/UP-002 and CONT-001 with exact direction-version pins so creative facts and dependencies are durable before media multiplication.
 4. Build BENCH-001 and VIEW-001 before enabling paid generation.
 5. Build WORKER-001, the COMFY-001–COMFY-005 stack, and the remaining CLOUD-001 lifecycle behind locked spending gates.
 6. Prove IMAGE-001, LAYER-001, VOICE-001, ANIMATIC-001, and needed CONTROL-001 paths before bulk LTX video; run ADAPT-001 only if the reference-only benchmark fails.

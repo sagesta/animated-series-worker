@@ -21,6 +21,7 @@ coverage/
 dist/
 build/
 release/
+release-smoke-*/
 .venv/
 __pycache__/
 *.pyc

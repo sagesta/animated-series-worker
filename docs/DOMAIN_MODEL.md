@@ -24,6 +24,7 @@ erDiagram
     CHARACTER ||--o{ CHARACTER_VERSION : versions
     CHARACTER_VERSION ||--o{ VOICE_PROFILE_VERSION : may_use
     PROJECT ||--o{ STYLE_BIBLE_VERSION : versions
+    PROJECT ||--o{ CREATIVE_DIRECTION_PROFILE : guides
     PROJECT ||--o{ LOCATION_VERSION : versions
     PROJECT ||--o{ PROP_VERSION : versions
     SHOT ||--o{ TAKE : attempts
@@ -61,6 +62,28 @@ erDiagram
 | `createdAt`, `updatedAt` | Audit timestamps |
 
 Series projects use seasons and episodes. Film projects can use a single implicit production plus sequences; both converge on scenes and shots.
+
+### Audience and creative-direction profile
+
+`CreativeDirectionProfile` is an immutable project-owned sidecar, not an approved story fact or a release attestation.
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion` | Profile contract version; current value `1` |
+| `profileId` | Immutable ULID for this revision |
+| `projectId` | Owning project; cross-project use is invalid |
+| `revision` | Monotonic project-local revision beginning at `1` |
+| `createdAt` | Immutable creation timestamp |
+| `direction.targetAudience` | Plain-language intended viewers and interests |
+| `direction.ageBand` | Creative maturity guidance: `all-ages`, `children`, `teens`, `young-adults`, `adults`, `mixed`, or `undecided`; never a made-for-kids answer |
+| `direction.primaryNiche`, `genres` | Subject/experience space and story conventions |
+| `direction.toneKeywords`, `coreThemes`, `storyPromise` | Feeling, recurring ideas, and reliable viewer experience |
+| `direction.culturalSetting`, `contentBoundaries` | Story context and matters to avoid/handle carefully |
+| `direction.episodeFormat` | Expected film/episode length, structure, and serialization pattern |
+| `direction.youtubePositioning`, `visualStyleNotes` | Truthful public framing and high-level art language |
+| `direction.comparableTitles`, `differentiation` | Directional neighbourhood plus explicit originality; no copying authority |
+
+Each new revision writes `bibles/creative-direction/versions/creative-direction-v####-<profileId>.json`. Earlier revisions remain readable. Existing projects may have no profile until the creator adds revision 1; this is not a manifest-schema error. Consuming records pin profile ID, revision, timestamp, and hash.
 
 ### Creative definition records
 
@@ -177,7 +200,7 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 
 A creative writing job proposes a new local version; it never edits a locked version or treats a provider conversation as canonical.
 
-Current version 0.5.0 persists the first provider-neutral `WritingDraftRecord` subset as a no-overwrite JSON file under `provenance/writing`. It includes one normalized project-manifest source version/hash, exact context-selection/hash, OpenAI/Anthropic/Gemini provider and approved model/profile, request ID, token usage, uncalculated dollar-cost state, and validated proposal sections. `skillsPlanned` and `skillsUsed` must both be empty until the skill runtime exists. Promotion of selected proposal content into separate versioned canon is still planned.
+Current version 0.6.0 persists provider-neutral `WritingDraftRecord` versions as no-overwrite JSON files under `provenance/writing`. Schema 2 includes the project manifest plus the exact selected creative-direction ID/revision/timestamp/hash when enabled, exact context selection/hash, OpenAI/Anthropic/Gemini provider and approved model/profile, request ID, token usage, uncalculated dollar-cost state, and validated proposal sections. Schema-1 proposal files remain readable. `skillsPlanned` and `skillsUsed` must both be empty until the skill runtime exists. Promotion of selected proposal content into separate versioned canon is still planned.
 
 | Field | Meaning |
 | --- | --- |
@@ -326,6 +349,7 @@ Examples:
 - Script line v5 → TTS audio v3 → A2V take v2 → caption cue v4.
 - Style bible v2 → environment board v3 and every shot that pins it.
 - Character/script source versions + skill receipts → proposed creative draft → reviewed canonical version.
+- Creative-direction revision → writing/upstream/media/release compiler → pinned proposal/job/package lineage; a later revision affects only explicitly reviewed dependants.
 - Verified original media → local thumbnail/proxy → review session; derivative failure never makes the original stale.
 - Storyboard frames + dialogue timing → animatic → approved shot timing → video jobs.
 - Control assets + adaptation profile → compiled workflow → take; changing one control marks only bound attempts/downstream outputs stale.
@@ -344,6 +368,7 @@ projects/
     ├── source/
     │   └── shuohao/<import-id>/       immutable imported JSON/reports
     ├── bibles/
+    │   ├── creative-direction/versions/ creative-direction-v####-<profile-id>.json
     │   ├── style/
     │   ├── characters/<code>/v###/
     │   ├── voices/<code>/v###/
@@ -377,7 +402,7 @@ projects/
 
 Media filenames are friendly, but identity comes from manifest IDs and hashes. No code relies on user-visible names being unique.
 
-The current source creates this directory skeleton, `project.json`, and `project.sqlite`. Creative entity/version records and media lineage remain planned; their folders are intentionally empty until those phases implement the corresponding contracts.
+The current source creates this directory skeleton, `project.json`, `project.sqlite`, and revision 1 of the creative-direction sidecar for a new project. It can append/read later direction revisions and leaves old projects without a profile readable. Other creative entity/version records and media lineage remain planned; their folders are intentionally empty until those phases implement the corresponding contracts.
 
 Verified full backups live outside individual project folders under the application backup root:
 
@@ -392,6 +417,7 @@ Incomplete backup and restore staging folders are never indexed as healthy proje
 ## 7. Multiple-series isolation
 
 - Every query, path, cache key, job, worker upload, and cost entry requires `projectId`.
+- Creative-direction files and consuming source-version records must match the owning `projectId`; identical niche text never authorizes cross-project reuse.
 - The worker receives a session-scoped project token and a project-specific temporary root.
 - Shared asset reuse is a copy operation that creates new project ownership plus lineage back to the source.
 - Global model caches contain models/workflows only, never project bibles or voice references.

@@ -6,9 +6,9 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.5.0
+### Current implementation — version 0.6.0
 
-The production library, series/film wizard, project overview, navigation, backup/recovery/migration, RunPod setup, and local support flow are implemented. Settings provides separate masked OpenAI, Anthropic, and Gemini cards with free model-list validation and independent refresh/disable/enable/remove. Every card names the approved studio models and their balanced/deep/economy purpose; only models both approved and available to that key appear in the profile picker. Story is a working Creative Room for character, world, outline, scene, dialogue, and continuity proposals: it shows exact selected project context, explains the additional instruction/format information, requires a checkbox for one potentially paid text request, and labels the locally saved result “proposal, not canon” with model/token/skill-use lineage. No model is presented as a task benchmark winner. World & Cast, Storyboard, Generate, Review, Edit & Export, Release, canon promotion/version comparison, exact text-dollar quotes, and external skills remain planned/locked. GPU generation remains unavailable.
+The production library, six-step series/film wizard, project overview, navigation, backup/recovery/migration, RunPod setup, and local support flow are implemented. The wizard now collects an Audience & Creative Direction profile; the overview shows its active revision and can append a revised local version without overwriting the earlier one. Settings provides separate masked OpenAI, Anthropic, and Gemini cards with free model-list validation and independent refresh/disable/enable/remove. Every card names the approved studio models and their balanced/deep/economy purpose; only models both approved and available to that key appear in the profile picker. Story is a working Creative Room for character, world, outline, scene, dialogue, and continuity proposals: it shows the exact selected project manifest and creative-direction context, requires a checkbox for one potentially paid text request, and labels the locally saved result “proposal, not canon” with model/token/source/skill-use lineage. No model is presented as a task benchmark winner. World & Cast, Storyboard, Generate, Review, Edit & Export, Release, canon promotion/version comparison, exact text-dollar quotes, and external skills remain planned/locked. GPU generation remains unavailable.
 
 ## 2. Navigation
 
@@ -53,7 +53,7 @@ Explain in one page:
 
 ### Step 3b: Writing accounts (optional until creative assistance is requested)
 
-- Offer separate **OpenAI** and **Anthropic** cards with `Connect`, `Test`, `Replace`, `Disable`, and `Remove` actions.
+- Offer separate **OpenAI**, **Anthropic**, and **Google Gemini** cards with `Connect`, `Test`, `Replace`, `Disable`, and `Remove` actions.
 - Explain plainly: “These services charge separately for text usage. They are not covered by your RunPod GPU balance.”
 - Accept each key in a masked field and return only opaque connected/error status after the main process stores it with OS protection.
 - Let the creator choose a default `Balanced`, `Best draft`, or later benchmarked custom writing profile, while keeping a provider/model selector available per task.
@@ -86,24 +86,40 @@ Technical details are available under `Show details` but are never the only expl
 - `Series` — seasons and episodes.
 - `One-off film` — sequences and scenes.
 
-### Screen 2: Creative basics
+### Screen 2: Identity
 
 - Title and working code.
-- Primary language.
 - Target episode/film duration.
-- Aspect ratio and delivery profile.
-- Visual direction: 2D, 3D-look, mixed, or undecided.
 
-The visual direction is a style brief, not a claim that a true 3D rig will be created.
+### Screen 3: Audience
 
-### Screen 3: Starting material
+- Who the production is for, in plain language.
+- Creative age band, with a warning that this does not answer YouTube's made-for-kids question.
+- Primary niche, genres/subgenres, and cultural/story setting.
+
+### Screen 4: Creative direction
+
+- Viewer/story promise, tone words, themes, and episode/film format.
+- Content boundaries, visual-style notes, and truthful YouTube positioning.
+- Optional comparable titles as directional references plus how this work will be different; copying is not authorized.
+
+### Screen 5: Starting point
 
 - Import a novel/source document.
 - Import existing upstream JSON/reports.
 - Start from an original idea.
 - Import an existing studio project.
 
-### Screen 4: Pilot definition
+The current slice records any selected starting-point intent, but it does not run an import. **Start from an idea** is immediately usable; all import paths remain planned and are labelled as such.
+
+### Screen 6: Review and create
+
+- Review project type, identity, audience, niche, genre, and viewer promise.
+- Create the project and direction locally; no API call, GPU, or charge occurs.
+
+The project overview provides **Revise direction**. Saving appends a new revision and says clearly that earlier proposals, approved work, and policy answers do not change. A future impact screen will identify dependent work before any rebinding or regeneration.
+
+### Later pilot definition
 
 Choose a representative 30–90 second scene containing the hardest expected elements: recurring character, dialogue, movement, location, and camera. The app explains that approving this test protects the larger budget.
 
@@ -130,7 +146,7 @@ Choices are `Create new version`, `Cancel`, and—only where safe—`Create and 
 
 Story, character, world, episode, scene, dialogue, and continuity assistants share one non-technical pattern:
 
-1. Select the exact local facts/versions the assistant may use.
+1. Select the exact local facts/versions the assistant may use; the active Audience & Creative Direction profile is visible and selected by default.
 2. Choose the writing profile or keep the project default.
 3. Preview **Skills planned**: required, optional, incompatible, and why each matched.
 4. Preview estimated text-service usage/cost where available, then generate a draft.
@@ -312,6 +328,7 @@ Never show only a stack trace, provider code, or “unknown error.” Expert det
 A representative non-technical user must be able to:
 
 - Create a project and define a pilot.
+- Define an audience/niche/direction for both a series and a one-off film, revise it, and explain why the earlier version and YouTube policy answers did not change.
 - Connect the provider using the guided steps.
 - Approve a character image and voice.
 - Queue and review a shot.

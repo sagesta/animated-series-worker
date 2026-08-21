@@ -17,7 +17,9 @@ If all work truly completes in five total GPU-hours at $2/hour, compute is $10. 
 | OpenAI/Anthropic/Gemini writing API | Input/output tokens and any selected provider tools/caching/service tier | Task estimate, context preview, approved model/profile choice, token cap, actual usage ledger |
 | Optional external tools/assets | Music, effects, fonts, editor, APIs | Rights and purchase records |
 
-The product must not claim “GPU is the only cost.” A creator-supplied OpenAI or Anthropic key creates a separate text-API bill on that provider account; RunPod balance does not cover it. The studio shows the current provider/storage assumptions and separates optional expenses.
+The product must not claim “GPU is the only cost.” A creator-supplied OpenAI, Anthropic, or Gemini key creates a separate text-API bill on that provider account; RunPod balance does not cover it. The studio shows the current provider/storage assumptions and separates optional expenses.
+
+Creating, viewing, or revising the local Audience & Creative Direction profile has no provider or GPU cost. A charge is possible only when the creator later approves a writing or media task that uses that profile; the context preview and estimate belong to that task, not to the profile itself.
 
 Most release packaging—local typography, chapter calculation, validation, manifests, and manual upload checklist—uses the creator's computer and no rented GPU. Drafting release text uses the selected writing API and is recorded under its normal token cost. A new AI thumbnail illustration uses the chosen local/cloud image path and shows its estimate before generation; reusing an approved frame plus local layout can avoid that generation cost. A future analytics connector may consume platform API quota, but it is not bundled with GPU billing and no paid connector request may be assumed free.
 

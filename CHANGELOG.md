@@ -4,6 +4,25 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-22 (versioned Audience & Creative Direction)
+
+- Added a six-step series/film wizard that records intended audience, creative age band, niche, genres, tone, themes, story promise, cultural setting, content boundaries, episode/film format, YouTube positioning, visual-style notes, comparable-title direction, and differentiation.
+- Added immutable project-local profile files under `bibles/creative-direction/versions`. New projects write revision 1; **Revise direction** appends the next version, keeps prior files, and refuses a save when another revision was created after the screen opened.
+- Kept existing projects readable without a forced project-manifest migration. They show no profile until the creator adds revision 1 from the overview.
+- Added exact creative-direction selection to the Creative Room. The preview shows the direction that may be disclosed, and new schema-2 proposals record manifest/profile IDs, revisions/timestamps, and SHA-256 hashes; schema-1 proposals remain readable.
+- Separated creative direction from canon, character identity/presentation versions, channel release profiles, and human YouTube attestations. Creative age/style/positioning cannot decide made-for-kids, synthetic-media, truthfulness, originality, rights, or full-watch answers; comparable titles cannot authorize copying.
+- Reconciled the current studio plan, the supplied rich workflow comparison, the six pinned upstream skills, and the reviewed YouTube-automation repository into one future consumer matrix for writing, upstream normalization, images, voice, LTX, thumbnails, and Release Details.
+- Added storage, older-project, damaged-history, writing-context, and renderer coverage. The local suite now contains 57 automated tests; full downstream compiler/impact/non-technical AT-059 acceptance remains open.
+- The full quality gate passes. A separate unpacked Windows package reports product version `0.6.0.0` and SHA-256 `781C89F819EDC55FA29CBF2910AF1DF606374328F23C88EFB41E2E72B56CEA22`; it remains unsigned and is not a production installer.
+
+User impact: a non-technical creator now gives each series or one-off film a clear reusable compass before building characters or episodes, sees it on the project overview, can revise it without destroying history, and can include or exclude it from a GPT/Claude/Gemini writing request. This local setup/revision uses no GPU and makes no provider call.
+
+Migration impact: project-manifest schema remains version 2. New projects add a revision-1 sidecar file. Older projects and backups remain readable with `creativeDirection: null` until a direction is added. New writing proposals use schema 2; the reader retains schema-1 compatibility. Existing approved work, proposals, media, credentials, and provider state are not rewritten.
+
+Documentation impact: added the authoritative Audience & Creative Direction specification and updated the PRD, architecture, domain/API/security/UX/media/production/YouTube/upstream contracts, implementation plan, backlog, tests, traceability, decisions, sources, glossary, status, documentation map, README, and changelog.
+
+Rollback: close the application and revert this feature commit. Existing direction-version and schema-2 writing-proposal JSON files are inert and may be retained or backed up; the version-0.5.0 reader does not expose them and cannot read schema-2 proposals. Restore the last pre-feature application backup only if those new local records must be removed as well. No GPU, remote worker, writing request, credential, or YouTube account requires rollback.
+
 ### Added — 2026-08-21 (protected Gemini and controlled writing models)
 
 - Added a separate Windows-protected Google Gemini credential, no-cost model-list validation, independent refresh/disable/enable/remove controls, and a provider-neutral Gemini `generateContent` adapter with structured JSON, bounded timeout, safe errors, completion checks, usage, and request lineage.

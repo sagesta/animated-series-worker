@@ -7,6 +7,7 @@ import {
   CreateProjectInputSchema,
   IPC_CHANNELS,
   ProjectBackupSummarySchema,
+  ProjectCreativeDirectionUpdateInputSchema,
   ProjectDetailsSchema,
   ProjectMigrationInputSchema,
   ProjectMigrationPreviewSchema,
@@ -51,6 +52,12 @@ const studioApi: StudioApi = {
       const safeProjectId = UlidSchema.parse(projectId)
       return ProjectDetailsSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.projectsOpen, safeProjectId)
+      )
+    },
+    async saveCreativeDirection(input) {
+      const safeInput = ProjectCreativeDirectionUpdateInputSchema.parse(input)
+      return ProjectDetailsSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.projectsSaveCreativeDirection, safeInput)
       )
     },
     async listBackups() {

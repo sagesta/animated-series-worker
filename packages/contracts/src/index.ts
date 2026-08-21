@@ -27,6 +27,68 @@ export const UlidSchema = z
   .string()
   .regex(/^[0-9A-HJKMNP-TV-Z]{26}$/, 'The project identity is not valid.')
 
+export const AudienceAgeBandSchema = z.enum([
+  'all-ages',
+  'children',
+  'teens',
+  'young-adults',
+  'adults',
+  'mixed',
+  'undecided'
+])
+export type AudienceAgeBand = z.infer<typeof AudienceAgeBandSchema>
+
+const CreativeDirectionListItemSchema = z.string().trim().min(1).max(160)
+
+export const CreativeDirectionInputSchema = z
+  .object({
+    targetAudience: z.string().trim().min(2, 'Describe who you want to make this for.').max(500),
+    ageBand: AudienceAgeBandSchema,
+    primaryNiche: z.string().trim().min(2, 'Describe the main niche or subject area.').max(300),
+    genres: CreativeDirectionListItemSchema.array().min(1, 'Add at least one genre.').max(8),
+    toneKeywords: CreativeDirectionListItemSchema.array()
+      .min(1, 'Add at least one tone word.')
+      .max(8),
+    coreThemes: CreativeDirectionListItemSchema.array().max(10),
+    storyPromise: z
+      .string()
+      .trim()
+      .min(10, 'Explain what viewers can consistently expect from this production.')
+      .max(1_200),
+    culturalSetting: z.string().trim().max(500),
+    contentBoundaries: CreativeDirectionListItemSchema.array().max(12),
+    episodeFormat: z.string().trim().min(2).max(500),
+    youtubePositioning: z.string().trim().max(1_000),
+    visualStyleNotes: z.string().trim().max(1_000),
+    comparableTitles: CreativeDirectionListItemSchema.array().max(8),
+    differentiation: z.string().trim().max(1_000)
+  })
+  .strict()
+export type CreativeDirectionInput = z.infer<typeof CreativeDirectionInputSchema>
+
+export const CreativeDirectionProfileSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    profileId: UlidSchema,
+    projectId: UlidSchema,
+    revision: z.number().int().positive(),
+    createdAt: z.string().datetime({ offset: true }),
+    direction: CreativeDirectionInputSchema
+  })
+  .strict()
+export type CreativeDirectionProfile = z.infer<typeof CreativeDirectionProfileSchema>
+
+export const ProjectCreativeDirectionUpdateInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    expectedProfileId: UlidSchema.nullable(),
+    direction: CreativeDirectionInputSchema
+  })
+  .strict()
+export type ProjectCreativeDirectionUpdateInput = z.infer<
+  typeof ProjectCreativeDirectionUpdateInputSchema
+>
+
 export const ProjectCodeSchema = z
   .string()
   .min(1)
@@ -49,7 +111,8 @@ export const CreateProjectInputSchema = z
       .max(240, 'Duration must be four hours or less.'),
     visualDirection: VisualDirectionSchema,
     sourceMode: SourceModeSchema,
-    pilotBrief: z.string().trim().max(4000).optional().default('')
+    pilotBrief: z.string().trim().max(4000).optional().default(''),
+    creativeDirection: CreativeDirectionInputSchema
   })
   .strict()
 export type CreateProjectInput = z.input<typeof CreateProjectInputSchema>
@@ -135,7 +198,8 @@ export type ProjectSummary = z.infer<typeof ProjectSummarySchema>
 export const ProjectDetailsSchema = z
   .object({
     manifest: ProjectManifestSchema,
-    workspacePath: z.string()
+    workspacePath: z.string(),
+    creativeDirection: CreativeDirectionProfileSchema.nullable()
   })
   .strict()
 export type ProjectDetails = z.infer<typeof ProjectDetailsSchema>
@@ -582,10 +646,18 @@ export const WritingTaskKindSchema = z.enum([
 ])
 export type WritingTaskKind = z.infer<typeof WritingTaskKindSchema>
 
-export const WritingContextSelectionSchema = z
+const WritingContextSelectionV1Schema = z
   .object({
     includeProjectBrief: z.boolean(),
     includeProductionSettings: z.boolean()
+  })
+  .strict()
+
+export const WritingContextSelectionSchema = z
+  .object({
+    includeProjectBrief: z.boolean(),
+    includeProductionSettings: z.boolean(),
+    includeCreativeDirection: z.boolean()
   })
   .strict()
 export type WritingContextSelection = z.infer<typeof WritingContextSelectionSchema>
@@ -696,7 +768,7 @@ export const WritingContextPreviewInputSchema = z
   .strict()
 export type WritingContextPreviewInput = z.infer<typeof WritingContextPreviewInputSchema>
 
-export const WritingSourceVersionSchema = z
+const WritingManifestSourceVersionSchema = z
   .object({
     kind: z.literal('project-manifest'),
     id: UlidSchema,
@@ -705,47 +777,81 @@ export const WritingSourceVersionSchema = z
     sha256: Sha256Schema
   })
   .strict()
+
+const WritingCreativeDirectionSourceVersionSchema = z
+  .object({
+    kind: z.literal('creative-direction'),
+    id: UlidSchema,
+    schemaVersion: z.literal(1),
+    revision: z.number().int().positive(),
+    updatedAt: z.string().datetime({ offset: true }),
+    sha256: Sha256Schema
+  })
+  .strict()
+
+export const WritingSourceVersionSchema = z.discriminatedUnion('kind', [
+  WritingManifestSourceVersionSchema,
+  WritingCreativeDirectionSourceVersionSchema
+])
 export type WritingSourceVersion = z.infer<typeof WritingSourceVersionSchema>
 
 export const WritingContextPreviewSchema = z
   .object({
     text: z.string().min(1).max(20_000),
     sha256: Sha256Schema,
-    sourceVersions: WritingSourceVersionSchema.array().length(1)
+    sourceVersions: WritingSourceVersionSchema.array().min(1).max(2)
   })
   .strict()
 export type WritingContextPreview = z.infer<typeof WritingContextPreviewSchema>
 
-export const WritingDraftRecordSchema = z
+const WritingDraftRecordFields = {
+  draftId: UlidSchema,
+  projectId: UlidSchema,
+  taskKind: WritingTaskKindSchema,
+  status: z.literal('proposal'),
+  provider: WritingProviderSchema,
+  model: z.string().min(1).max(200),
+  profile: WritingProfileSchema,
+  createdAt: z.string().datetime({ offset: true }),
+  instruction: z.string().min(10).max(12_000),
+  contextSnapshotSha256: Sha256Schema,
+  output: CreativeDraftContentSchema,
+  usage: WritingUsageSchema,
+  cost: z
+    .object({
+      currency: z.literal('USD'),
+      estimatedUsd: z.number().nonnegative().nullable(),
+      actualUsd: z.number().nonnegative().nullable(),
+      state: z.literal('not-calculated')
+    })
+    .strict(),
+  providerRequestId: z.string().min(1).max(240),
+  skillsPlanned: z.array(z.never()).length(0),
+  skillsUsed: z.array(z.never()).length(0)
+} as const
+
+const WritingDraftRecordV1Schema = z
   .object({
     schemaVersion: z.literal(1),
-    draftId: UlidSchema,
-    projectId: UlidSchema,
-    taskKind: WritingTaskKindSchema,
-    status: z.literal('proposal'),
-    provider: WritingProviderSchema,
-    model: z.string().min(1).max(200),
-    profile: WritingProfileSchema,
-    createdAt: z.string().datetime({ offset: true }),
-    instruction: z.string().min(10).max(12_000),
-    contextSelection: WritingContextSelectionSchema,
-    contextSnapshotSha256: Sha256Schema,
-    sourceVersions: WritingSourceVersionSchema.array().length(1),
-    output: CreativeDraftContentSchema,
-    usage: WritingUsageSchema,
-    cost: z
-      .object({
-        currency: z.literal('USD'),
-        estimatedUsd: z.number().nonnegative().nullable(),
-        actualUsd: z.number().nonnegative().nullable(),
-        state: z.literal('not-calculated')
-      })
-      .strict(),
-    providerRequestId: z.string().min(1).max(240),
-    skillsPlanned: z.array(z.never()).length(0),
-    skillsUsed: z.array(z.never()).length(0)
+    ...WritingDraftRecordFields,
+    contextSelection: WritingContextSelectionV1Schema,
+    sourceVersions: WritingManifestSourceVersionSchema.array().length(1)
   })
   .strict()
+
+const WritingDraftRecordV2Schema = z
+  .object({
+    schemaVersion: z.literal(2),
+    ...WritingDraftRecordFields,
+    contextSelection: WritingContextSelectionSchema,
+    sourceVersions: WritingSourceVersionSchema.array().min(1).max(2)
+  })
+  .strict()
+
+export const WritingDraftRecordSchema = z.discriminatedUnion('schemaVersion', [
+  WritingDraftRecordV1Schema,
+  WritingDraftRecordV2Schema
+])
 export type WritingDraftRecord = z.infer<typeof WritingDraftRecordSchema>
 
 export const WritingErrorCodeSchema = z.enum([
@@ -794,6 +900,7 @@ export const IPC_CHANNELS = {
   projectsListBackups: 'studio:projects:list-backups',
   projectsBackup: 'studio:projects:backup',
   projectsRestore: 'studio:projects:restore',
+  projectsSaveCreativeDirection: 'studio:projects:save-creative-direction',
   projectsGetMigrationPreview: 'studio:projects:get-migration-preview',
   projectsMigrate: 'studio:projects:migrate',
   supportRecordRendererError: 'studio:support:record-renderer-error',
@@ -825,6 +932,7 @@ export interface StudioApi {
     listBackups(): Promise<ProjectBackupSummary[]>
     backup(projectId: string): Promise<ProjectBackupSummary>
     restore(backupId: string): Promise<ProjectRestoreResult>
+    saveCreativeDirection(input: ProjectCreativeDirectionUpdateInput): Promise<ProjectDetails>
     getMigrationPreview(projectId: string): Promise<ProjectMigrationPreview | null>
     migrate(input: ProjectMigrationInput): Promise<ProjectMigrationResult>
   }

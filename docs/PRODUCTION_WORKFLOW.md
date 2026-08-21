@@ -6,6 +6,7 @@ The studio uses the same core workflow for a recurring series and a one-off film
 
 ```text
 Idea/source
+  -> versioned audience and creative direction
   -> story structure
   -> locked world and character bibles
   -> script and line book
@@ -31,7 +32,7 @@ The difference is organization:
 
 | Gate | Must be approved | Why it occurs here |
 | --- | --- | --- |
-| G0 Project brief | Format, audience, language, duration, delivery, budget envelope | Prevents incompatible assumptions |
+| G0 Project compass | Format plus an exact Audience & Creative Direction revision: audience, niche, genres, tone, themes, promise, setting, boundaries, episode/film shape, visual/public direction, and differentiation | Gives every later stage a consistent brief without treating it as canon or policy authority |
 | G1 Story lock | Premise, arc, episode/film structure, major beats | Assets should serve a stable story |
 | G2 Bible lock | Style, lead characters, voices, recurring locations/props | Multiplied consistency depends on these |
 | G3 Script lock | Scene action, dialogue, line IDs, timing target | Voice and shot timing need stable text |
@@ -47,9 +48,11 @@ Changing an earlier gate creates a new version and an impact report. Later gates
 
 ## 3. Stage 0 — define the production
 
-For a series, define:
+For a series, create and review one project-local Audience & Creative Direction revision:
 
-- Series promise and audience.
+- Target audience and creative maturity guidance.
+- Primary niche, genres, tone, themes, cultural/story setting, and content boundaries.
+- Series promise, differentiation, visual direction, and truthful public positioning.
 - Season arc and expected episode count.
 - Typical 20–35 minute episode structure.
 - Visual style and motion budget.
@@ -57,15 +60,17 @@ For a series, define:
 - Language and voice approach.
 - Delivery and budget profiles.
 
-For a one-off film, define the same creative constraints at film and sequence level. It does not need fake season metadata.
+For a one-off film, define the same creative constraints with a film-shaped format and sequence-level plan. It does not need fake season metadata.
+
+The creative age band is not a YouTube made-for-kids decision. Comparable titles help explain direction but never authorize copied characters, plots, shots, dialogue, or distinctive visual expression. Revision creates a new profile version and later shows impact; it never overwrites earlier production history.
 
 Select a pilot scene that is difficult enough to be honest. A silent landscape shot alone is not a valid proof for a dialogue-heavy series.
 
 ## 4. Stage 1 — story development and upstream import
 
-Choose a connected OpenAI, Anthropic, or Gemini writing profile from the version-0.5.0 approved catalogue and select the local context the request may use. The app previews that exact context, requires approval for one potentially paid text request, validates the structured response, and saves it locally as a proposal with provider/model, token usage, uncalculated dollar cost, and `Skills used: none`. Balanced/deep/economy labels explain intended use but do not replace the planned task benchmark. The provider remains a drafting assistant; it cannot approve canon. Selective acceptance into versioned local facts and the matched external-skill plan/receipts remain the next writing/skill slices, not current behavior.
+Choose a connected OpenAI, Anthropic, or Gemini writing profile from the version-0.6.0 approved catalogue and select the local context the request may use. The current profile revision is selected by default. The app previews the exact manifest and direction text plus hashes, requires approval for one potentially paid text request, validates the structured response, and saves it locally as a schema-2 proposal with provider/model, source versions, token usage, uncalculated dollar cost, and `Skills used: none`. Balanced/deep/economy labels explain intended use but do not replace the planned task benchmark. The provider remains a drafting assistant; it cannot approve canon. Selective acceptance into versioned local facts and the matched external-skill plan/receipts remain the next writing/skill slices, not current behavior.
 
-Use the pinned upstream skills and other enabled compatible skills where they help:
+Use the exact selected direction revision with the pinned upstream skills and other enabled compatible skills where they help:
 
 1. Outline and adaptation facts.
 2. Character roster and design prompts.
@@ -74,6 +79,8 @@ Use the pinned upstream skills and other enabled compatible skills where they he
 5. Storyboard segment/cut suggestions and shot vocabulary.
 
 The studio copies imported source files unchanged, records the upstream commit, runs upstream validation, and generates a normalization preview. A required skill that fails, times out, produces invalid output, or lacks an execution receipt blocks that creative job until the creator retries or explicitly changes the plan.
+
+Every future story, character, art, script, storyboard, and shot-recipe task records the profile version/hash it used. The adapter converts the neutral profile into each skill's expected input; it does not modify `vendor/shuohao-skills` or assume one storyboard paragraph can fully determine identity, staging, motion, dialogue timing, and engine controls.
 
 For long-form episodes, the creator and studio then organize material into acts/sequences. The upstream short-drama cut cadence is a suggestion, not the final pacing law. The normalized episode may contain longer holds and editorial construction while retaining story evidence and IDs.
 
@@ -115,6 +122,8 @@ Functional background characters can use a lighter pack. Leads cannot.
 
 Only accepted versions are available to the bulk-generation planner.
 
+The style bible is developed from the profile's high-level visual direction, but it becomes a separate reviewed record. Changing “2D”, “3D-look”, palette, or rendering language never changes a character's identity or previously approved style binding automatically.
+
 ## 6. Stage 3 — voice lock and line production
 
 For each recurring character:
@@ -142,6 +151,8 @@ For every shot decide:
 - Production method and fallback.
 - Approval criteria.
 - Optional start/end frame, pose/depth/edge/mask, motion track, layered composite, or rights-cleared motion reference.
+
+The storyboard compiler uses the pinned audience/tone/format/style direction together with the approved script and bibles. It cannot replace locked character references, timed dialogue, staging, or shot-control records with a general prompt.
 
 ### Production-method selection
 

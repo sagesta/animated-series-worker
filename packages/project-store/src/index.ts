@@ -13,6 +13,8 @@ import {
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import {
+  CreativeDirectionInputSchema,
+  CreativeDirectionProfileSchema,
   ProjectDetailsSchema,
   ProjectManifestSchema,
   ProjectManifestV2Schema,
@@ -20,10 +22,13 @@ import {
   ProjectMigrationPreviewSchema,
   ProjectMigrationResultSchema,
   ProjectRestoreResultSchema,
+  ProjectCreativeDirectionUpdateInputSchema,
   ProjectSummarySchema,
   UlidSchema,
   WritingDraftRecordSchema,
   type CreateProjectInput,
+  type CreativeDirectionInput,
+  type CreativeDirectionProfile,
   type ProjectBackupSummary,
   type ProjectDetails,
   type ProjectManifest,
@@ -34,13 +39,14 @@ import {
   type ProjectSummary,
   type WritingDraftRecord
 } from '@studio/contracts'
-import { buildProjectManifest } from '@studio/domain'
+import { buildProjectManifest, createUlid } from '@studio/domain'
 import { ProjectBackupService } from './backup'
 import { WorkspaceWriterLock } from './writer-lock'
 
 const PROJECT_DIRECTORIES = [
   'source/shuohao',
   'bibles/style',
+  'bibles/creative-direction/versions',
   'bibles/characters',
   'bibles/voices',
   'bibles/locations',
@@ -230,10 +236,17 @@ export class ProjectStore {
     }
 
     const { sha256 } = atomicWriteJson(join(workspacePath, 'project.json'), manifest)
+    const creativeDirection = this.createCreativeDirectionVersion(
+      workspacePath,
+      manifest.id,
+      input.creativeDirection,
+      1,
+      manifest.createdAt
+    )
     this.initializeProjectDatabase(workspacePath, manifest, sha256)
     this.indexManifest(manifest, workspacePath, sha256)
 
-    return ProjectDetailsSchema.parse({ manifest, workspacePath })
+    return ProjectDetailsSchema.parse({ manifest, workspacePath, creativeDirection })
   }
 
   async createBackup(projectId: string): Promise<ProjectBackupSummary> {
@@ -278,7 +291,11 @@ export class ProjectStore {
         restoredAt: new Date().toISOString(),
         project: {
           manifest: restored.manifest,
-          workspacePath: restored.workspacePath
+          workspacePath: restored.workspacePath,
+          creativeDirection: this.readLatestCreativeDirection(
+            restored.workspacePath,
+            restored.manifest.id
+          )
         }
       })
     })
@@ -360,7 +377,11 @@ export class ProjectStore {
           migrationId: 'project-manifest-v1-to-v2',
           migratedAt,
           backup,
-          project: { manifest: migratedManifest, workspacePath: project.workspacePath }
+          project: {
+            manifest: migratedManifest,
+            workspacePath: project.workspacePath,
+            creativeDirection: project.creativeDirection
+          }
         })
       } catch (error) {
         try {
@@ -421,7 +442,30 @@ export class ProjectStore {
       throw new Error('The project identity does not match its catalog entry.')
     }
 
-    return ProjectDetailsSchema.parse({ manifest, workspacePath })
+    return ProjectDetailsSchema.parse({
+      manifest,
+      workspacePath,
+      creativeDirection: this.readLatestCreativeDirection(workspacePath, validId)
+    })
+  }
+
+  saveCreativeDirection(unknownInput: unknown): ProjectDetails {
+    this.assertAvailableForWrite()
+    const input = ProjectCreativeDirectionUpdateInputSchema.parse(unknownInput)
+    const project = this.openProject(input.projectId)
+    if ((project.creativeDirection?.profileId ?? null) !== input.expectedProfileId) {
+      throw new Error(
+        'The creative direction changed after this screen opened. Reopen it before saving a revision.'
+      )
+    }
+    const creativeDirection = this.createCreativeDirectionVersion(
+      project.workspacePath,
+      project.manifest.id,
+      input.direction,
+      this.nextCreativeDirectionRevision(project.workspacePath),
+      new Date().toISOString()
+    )
+    return ProjectDetailsSchema.parse({ ...project, creativeDirection })
   }
 
   saveWritingDraft(unknownDraft: WritingDraftRecord): WritingDraftRecord {
@@ -597,6 +641,80 @@ export class ProjectStore {
     return ProjectManifestSchema.parse(
       JSON.parse(readFileSync(join(resolvedWorkspace, 'project.json'), 'utf8'))
     )
+  }
+
+  private createCreativeDirectionVersion(
+    workspacePath: string,
+    projectId: string,
+    unknownDirection: CreativeDirectionInput,
+    revision: number,
+    createdAt: string
+  ): CreativeDirectionProfile {
+    const direction = CreativeDirectionInputSchema.parse(unknownDirection)
+    const profile = CreativeDirectionProfileSchema.parse({
+      schemaVersion: 1,
+      profileId: createUlid(),
+      projectId,
+      revision,
+      createdAt,
+      direction
+    })
+    const directory = join(workspacePath, 'bibles', 'creative-direction', 'versions')
+    mkdirSync(directory, { recursive: true })
+    const filePath = join(
+      directory,
+      `creative-direction-v${String(revision).padStart(4, '0')}-${profile.profileId}.json`
+    )
+    if (existsSync(filePath)) {
+      throw new Error('That creative-direction version already exists and will not be overwritten.')
+    }
+    atomicWriteJson(filePath, profile)
+    return profile
+  }
+
+  private readLatestCreativeDirection(
+    workspacePath: string,
+    projectId: string
+  ): CreativeDirectionProfile | null {
+    const directory = join(workspacePath, 'bibles', 'creative-direction', 'versions')
+    if (!existsSync(directory)) return null
+
+    const profiles: CreativeDirectionProfile[] = []
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (
+        !entry.isFile() ||
+        !/^creative-direction-v\d+-[0-9A-HJKMNP-TV-Z]{26}\.json$/.test(entry.name)
+      ) {
+        continue
+      }
+      try {
+        const profile = CreativeDirectionProfileSchema.parse(
+          JSON.parse(readFileSync(join(directory, entry.name), 'utf8'))
+        )
+        if (profile.projectId === projectId) profiles.push(profile)
+      } catch {
+        // Damaged versions remain on disk for recovery and are not treated as current.
+      }
+    }
+    return (
+      profiles.sort(
+        (left, right) =>
+          right.revision - left.revision || right.createdAt.localeCompare(left.createdAt)
+      )[0] ?? null
+    )
+  }
+
+  private nextCreativeDirectionRevision(workspacePath: string): number {
+    const directory = join(workspacePath, 'bibles', 'creative-direction', 'versions')
+    if (!existsSync(directory)) return 1
+
+    let highestRevision = 0
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isFile()) continue
+      const match = /^creative-direction-v(\d+)-[0-9A-HJKMNP-TV-Z]{26}\.json$/.exec(entry.name)
+      if (match) highestRevision = Math.max(highestRevision, Number(match[1]))
+    }
+    return highestRevision + 1
   }
 
   private initializeProjectDatabase(

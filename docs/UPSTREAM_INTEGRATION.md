@@ -44,6 +44,8 @@ The submodule Git commit and lock-file commit must match.
 
 The adapter invokes public scripts as separate processes. It does not import private functions from upstream files.
 
+Every future invocation also receives a normalized view of the exact project-owned Audience & Creative Direction revision appropriate to that skill. The profile supplies audience, niche, genres, tone, themes, promise, culture/setting, boundaries, format, visual direction, and differentiation; the adapter maps only relevant fields into the skill contract and records the profile ID/revision/hash. It never edits the upstream skill, injects unrelated project data, or treats comparable titles as copy instructions.
+
 ## 4. Known boundary differences
 
 ### Short drama versus 20–35 minute episodes
@@ -75,12 +77,12 @@ Upstream skills may use an agent-provided image generator. The studio treats ups
 
 ## 5. Import process
 
-1. Inspect submodule/lock/adapter compatibility.
+1. Inspect submodule/lock/adapter compatibility and select the project-owned creative-direction revision.
 2. Copy selected upstream JSON/report/source files into the project's immutable `source/shuohao/<import-id>/` folder.
-3. Hash copied files and record source commit.
+3. Hash copied files and record source commit plus direction ID/revision/hash.
 4. Run applicable upstream validation against the copies.
 5. Parse through versioned studio schemas.
-6. Produce normalization preview: IDs, language, duration, missing fields, long-form changes, H3 provenance.
+6. Produce normalization preview: IDs, language, duration, missing fields, long-form changes, H3 provenance, and direction binding.
 7. User accepts import.
 8. Create studio-owned versions and source-alias mappings.
 9. Run studio long-form/continuity validation.
@@ -140,6 +142,7 @@ Phase 2 must add fixtures for:
 - H3 prompt preservation but non-execution.
 - C/S/P/E source alias mapping.
 - Changes in render-only output that do not alter imported facts.
+- Direction-profile inclusion, wrong-project refusal, changed-revision lineage, and non-copying comparable-title handling across all six skills.
 
 The suite outputs a machine-readable comparison of schema and normalized behavior between current and candidate commits.
 

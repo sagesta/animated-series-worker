@@ -31,7 +31,7 @@ Implementation consequence: Electron is pinned at 43.4.1, Electron Vite at 5.0.0
 | Claude tool use | Claude's Messages API supports declared client/server tools; Claude returns a structured tool call and the application executes and returns client-tool results. | [Claude tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview) |
 | MCP interoperability | MCP is an open standard for connecting AI applications to external data, tools, and workflows and is supported across multiple AI clients. | [Model Context Protocol introduction](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) |
 
-Implementation consequence: the studio uses provider-neutral writing tasks with OpenAI, Anthropic, and Gemini adapters rather than making any provider conversation the project database. Version 0.5.0 uses model-list reads for no-cost key validation, intersects availability with the controlled stable catalogue, then uses OpenAI `POST /responses` with `store: false`, Anthropic `POST /v1/messages`, or Gemini `POST /v1beta/models/{model}:generateContent` with structured output. It refuses partial/unreadable structures, records usage/request IDs locally, and leaves dollar cost uncalculated until versioned price profiles and live benchmarks exist. External skill selection/receipts remain planned and are explicitly empty in current proposal records.
+Implementation consequence: the studio uses provider-neutral writing tasks with OpenAI, Anthropic, and Gemini adapters rather than making any provider conversation the project database. Version 0.6.0 uses model-list reads for no-cost key validation, intersects availability with the controlled stable catalogue, then uses OpenAI `POST /responses` with `store: false`, Anthropic `POST /v1/messages`, or Gemini `POST /v1beta/models/{model}:generateContent` with structured output. It previews the exact selected manifest and creative-direction context, refuses partial/unreadable structures, records usage/request IDs and both source hashes locally, and leaves dollar cost uncalculated until versioned price profiles and live benchmarks exist. External skill selection/receipts remain planned and are explicitly empty in current proposal records.
 
 ## LTX
 
@@ -115,6 +115,12 @@ Design consequence: default video delivery remains a versioned 1080p/24fps SDR H
 | Project/source | Upstream provides outline, character, art, script, storyboard, and shot-recipe skills for AI short-drama production and is Apache-2.0 at the pinned commit. | [shuohao-skills repository](https://github.com/eternityspring/shuohao-skills), pinned locally at `4cff5ae3a4a2d2b5d13161f5a2378c5910be7cad` |
 
 Local inspection at the pin established the H3-specific storyboard, 2–5 second cut gate, up-to-15-second segments, Chinese-first fields, and self-test behavior. Those repository facts are preserved through the submodule lock and compatibility suite rather than web assumptions.
+
+## Creative-direction design synthesis
+
+The Audience & Creative Direction contract does not introduce a new model or platform capability claim. It reconciles four previously reviewed design inputs: the current studio requirements/media architecture, the user-supplied rich animation-workflow comparison (identity/style separation, controlled storyboards, motion/dialogue timing, and production checks), the six pinned upstream skills above, and the external YouTube-automation reference below. The adopted fields, separation rules, current implementation boundary, and future consumer matrix are recorded in [CREATIVE_DIRECTION_PROFILE.md](CREATIVE_DIRECTION_PROFILE.md), so the non-portable supplied material is not required to reproduce the design decision.
+
+Implementation consequence: one immutable project profile supplies consistent high-level direction to writing and future upstream/media/release compilers. Canon, character identity/style versions, shot controls, release profiles, and human YouTube attestations remain separate records. Comparable titles provide direction only and do not authorize copying.
 
 ## External YouTube-automation reference
 

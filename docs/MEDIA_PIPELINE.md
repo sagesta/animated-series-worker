@@ -2,7 +2,9 @@
 
 ## 1. Pipeline policy
 
-Creative facts and approvals are canonical. Model prompts and workflow graphs are compiled from them. This prevents a model-specific string from becoming the only record of what a shot was supposed to achieve.
+Creative facts and approvals are canonical. The exact Audience & Creative Direction revision is a versioned compiler input, while model prompts and workflow graphs are disposable compiled outputs. This prevents a niche field or model-specific string from becoming the only record of what a production or shot was supposed to achieve.
+
+Each media job pins the profile ID/revision/hash alongside its approved identity, style, script, shot, timing, and control inputs. The profile guides audience fit, tone, cultural context, boundaries, high-level style, and differentiation; it cannot replace those stage-specific locks.
 
 Every workflow has:
 
@@ -27,7 +29,7 @@ The exact checkpoint and quantization are selected by the Phase 0 benchmark and 
 
 ### Character workflow
 
-1. Compile character facts and style bible into a concept brief.
+1. Compile the selected audience/tone/cultural/style direction with approved character facts and the style bible into a concept brief.
 2. Generate a deliberately small candidate set.
 3. Human selects one identity direction.
 4. Use controlled editing to create neutral portrait/full-body references.
@@ -39,6 +41,8 @@ The exact checkpoint and quantization are selected by the Phase 0 benchmark and 
 Do not independently prompt every view from text; each later board must condition on approved images.
 
 For a deliberate character style/redesign change, preserve the approved identity anchors and old presentation pack, create a new presentation version, generate the required multi-view/expression/wardrobe consistency board, and test it in representative environments and multi-character compositions. Only after approval may the continuity engine bind it to the selected shot/scene/episode/season/future scope. A 2D-to-3D-look change is therefore a traceable new presentation, not an in-place prompt edit.
+
+The profile's visual-style notes seed the first style-bible discussion only. Once a style or character presentation is locked, revising the profile produces an impact question rather than silently restyling images.
 
 ### Environment and prop workflow
 
@@ -52,6 +56,7 @@ For a deliberate character style/redesign change, preserve the approved identity
 
 Compile:
 
+- Pinned audience/tone/format/visual-direction revision.
 - Locked style and identity references.
 - Location/prop state.
 - Shot composition and camera intent.
@@ -62,7 +67,7 @@ Storyboard images are planning assets. A production first frame becomes a separa
 
 ### Public release-thumbnail workflow
 
-A public YouTube thumbnail is a release artifact, not the small rebuildable proxy used by the in-app media gallery. It starts from approved episode frames/character references or a separately authorized illustration request, keeps exact source and rights lineage, and may use the same versioned image adapter for controlled generation/editing. Final spelling, logo, border, and typography are rendered locally from approved text rather than trusted to generated raster text.
+A public YouTube thumbnail is a release artifact, not the small rebuildable proxy used by the in-app media gallery. Its brief may use the pinned audience, niche, positioning, visual direction, and differentiation, but truth comes from the locked episode/film and release details. It starts from approved episode frames/character references or a separately authorized illustration request, keeps exact source and rights lineage, and may use the same versioned image adapter for controlled generation/editing. Final spelling, logo, border, and typography are rendered locally from approved text rather than trusted to generated raster text.
 
 Candidates are previewed at full, desktop-card, and phone-card sizes and checked for current delivery dimensions/aspect ratio/format/file size, readability, safe margins, corruption, duplicates, and truthful representation. Each candidate preserves its hypothesis, recipe, hashes, cost, and review decision. Local comparison never creates an audience experiment result; only imported official platform evidence for the exact candidate hashes may do that.
 
@@ -88,7 +93,7 @@ For a reusable designed voice, produce a reference clip, approve it, and create 
 
 ### Dialogue generation
 
-1. Validate line ID, text, speaker, language, delivery, and pronunciation dictionary.
+1. Validate line ID, text, speaker, language, delivery, pronunciation dictionary, and the pinned audience/tone/cultural-direction context.
 2. Generate line-level WAV masters.
 3. Review identity, delivery, pronunciation, noise, and clipping.
 4. Retake only failed lines.
@@ -132,6 +137,7 @@ The current official compatibility evidence does not permit assuming every LTX-2
 
 An LTX motion prompt is compiled from:
 
+- The pinned creative-direction tone, visual language, boundaries, and format guidance relevant to this shot.
 - Who/what is visible, described by approved reference roles rather than unstable names alone.
 - Initial composition.
 - Ordered subject action.

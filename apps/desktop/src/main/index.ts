@@ -22,6 +22,7 @@ import {
   CreateProjectInputSchema,
   IPC_CHANNELS,
   ProjectBackupSummarySchema,
+  ProjectCreativeDirectionUpdateInputSchema,
   ProjectDetailsSchema,
   ProjectMigrationInputSchema,
   ProjectMigrationPreviewSchema,
@@ -268,6 +269,34 @@ function registerIpcHandlers(): void {
       return ProjectDetailsSchema.parse(requireStore().openProject(projectId))
     } catch {
       throw new Error('That project could not be opened safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.projectsSaveCreativeDirection, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = ProjectCreativeDirectionUpdateInputSchema.parse(unknownInput)
+      const project = ProjectDetailsSchema.parse(requireStore().saveCreativeDirection(input))
+      recordDiagnostic({
+        level: 'info',
+        area: 'project',
+        eventName: 'project.creative-direction.saved',
+        message: 'A new local creative-direction version was saved.',
+        context: {
+          projectId: project.manifest.id,
+          profileId: project.creativeDirection?.profileId ?? null,
+          revision: project.creativeDirection?.revision ?? null
+        }
+      })
+      return project
+    } catch (error) {
+      recordDiagnostic({
+        level: 'warning',
+        area: 'project',
+        eventName: 'project.creative-direction.failed',
+        message: 'A creative-direction version could not be saved safely.'
+      })
+      throw new Error(safeInputMessage(error))
     }
   })
 

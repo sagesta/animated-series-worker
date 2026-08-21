@@ -8,7 +8,23 @@ const validInput = {
   targetDurationMinutes: 25,
   visualDirection: '2d' as const,
   sourceMode: 'original' as const,
-  pilotBrief: 'Two young keepers protect a floating city.'
+  pilotBrief: 'Two young keepers protect a floating city.',
+  creativeDirection: {
+    targetAudience: 'Families who enjoy adventurous fantasy.',
+    ageBand: 'all-ages' as const,
+    primaryNiche: 'African folklore fantasy',
+    genres: ['fantasy', 'family adventure'],
+    toneKeywords: ['warm', 'mysterious'],
+    coreThemes: ['belonging'],
+    storyPromise: 'Every episode resolves a magical community mystery with hope.',
+    culturalSetting: 'A fictional coastal kingdom.',
+    contentBoundaries: ['No graphic violence'],
+    episodeFormat: 'A recurring 25-minute episode.',
+    youtubePositioning: '',
+    visualStyleNotes: '',
+    comparableTitles: [],
+    differentiation: ''
+  }
 }
 
 describe('project identity', () => {

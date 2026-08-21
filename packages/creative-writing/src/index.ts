@@ -412,20 +412,61 @@ function buildContext(project: ProjectDetails, selection: WritingContextPreviewI
       ].join('\n')
     )
   }
+  if (selection.includeCreativeDirection) {
+    const profile = project.creativeDirection
+    if (profile) {
+      const direction = profile.direction
+      sections.push(
+        [
+          'AUDIENCE & CREATIVE DIRECTION',
+          `Target audience: ${direction.targetAudience}`,
+          `Creative age band: ${direction.ageBand}`,
+          `Primary niche: ${direction.primaryNiche}`,
+          `Genres: ${direction.genres.join(', ')}`,
+          `Tone: ${direction.toneKeywords.join(', ')}`,
+          `Core themes: ${direction.coreThemes.join(', ') || 'Not specified'}`,
+          `Viewer promise: ${direction.storyPromise}`,
+          `Cultural or story setting: ${direction.culturalSetting || 'Not specified'}`,
+          `Content boundaries: ${direction.contentBoundaries.join('; ') || 'Not specified'}`,
+          `Episode or film format: ${direction.episodeFormat}`,
+          `YouTube positioning: ${direction.youtubePositioning || 'Not specified'}`,
+          `Visual style notes: ${direction.visualStyleNotes || 'Not specified'}`,
+          `Comparable directional references: ${direction.comparableTitles.join(', ') || 'None'}`,
+          `Distinctive angle: ${direction.differentiation || 'Not specified'}`,
+          'Use comparable productions only as high-level direction. Do not copy protected characters, plots, dialogue, or visual expression.',
+          'Creative age guidance is not a YouTube made-for-kids or policy declaration.'
+        ].join('\n')
+      )
+    } else {
+      sections.push('AUDIENCE & CREATIVE DIRECTION\nNo project direction has been set yet.')
+    }
+  }
   const text = sections.length > 0 ? sections.join('\n\n') : 'No local project context selected.'
   const normalizedManifest = JSON.stringify(manifest)
+  const sourceVersions: WritingContextPreview['sourceVersions'] = [
+    {
+      kind: 'project-manifest',
+      id: manifest.id,
+      schemaVersion: manifest.schemaVersion,
+      updatedAt: manifest.updatedAt,
+      sha256: hash(normalizedManifest)
+    }
+  ]
+  if (selection.includeCreativeDirection && project.creativeDirection) {
+    const profile = project.creativeDirection
+    sourceVersions.push({
+      kind: 'creative-direction',
+      id: profile.profileId,
+      schemaVersion: profile.schemaVersion,
+      revision: profile.revision,
+      updatedAt: profile.createdAt,
+      sha256: hash(JSON.stringify(profile))
+    })
+  }
   return WritingContextPreviewSchema.parse({
     text,
     sha256: hash(text),
-    sourceVersions: [
-      {
-        kind: 'project-manifest',
-        id: manifest.id,
-        schemaVersion: manifest.schemaVersion,
-        updatedAt: manifest.updatedAt,
-        sha256: hash(normalizedManifest)
-      }
-    ]
+    sourceVersions
   })
 }
 
@@ -486,7 +527,7 @@ export class CreativeWritingService {
     })
 
     const draft = WritingDraftRecordSchema.parse({
-      schemaVersion: 1,
+      schemaVersion: 2,
       draftId: this.createId(),
       projectId: input.projectId,
       taskKind: input.taskKind,

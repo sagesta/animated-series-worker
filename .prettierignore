@@ -2,6 +2,7 @@ vendor/
 node_modules/
 out/
 release/
+release-smoke-*/
 coverage/
 pnpm-lock.yaml
 docs/

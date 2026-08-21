@@ -180,6 +180,10 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **FR-065:** The studio can propose evidence-backed packaging or editorial learnings using comparable releases within the same channel/profile. A recommendation lists its evidence, inference, confidence, and proposed scope and remains inactive until a human approves it; it cannot rewrite locked creative facts, switch live metadata, regenerate media, or trigger spend automatically.
 - **FR-066:** A single Prepared Studio and Release Readiness view aggregates prerequisite, provider, worker, media, recovery, package, rights, and policy checks with safe remediation. Paid probes are separately identified and opt-in; a stale or failed blocking result prevents the affected action without disabling unrelated local work.
 
+### Audience and creative direction
+
+- **FR-067:** Every new series or film records a project-local Audience & Creative Direction profile containing target audience, creative age band, primary niche, genres, tone, themes, viewer/story promise, cultural setting, content boundaries, episode/film format, YouTube positioning, visual-style notes, comparable-title direction, and differentiation. Each revision is immutable and project-isolated; later writing and production jobs pin the exact selected profile version/hash. Revising it creates an impact preview rather than silently rewriting approved work. The creative age band and positioning cannot complete child-directed, synthetic-media, originality, rights, or truthfulness attestations, and comparable titles cannot authorize imitation.
+
 ## 7. Non-functional requirements
 
 - **NFR-001 Usability:** After initial installation, the primary workflow must require no terminal, Docker command, SSH session, ComfyUI graph editing, or manual cloud console operation.

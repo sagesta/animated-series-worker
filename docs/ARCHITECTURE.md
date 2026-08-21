@@ -10,7 +10,8 @@ Animated Series Studio is a local control plane with disposable cloud execution 
 - The **network volume** caches models and workflow dependencies; it is never the only copy of creative work.
 - The **provider adapter** creates and terminates compute. RunPod is the first implementation.
 - The **media-engine adapters** translate neutral jobs into Qwen, LTX, FFmpeg, and QC operations.
-- The **writing-provider adapters** send a task-scoped, user-previewed context pack to the selected OpenAI or Anthropic API; locally validated bibles and scripts remain authoritative.
+- The **creative-direction profile** gives each project a versioned audience, niche, tone, theme, format, boundary, style, and positioning compass without becoming canon or a platform declaration.
+- The **writing-provider adapters** send a task-scoped, user-previewed context pack to the selected OpenAI, Anthropic, or Gemini API; locally validated bibles and scripts remain authoritative.
 - The **skill runtime** matches enabled external skills to a task, enforces permissions and required-skill completion, validates outputs, and records exact execution receipts.
 - The **studio media viewer** serves verified local images, audio, proxies, and video through the restricted application protocol. ComfyUI executes workflows but is not the creator-facing review platform.
 - The **previsualization and control layer** owns timed animatics plus engine-neutral pose, depth, edge, segmentation, mask, motion-track, reference-clip, and layered-parallax assets.
@@ -24,7 +25,8 @@ flowchart LR
     Creator[Creator] --> Desktop[Local Studio Desktop]
     Desktop --> LocalStore[(Local Project Files\nSQLite Index\nCredential Vault)]
     Desktop --> Upstream[Pinned shuohao-skills\nsubmodule + adapter]
-    Desktop --> Writing[OpenAI / Anthropic\nwriting adapters]
+    Desktop --> Direction[Versioned audience and\ncreative direction]
+    Desktop --> Writing[OpenAI / Anthropic / Gemini\nwriting adapters]
     Desktop --> Skills[Versioned skill registry\nrouter + permission broker]
     Desktop --> Provider[RunPod Provider API]
     Provider --> Worker[Temporary GPU Worker]
@@ -44,7 +46,7 @@ flowchart LR
 
 | Boundary | Authoritative data | Disposable/cached data |
 | --- | --- | --- |
-| Local project workspace | Story facts, bibles, scripts, shot plans, approvals, manifests, final media | Rebuildable thumbnails, waveform caches, UI indexes |
+| Local project workspace | Creative-direction versions, story facts, bibles, scripts, shot plans, approvals, manifests, final media | Rebuildable thumbnails, waveform caches, UI indexes |
 | SQLite | Transactional index, dependency and queue state | Rebuildable from manifests and project files where documented |
 | Operating-system credential vault | Provider and service credentials | Short-lived worker session tokens |
 | External writing provider | Only the explicit task context sent for the selected request | Provider-side response/conversation state is never the canonical project record |
@@ -118,7 +120,7 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Media processing | FFmpeg/ffprobe | Deterministic assembly, normalization, probing, and export |
 | Worker packaging | Docker image pinned by digest | Repeatable GPU setup with no per-session installation |
 | Cloud provider | RunPod through an adapter | Temporary GPU lifecycle, templates, API control, persistent network cache |
-| Writing providers | Provider-neutral contract; OpenAI Responses and Anthropic Messages adapters first | Bring-your-own-key choice, structured outputs/tool use, and no canonical-data lock-in |
+| Writing providers | Provider-neutral contract; OpenAI Responses, Anthropic Messages, and Gemini GenerateContent adapters | Bring-your-own-key choice, structured outputs/tool use, and no canonical-data lock-in |
 | External skills | Declarative, versioned studio capability packages first; compatible Agent Skill/MCP bridges only after security review | Extensibility with explicit routing, permissions, validation, execution proof, and rollback |
 | Media review | Restricted `studio://` local media routes plus native image/audio/video elements and derived proxies | Review remains available after the GPU/ComfyUI worker is gone |
 | Previsualization/control | Versioned animatic and engine-neutral control-asset contracts | Rich pose/motion/compositing control without exposing node graphs |
@@ -142,10 +144,11 @@ The local project store currently provides:
 - SQLite checkpoint/integrity check plus flushed, SHA-256-inventoried full backups outside project folders.
 - Non-overwriting restore through a verified temporary copy and atomic project-folder activation.
 - Explicit v1→v2 migration preview, mandatory verified backup, stale-preview refusal, atomic manifest activation, matching SQLite history/hash update, and rollback after injected pre/post-activation/database failures.
+- Immutable project-local Audience & Creative Direction sidecar versions under `bibles/creative-direction/versions`; older projects can add revision 1 without changing their manifest schema.
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-OpenAI, Anthropic, and Google Gemini use separate encrypted vault files and one non-secret atomic settings record. Settings schema 2 adds Gemini while retaining schema-1 OpenAI/Anthropic reads. Each adapter first uses its authenticated model-list read for connection validation; the setup service intersects that live list with the release-controlled catalogue before exposing any choice. A confirmed provider-neutral request is compiled from the user's instruction plus the exact previewed project-context snapshot, sent through OpenAI Responses, Anthropic Messages, or Gemini GenerateContent with a strict creative-draft JSON shape, validated locally, and written as a new proposal under the owning project's `provenance/writing` folder. The record includes context/source hashes, provider/model/profile, token usage, and request ID; price remains explicitly uncalculated until benchmarked pricing profiles exist. The external-skill plan/receipt arrays are empty by contract in this slice.
+OpenAI, Anthropic, and Google Gemini use separate encrypted vault files and one non-secret atomic settings record. Settings schema 2 adds Gemini while retaining schema-1 OpenAI/Anthropic reads. Each adapter first uses its authenticated model-list read for connection validation; the setup service intersects that live list with the release-controlled catalogue before exposing any choice. A confirmed provider-neutral request is compiled from the user's instruction plus the exact previewed project-context snapshot, including the selected creative-direction version by default, then sent through OpenAI Responses, Anthropic Messages, or Gemini GenerateContent with a strict creative-draft JSON shape. The result is validated locally and written as a new proposal under the owning project's `provenance/writing` folder. Schema-2 proposals record both manifest and creative-direction IDs, revisions/timestamps, content hashes, provider/model/profile, token usage, and request ID; schema-1 proposals remain readable. Price remains explicitly uncalculated until benchmarked pricing profiles exist. The external-skill plan/receipt arrays are empty by contract in this slice.
 
 Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. Live writing benchmarks, actual model-cost profiles, canon promotion/version comparison, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, project-scoped adaptation, YouTube release profiles/ideas/thumbnails/details/packages, policy attestations, analytics import, and learning are also documented only and remain unimplemented.
 
@@ -153,7 +156,7 @@ Archive UI, future-migration registry/upgrade breadth, incremental/release archi
 
 ### Desktop renderer
 
-- Presents guided project, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens.
+- Presents guided project setup including Audience & Creative Direction, overview revision, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens.
 - Never receives raw provider secrets.
 - Communicates only through typed Electron IPC exposed by the preload boundary.
 - Keeps technical details behind an optional expert drawer.
@@ -171,6 +174,7 @@ Archive UI, future-migration registry/upgrade breadth, incremental/release archi
 - Maintains SQLite transactions for queues, approvals, costs, and dependencies.
 - Produces backup snapshots and can rebuild indexes from manifests.
 - Runs versioned, reversible migrations after preview and backup.
+- Appends immutable creative-direction sidecar versions and reads the latest valid project-owned revision without overwriting earlier files.
 
 ### Workflow orchestrator
 
@@ -190,6 +194,7 @@ Archive UI, future-migration registry/upgrade breadth, incremental/release archi
 ### Upstream adapter
 
 - Invokes only documented upstream command-line operations.
+- Receives the exact selected Audience & Creative Direction version as a normalized input for outline, cast, art, script, storyboard, and shot-recipe work rather than editing the pinned skill source.
 - Captures stdout/stderr, exit code, commit, schema assumptions, and original files.
 - Normalizes upstream IDs into project-scoped records while retaining source references.
 - Does not treat H3 prompt strings or short-drama pacing rules as canonical LTX production data.
@@ -206,6 +211,14 @@ Archive UI, future-migration registry/upgrade breadth, incremental/release archi
 - Compile the task to the selected provider API without storing provider conversation state as the project source of truth.
 - Return schema-validated draft proposals, usage, cost metadata, model identity, and safe errors; only a reviewed studio operation can create a canonical version.
 - Obtain provider credentials in the main process immediately before the call. The renderer and skill runtime receive only opaque provider status.
+
+### Creative-direction compiler
+
+- Selects one exact project-owned profile version and records its ID, revision, timestamp, and hash on every consuming job.
+- Combines direction with only the approved canon, identity/style binding, script, timing, control, and release facts required by that stage; it never sends a giant global prompt to every engine.
+- Translates neutral audience/tone/format/style guidance into task-specific writing, upstream, image, voice, video, thumbnail, and release briefs while keeping engine prompts disposable and reproducible.
+- Treats comparable works as non-copying direction and has no authority to complete child-directed, synthetic-media, truthfulness, originality, rights, or full-watch attestations.
+- Uses the dependency engine to preview affected future/unapproved work after a revision; historical approved outputs retain their original profile pin.
 
 ### External-skill runtime
 
@@ -321,11 +334,12 @@ The upstream repository is valuable but has different production assumptions:
 - Some upstream content fields are Chinese-first even when report labels can be rendered in English.
 - Image calls can rely on an agent's built-in image generation rather than the studio's chosen GPU workflow.
 
-The studio therefore uses a three-layer integration:
+The studio therefore uses a direction input plus three integration layers:
 
-1. **Source layer:** immutable original upstream JSON, reports, validation results, and commit.
-2. **Normalized story layer:** language-aware, long-form acts/sequences/scenes/beats, characters, locations, props, dialogue, and shot intent.
-3. **Production layer:** engine-neutral shot methods and versioned LTX/Qwen job specifications.
+1. **Direction input:** exact project audience, niche, tone, themes, boundaries, format, visual direction, and differentiation version.
+2. **Source layer:** immutable original upstream JSON, reports, validation results, and commit.
+3. **Normalized story layer:** language-aware, long-form acts/sequences/scenes/beats, characters, locations, props, dialogue, and shot intent.
+4. **Production layer:** engine-neutral shot methods and versioned LTX/Qwen job specifications.
 
 A 20–35 minute episode is decomposed into acts, sequences, and scenes. Upstream segments and cuts can seed this structure, but the studio owns final pacing. Longer dialogue holds, reaction shots, and editorial motion are allowed without weakening or editing upstream validators.
 
@@ -342,6 +356,7 @@ Every production manifest records:
 - Worker image digest, CUDA/runtime compatibility, GPU class, and driver information.
 - Workflow ID/version/hash and engine adapter version.
 - Canonical input and reference asset IDs, versions, and hashes.
+- Audience & Creative Direction profile ID, revision, timestamp, and hash used to compile the task.
 - Resolved character identity and presentation/style binding IDs plus the scope boundary that selected them.
 - Prompt, negative prompt, seed, duration, resolution, frame rate, audio, and advanced parameters.
 - Writing provider/model/profile, token usage/cost, selected canonical context versions, and external-skill execution receipts where applicable.
@@ -376,6 +391,7 @@ A compatibility matrix in `config/` will declare tested combinations. The UI may
 | Upstream/model update fails | Return to previous pin and leave current productions unchanged |
 | Migration fails | Restore automatic pre-migration backup and retain incident report |
 | Writing provider fails or changes response shape | Preserve the local task/context, record safe error/usage where available, and retry or switch provider only with a new draft lineage |
+| Creative-direction version is missing, damaged, or belongs to another project | Refuse that version, preserve older valid versions, and require a project-owned selection or repair before affected generation |
 | Required skill fails or is ignored | Fail the creative job, preserve diagnostics without secrets, and require retry, compatible skill version, or explicit plan change |
 | Preview/proxy generation fails | Keep the verified original unchanged and rebuild only the derived review media locally |
 | Control asset unsupported or mismatched | Block before estimate/authorization and identify the incompatible control/profile |

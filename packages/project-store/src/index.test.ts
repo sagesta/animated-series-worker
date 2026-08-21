@@ -36,7 +36,24 @@ function input(title: string, type: 'series' | 'film') {
     targetDurationMinutes: type === 'series' ? 25 : 12,
     visualDirection: type === 'series' ? ('2d' as const) : ('3d-look' as const),
     sourceMode: 'original' as const,
-    pilotBrief: ''
+    pilotBrief: '',
+    creativeDirection: {
+      targetAudience: 'Families and viewers aged 9–15 who enjoy adventurous fantasy.',
+      ageBand: 'all-ages' as const,
+      primaryNiche: 'African folklore fantasy adventures',
+      genres: ['fantasy', 'mystery', 'family adventure'],
+      toneKeywords: ['warm', 'adventurous', 'mysterious'],
+      coreThemes: ['belonging', 'courage', 'community'],
+      storyPromise: 'Each story combines a magical mystery with an emotionally hopeful resolution.',
+      culturalSetting: 'A fictional West African coastal kingdom.',
+      contentBoundaries: ['No graphic violence', 'No sexual content'],
+      episodeFormat:
+        type === 'series' ? 'A recurring 25-minute animated episode.' : 'A self-contained film.',
+      youtubePositioning: 'Original serialized fantasy for family co-viewing.',
+      visualStyleNotes: 'Graphic 2D shapes with painted light and expressive silhouettes.',
+      comparableTitles: ['Directional reference only'],
+      differentiation: 'Folklore-inspired mysteries told through a community of young keepers.'
+    }
   }
 }
 
@@ -112,6 +129,79 @@ describe('ProjectStore', () => {
     expect(first.workspacePath).not.toBe(second.workspacePath)
     expect(first.workspacePath.startsWith(workspaceRoot)).toBe(true)
     expect(second.workspacePath.startsWith(workspaceRoot)).toBe(true)
+    store.close()
+  })
+
+  it('versions creative direction locally without overwriting or crossing projects', () => {
+    const workspaceRoot = createRoot()
+    const store = new ProjectStore({ workspaceRoot })
+    const first = store.createProject(input('Lantern Keepers', 'series'))
+    const second = store.createProject(input('River Signal', 'series'))
+
+    expect(first.creativeDirection).toMatchObject({
+      revision: 1,
+      direction: { primaryNiche: 'African folklore fantasy adventures' }
+    })
+    const revised = store.saveCreativeDirection({
+      projectId: first.manifest.id,
+      expectedProfileId: first.creativeDirection!.profileId,
+      direction: {
+        ...first.creativeDirection!.direction,
+        primaryNiche: 'African folklore science-fantasy adventures',
+        differentiation: 'Ancestral technology turns community memory into practical magic.'
+      }
+    })
+
+    expect(revised.creativeDirection).toMatchObject({
+      revision: 2,
+      direction: { primaryNiche: 'African folklore science-fantasy adventures' }
+    })
+    expect(store.openProject(first.manifest.id).creativeDirection?.revision).toBe(2)
+    expect(store.openProject(second.manifest.id).creativeDirection?.revision).toBe(1)
+    expect(() =>
+      store.saveCreativeDirection({
+        projectId: first.manifest.id,
+        expectedProfileId: first.creativeDirection!.profileId,
+        direction: revised.creativeDirection!.direction
+      })
+    ).toThrow(/changed after this screen opened/)
+    const directionVersions = join(first.workspacePath, 'bibles', 'creative-direction', 'versions')
+    writeFileSync(
+      join(directionVersions, 'creative-direction-v0003-01J00000000000000000000011.json'),
+      '{damaged'
+    )
+    const afterDamage = store.saveCreativeDirection({
+      projectId: first.manifest.id,
+      expectedProfileId: revised.creativeDirection!.profileId,
+      direction: revised.creativeDirection!.direction
+    })
+    expect(afterDamage.creativeDirection?.revision).toBe(4)
+    expect(
+      readdirSync(directionVersions, { withFileTypes: true }).filter((entry) => entry.isFile())
+    ).toHaveLength(4)
+    store.close()
+  })
+
+  it('opens an older project without a direction and lets it add revision one', () => {
+    const workspaceRoot = createRoot()
+    const store = new ProjectStore({ workspaceRoot })
+    const project = store.createProject(input('Older Lantern', 'series'))
+    const originalDirection = project.creativeDirection!.direction
+    rmSync(join(project.workspacePath, 'bibles', 'creative-direction'), {
+      recursive: true,
+      force: true
+    })
+
+    expect(store.openProject(project.manifest.id).creativeDirection).toBeNull()
+    const updated = store.saveCreativeDirection({
+      projectId: project.manifest.id,
+      expectedProfileId: null,
+      direction: originalDirection
+    })
+    expect(updated.creativeDirection).toMatchObject({
+      revision: 1,
+      direction: { primaryNiche: originalDirection.primaryNiche }
+    })
     store.close()
   })
 

@@ -103,7 +103,8 @@ export function CreativeRoom({
   const [instruction, setInstruction] = useState('')
   const [context, setContext] = useState({
     includeProjectBrief: true,
-    includeProductionSettings: true
+    includeProductionSettings: true,
+    includeCreativeDirection: true
   })
   const [preview, setPreview] = useState<WritingContextPreview>()
   const [previewError, setPreviewError] = useState(false)
@@ -326,6 +327,19 @@ export function CreativeRoom({
                 }
               />
               Duration, visual direction, source mode, and status
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={context.includeCreativeDirection}
+                onChange={(event) =>
+                  setContext((current) => ({
+                    ...current,
+                    includeCreativeDirection: event.target.checked
+                  }))
+                }
+              />
+              Audience, niche, tone, themes, boundaries, format, and creative promise
             </label>
           </div>
           <pre className="context-preview">

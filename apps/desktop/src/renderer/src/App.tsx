@@ -11,6 +11,7 @@ import {
   type WritingSettingsStatus
 } from '@studio/contracts'
 import { CloudSetup } from './CloudSetup'
+import { CreativeDirectionPanel } from './CreativeDirectionPanel'
 import { CreativeRoom } from './CreativeRoom'
 import { ProjectWizard } from './ProjectWizard'
 import { WritingSetup } from './WritingSetup'
@@ -490,6 +491,8 @@ function ProjectOverview({
       </section>
 
       <ProjectMigrationPanel project={project} onUpdated={onProjectUpdated} />
+
+      <CreativeDirectionPanel project={project} onUpdated={onProjectUpdated} />
 
       <section className="health-grid">
         <article className="health-card">

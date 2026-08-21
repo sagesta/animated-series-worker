@@ -48,6 +48,7 @@ No behavioral code change is complete at step 6.
 | User workflow | `UX_SPEC.md`, `PRODUCTION_WORKFLOW.md`, `GLOSSARY.md` |
 | Component/boundary | `ARCHITECTURE.md`, `API_CONTRACTS.md`, `DECISIONS.md` |
 | Data/version/migration | `DOMAIN_MODEL.md`, `API_CONTRACTS.md`, `SECURITY_AND_RECOVERY.md` |
+| Audience/niche/creative direction | `CREATIVE_DIRECTION_PROFILE.md`, `PRD.md`, `UX_SPEC.md`, `PRODUCTION_WORKFLOW.md`, every consuming compiler contract, and the YouTube attestation boundary |
 | Image/voice/video/audio/export | `MEDIA_PIPELINE.md`, `COST_MODEL.md`, `SOURCES.md` |
 | Cloud/worker/provider | `GPU_OPERATIONS.md`, `ARCHITECTURE.md`, `COST_MODEL.md`, `SECURITY_AND_RECOVERY.md`, `SOURCES.md` |
 | Tests/release evidence | `TEST_PLAN.md`, `TRACEABILITY.md`, `STATUS.md` |
@@ -65,6 +66,7 @@ No behavioral code change is complete at step 6.
 - Models: repository/name, exact revision and file checksum.
 - Upstream: exact Git commit.
 - Production assets: immutable per-entity version numbers and hashes.
+- Audience & Creative Direction: immutable project-sidecar revision, profile ID, and content hash; later jobs pin one exact revision.
 - Documentation: changes with product version; external facts carry verification dates.
 
 Changing a default does not rewrite historical manifests.

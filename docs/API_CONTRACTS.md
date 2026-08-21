@@ -1,6 +1,6 @@
 # API and adapter contracts
 
-This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle, verified backup/restore, no-cost cloud-account setup, protected writing-provider setup, context preview, and local structured proposals. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
+This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle, immutable Audience & Creative Direction versions, verified backup/restore, no-cost cloud-account setup, protected writing-provider setup, exact context preview, and local structured proposals. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
 
 ## 1. Contract rules
 
@@ -24,6 +24,7 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `projects.list()` | `studio:projects:list` | List valid locally indexed projects |
 | `projects.create(input)` | `studio:projects:create` | Validate and create an isolated series/film project |
 | `projects.open(projectId)` | `studio:projects:open` | Validate identity and reopen canonical local metadata |
+| `projects.saveCreativeDirection(input)` | `studio:projects:save-creative-direction` | Validate a project-scoped direction revision, append a new immutable sidecar version, and return the updated project without replacing earlier versions |
 | `projects.listBackups()` | `studio:projects:list-backups` | Return completed backup generations that currently pass manifest, inventory, identity, size, and SHA-256 verification |
 | `projects.backup(projectId)` | `studio:projects:backup` | Checkpoint/integrity-check SQLite, copy and flush canonical files, verify the copy, then atomically expose a completed backup |
 | `projects.restore(backupId)` | `studio:projects:restore` | Re-verify and restore into an absent canonical project folder without overwriting existing work |
@@ -42,7 +43,7 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `writing.setEnabled({ provider, enabled })` | `studio:writing:set-enabled` | Disable/enable one provider locally without exposing or deleting its key |
 | `writing.disconnect({ provider })` | `studio:writing:disconnect` | Remove one protected key and its non-secret snapshot without touching the other providers |
 | `writing.saveDefaultProfile(profile)` | `studio:writing:save-default-profile` | Save an available approved provider/model/depth choice; no task benchmark winner is silently chosen |
-| `writing.previewContext(input)` | `studio:writing:preview-context` | Return the exact selected local context text, SHA-256, and source-manifest version before disclosure |
+| `writing.previewContext(input)` | `studio:writing:preview-context` | Return the exact selected local context text, SHA-256, manifest source version, and selected creative-direction version/hash before disclosure |
 | `writing.generateDraft(request)` | `studio:writing:generate-draft` | Require explicit paid confirmation, call one enabled provider, validate structured output, and save a new local proposal with lineage |
 | `writing.listDrafts(projectId)` | `studio:writing:list-drafts` | List only valid proposal records inside the owning project without modifying damaged files |
 
@@ -97,7 +98,7 @@ interface GPUProvider {
 
 `createLease` must tag the provider resource with project, studio session, idempotency key, hard deadline, and worker-image version. A timeout is reconciled by tag before retry.
 
-Version 0.5.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
+Version 0.6.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
 
 ## 4. Media-engine interfaces
 
@@ -140,7 +141,7 @@ interface AdaptationEngine {
 }
 ```
 
-Neutral jobs contain narrative and media intent, control roles, and immutable asset references—not ComfyUI node IDs. Compiled workflows record the adapter and workflow version that produced them. An unsupported control role, model/profile combination, runtime install request, or unapproved adaptation fails validation before estimation or authorization.
+Neutral jobs contain the exact project-owned creative-direction profile ID/revision/hash, narrative and media intent, control roles, and immutable asset references—not ComfyUI node IDs. Compiled workflows record the adapter and workflow version that produced them. An unsupported or foreign profile, control role, model/profile combination, runtime install request, or unapproved adaptation fails validation before estimation or authorization.
 
 ### Control-pack contract
 
@@ -171,7 +172,9 @@ Control strengths are intent-level values in canonical data. The adapter resolve
 
 ## 4.1 Writing-provider and external-skill contracts
 
-Current version 0.5.0 implements the safe first subset: `develop_character`, `build_world`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, and `check_continuity`; balanced/deep/custom depth; exact manifest-context preview/hash; structured output through OpenAI Responses, Anthropic Messages, and Gemini GenerateContent; and immutable proposal records with provider/model/profile, source versions, token usage, request ID, and dollar-cost state `not-calculated`. The release-controlled catalogue is intersected with each key's live model list before selection. The implemented request requires `paidConfirmed: true`. The current proposal contract requires empty skill-plan/skill-use arrays because the external-skill runtime is still locked. Story/season/board compilation, estimate/actual dollar profiles, skill execution, selective canon promotion, and approved creative versions remain the target contract below, not implemented behavior.
+Current version 0.6.0 implements the safe first subset: `develop_character`, `build_world`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, and `check_continuity`; balanced/deep/custom depth; exact manifest plus optional creative-direction context preview/hash; structured output through OpenAI Responses, Anthropic Messages, and Gemini GenerateContent; and immutable schema-2 proposal records with provider/model/profile, source versions, token usage, request ID, and dollar-cost state `not-calculated`. Schema-1 proposal records remain readable. The release-controlled catalogue is intersected with each key's live model list before selection. The implemented request requires `paidConfirmed: true`. The current proposal contract requires empty skill-plan/skill-use arrays because the external-skill runtime is still locked. Story/season/board compilation, estimate/actual dollar profiles, skill execution, selective canon promotion, and approved creative versions remain the target contract below, not implemented behavior.
+
+The current creative-direction write contract contains `projectId`, `expectedProfileId` (or `null` for an older project with no profile), and the complete validated direction. This optimistic check refuses a stale overview before appending the next revision. The writing context selection contains `includeProjectManifest` and `includeCreativeDirection`; old schema-1 writing records retain their original two-field context selection.
 
 ```ts
 type WritingTaskKind =

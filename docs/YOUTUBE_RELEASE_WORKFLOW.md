@@ -1,6 +1,6 @@
 # YouTube release, packaging, and learning workflow
 
-Status: accepted product design; not implemented
+Status: accepted product design; release features not implemented. The project-level Audience & Creative Direction source that will feed release drafting is implemented in version 0.6.0.
 
 Reference inspected: `darkzOGx/youtube-automation-agent` at commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` on 2026-08-21.
 
@@ -32,6 +32,17 @@ The repository contains working code for several channel-operations concerns tha
 
 ## 3. Release profile and idea library
 
+### Project direction versus release decisions
+
+The implemented project Audience & Creative Direction profile supplies a pinned target audience, niche, viewer promise, tone, themes, visual direction, differentiation, boundaries, and preliminary YouTube positioning. Future idea, thumbnail, and Release Details tasks may use that exact version as drafting context.
+
+It is not the same as either record below:
+
+- A `ChannelReleaseProfileVersion` governs reusable channel/public-packaging conventions and must be explicitly bound to projects.
+- A `ReleaseAttestationVersion` records the creator's explicit made-for-kids, altered/synthetic-media, truthfulness, originality, rights/credits, and full-watch decisions for the exact release.
+
+A creative age band of `children`, `all-ages`, or any other value never pre-fills the made-for-kids attestation. `youtubePositioning` never proves that a title or thumbnail is truthful. The release UI may show the project direction beside the question as context, but it must leave the legal/platform answer unresolved until the creator decides it.
+
 A `ChannelReleaseProfileVersion` is packaging guidance, not a creative project database. It records:
 
 - Channel/profile name and optional channel ID after connection.
@@ -48,7 +59,7 @@ The Idea Library stores a topic or story idea, intended project/profile, source 
 
 Thumbnail work starts after a sufficiently stable picture lock so it represents the actual episode. Earlier concepts may be labelled `draft`, but they cannot become the selected release thumbnail.
 
-1. Choose a truthful release promise and one to three approved source frames, character references, or a specifically authorized new illustration.
+1. Select the exact project direction and release-profile versions, then choose a truthful release promise and one to three approved source frames, character references, or a specifically authorized new illustration.
 2. Create concepts with composition, emotion, focal subject, background, text/no-text choice, palette, and intended viewing size.
 3. Generate or edit the visual through the versioned image adapter. Character identity, wardrobe, series style, likeness rights, and misleading-content checks remain active.
 4. Apply exact text, logo, border, and safe-area layout locally so spelling and typography are deterministic. Generated raster text is never trusted as final copy.
@@ -72,7 +83,7 @@ The creator sees one editable workspace containing:
 - End-screen/card plan as editorial notes. It does not claim those elements have been created on YouTube.
 - A factual-support view showing which title/description claims come from approved story facts or cited research.
 
-AI may draft options through the provider-neutral writing contract and applicable skills. A human edits and selects them. Validation is deterministic; a numerical `SEO score` does not approve or block release.
+AI may draft options through the provider-neutral writing contract and applicable skills using the exact project-direction, release-profile, final-master, and factual-source versions selected. A human edits and selects them. Validation is deterministic; a numerical `SEO score` does not approve or block release.
 
 ## 6. Policy and release-attestation gate
 
@@ -111,7 +122,7 @@ release/<release-id>/
   package-manifest.json
 ```
 
-`package-manifest.json` records every file hash, source release/profile versions, selected candidate IDs, approval identities/times, ruleset versions, and master lineage. A changed title, thumbnail, chapter, caption, master, or attestation creates a new release-package version. It never edits a previously locked package in place.
+`package-manifest.json` records every file hash, source creative-direction/release-profile versions, selected candidate IDs, approval identities/times, ruleset versions, and master lineage. A changed title, thumbnail, chapter, caption, master, direction binding, or attestation creates a new release-package version. It never edits a previously locked package in place.
 
 The upload checklist gives plain instructions for YouTube Studio and copy-ready fields. It can open the local folder and the official upload page, but it does not paste secrets, click Publish, or claim that an upload occurred.
 

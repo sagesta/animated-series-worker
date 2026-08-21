@@ -19,6 +19,7 @@ const requiredFiles = [
   "docs/PRD.md",
   "docs/STATUS.md",
   "docs/UX_SPEC.md",
+  "docs/CREATIVE_DIRECTION_PROFILE.md",
   "docs/PRODUCTION_WORKFLOW.md",
   "docs/ARCHITECTURE.md",
   "docs/DOMAIN_MODEL.md",

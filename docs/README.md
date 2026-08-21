@@ -2,7 +2,7 @@
 
 This folder is the authoritative build specification for Animated Series Studio. If code and documentation disagree, the change is incomplete until they are reconciled and tested.
 
-Current version 0.5.0 implements the local project/backup/migration foundation, protected RunPod account checks, and a protected GPT/Claude/Gemini Creative Room with a controlled stable model catalogue that saves provider-neutral proposals locally. Media generation, external skills, canon promotion/version comparison, release packaging, and analytics remain planned.
+Current version 0.6.0 implements the local project/backup/migration foundation, protected RunPod account checks, a project-local versioned Audience & Creative Direction profile, and a protected GPT/Claude/Gemini Creative Room with exact profile lineage and a controlled stable model catalogue. Media generation, external skills, canon promotion/version comparison, release packaging, and analytics remain planned.
 
 ## Product and experience
 
@@ -10,6 +10,7 @@ Current version 0.5.0 implements the local project/backup/migration foundation, 
 | --- | --- |
 | [PRD](PRD.md) | What is being built, for whom, and what counts as success? |
 | [UX specification](UX_SPEC.md) | What does a non-technical creator see and do? |
+| [Audience and creative direction](CREATIVE_DIRECTION_PROFILE.md) | How do audience, niche, tone, themes, style, boundaries, and positioning consistently guide every later stage without becoming canon or a platform declaration? |
 | [Production workflow](PRODUCTION_WORKFLOW.md) | How does an idea become an approved YouTube episode or one-off film? |
 | [YouTube release workflow](YOUTUBE_RELEASE_WORKFLOW.md) | Which thumbnail, release-details, research, policy, packaging, and learning features were adopted after the reference-repository review? |
 | [Status](STATUS.md) | What exists now, what is being built, and what is not yet safe to claim? |

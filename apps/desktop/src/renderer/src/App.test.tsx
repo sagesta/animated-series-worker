@@ -12,10 +12,11 @@ import type {
   WritingSettingsStatus
 } from '@studio/contracts'
 import { App } from './App'
+import { CreativeDirectionPanel } from './CreativeDirectionPanel'
 import { CreativeRoom } from './CreativeRoom'
 
 const systemStatus: SystemStatus = {
-  appVersion: '0.5.0',
+  appVersion: '0.6.0',
   electronVersion: '43.4.1',
   nodeVersion: '24.18.1',
   storagePath: 'C:\\Studio\\projects',
@@ -146,7 +147,30 @@ const createdFilm: ProjectDetails = {
     createdAt: '2026-08-21T12:00:00.000Z',
     updatedAt: '2026-08-21T12:00:00.000Z'
   },
-  workspacePath: 'C:\\Studio\\projects\\the-last-kite-01j00000000000000000000000'
+  workspacePath: 'C:\\Studio\\projects\\the-last-kite-01j00000000000000000000000',
+  creativeDirection: {
+    schemaVersion: 1,
+    profileId: '01J00000000000000000000008',
+    projectId: '01J00000000000000000000000',
+    revision: 1,
+    createdAt: '2026-08-21T12:00:00.000Z',
+    direction: {
+      targetAudience: 'Families and viewers aged 9–15 who enjoy hopeful fantasy.',
+      ageBand: 'all-ages',
+      primaryNiche: 'Hopeful family fantasy',
+      genres: ['fantasy', 'family adventure'],
+      toneKeywords: ['warm', 'adventurous'],
+      coreThemes: ['courage', 'family'],
+      storyPromise: 'A self-contained emotional adventure with a memorable visual resolution.',
+      culturalSetting: '',
+      contentBoundaries: ['No graphic violence'],
+      episodeFormat: 'A self-contained 12-minute animated film.',
+      youtubePositioning: 'An original short fantasy film for family co-viewing.',
+      visualStyleNotes: 'Expressive 2D animation.',
+      comparableTitles: [],
+      differentiation: 'The story uses a repaired kite as an emotional and visual motif.'
+    }
+  }
 }
 
 const verifiedFilmBackup: ProjectBackupSummary = {
@@ -221,6 +245,7 @@ beforeEach(() => {
       list: vi.fn().mockResolvedValue([]),
       create: createProject,
       open: vi.fn(),
+      saveCreativeDirection: vi.fn().mockResolvedValue(createdFilm),
       listBackups,
       backup: backupProject,
       restore: restoreProject,
@@ -298,6 +323,19 @@ describe('desktop project foundation', () => {
 
     await user.type(screen.getByLabelText('Production title'), 'The Last Kite')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(
+      screen.getByLabelText(/Who is this production for?/),
+      'Families and viewers aged 9–15 who enjoy hopeful fantasy.'
+    )
+    await user.type(screen.getByLabelText('Primary niche'), 'Hopeful family fantasy')
+    await user.type(screen.getByLabelText(/Genre and subgenre/), 'Fantasy, family adventure')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(
+      screen.getByLabelText(/Viewer promise/),
+      'A self-contained emotional adventure with a memorable visual resolution.'
+    )
+    await user.type(screen.getByLabelText(/Tone/), 'Warm, adventurous')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
     await user.click(screen.getByRole('button', { name: /start from an idea/i }))
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     await user.click(screen.getByRole('button', { name: 'Create production' }))
@@ -309,7 +347,13 @@ describe('desktop project foundation', () => {
         code: 'THE-LAST-KITE',
         type: 'film',
         targetDurationMinutes: 12,
-        sourceMode: 'original'
+        sourceMode: 'original',
+        creativeDirection: expect.objectContaining({
+          targetAudience: 'Families and viewers aged 9–15 who enjoy hopeful fantasy.',
+          primaryNiche: 'Hopeful family fantasy',
+          genres: ['Fantasy', 'family adventure'],
+          toneKeywords: ['Warm', 'adventurous']
+        })
       })
     )
     expect(await screen.findByRole('heading', { name: 'The Last Kite' })).toBeTruthy()
@@ -319,7 +363,7 @@ describe('desktop project foundation', () => {
     await user.click(screen.getByRole('button', { name: 'Create verified backup' }))
     await waitFor(() => expect(backupProject).toHaveBeenCalledWith(createdFilm.manifest.id))
     expect(await screen.findByText(/verified backup complete/i)).toBeTruthy()
-  })
+  }, 15_000)
 
   it('SEC-001 connects RunPod with a free check while generation remains locked', async () => {
     const user = userEvent.setup()
@@ -431,6 +475,19 @@ describe('desktop project foundation', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     await user.type(screen.getByLabelText('Production title'), 'The Last Kite')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(
+      screen.getByLabelText(/Who is this production for?/),
+      'Families and viewers aged 9–15 who enjoy hopeful fantasy.'
+    )
+    await user.type(screen.getByLabelText('Primary niche'), 'Hopeful family fantasy')
+    await user.type(screen.getByLabelText(/Genre and subgenre/), 'Fantasy, family adventure')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(
+      screen.getByLabelText(/Viewer promise/),
+      'A self-contained emotional adventure with a memorable visual resolution.'
+    )
+    await user.type(screen.getByLabelText(/Tone/), 'Warm, adventurous')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
     await user.click(screen.getByRole('button', { name: /start from an idea/i }))
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     await user.click(screen.getByRole('button', { name: 'Create production' }))
@@ -443,7 +500,7 @@ describe('desktop project foundation', () => {
       })
     )
     expect(await screen.findByText('Project format updated safely')).toBeTruthy()
-  })
+  }, 15_000)
 })
 
 describe('creative room', () => {
@@ -531,5 +588,45 @@ describe('creative room', () => {
     )
     expect(screen.getByText('Proposal · not canon')).toBeTruthy()
     expect(screen.getByText(/External skills used: none/)).toBeTruthy()
+  })
+})
+
+describe('audience and creative direction', () => {
+  it('saves a revision through the project overview without replacing the prior version', async () => {
+    const user = userEvent.setup()
+    const updated: ProjectDetails = {
+      ...createdFilm,
+      creativeDirection: {
+        ...createdFilm.creativeDirection!,
+        profileId: '01J00000000000000000000010',
+        revision: 2,
+        direction: {
+          ...createdFilm.creativeDirection!.direction,
+          primaryNiche: 'Hopeful African family fantasy'
+        }
+      }
+    }
+    const saveCreativeDirection = vi
+      .fn<StudioApi['projects']['saveCreativeDirection']>()
+      .mockResolvedValue(updated)
+    window.studio.projects.saveCreativeDirection = saveCreativeDirection
+    const onUpdated = vi.fn()
+    render(<CreativeDirectionPanel project={createdFilm} onUpdated={onUpdated} />)
+
+    await user.click(screen.getByRole('button', { name: 'Revise direction' }))
+    const niche = screen.getByLabelText('Primary niche')
+    await user.clear(niche)
+    await user.type(niche, 'Hopeful African family fantasy')
+    await user.click(screen.getByRole('button', { name: 'Save as new version' }))
+
+    await waitFor(() =>
+      expect(saveCreativeDirection).toHaveBeenCalledWith({
+        projectId: createdFilm.manifest.id,
+        expectedProfileId: createdFilm.creativeDirection!.profileId,
+        direction: expect.objectContaining({ primaryNiche: 'Hopeful African family fantasy' })
+      })
+    )
+    expect(onUpdated).toHaveBeenCalledWith(updated)
+    expect(createdFilm.creativeDirection?.revision).toBe(1)
   })
 })

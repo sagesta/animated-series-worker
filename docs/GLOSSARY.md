@@ -3,6 +3,7 @@
 | Term | Meaning in this project |
 | --- | --- |
 | Asset | Any reusable creative item: character image, voice, location, prop, audio line, clip, music cue, or export. |
+| Audience & Creative Direction | A project-local, versioned compass for intended viewers, niche, genre, tone, themes, promise, setting, boundaries, format, style, positioning, and differentiation. It guides work but is not canon or a YouTube policy answer. |
 | Adaptation | An optional project-scoped LoRA or similar small trained add-on used only when approved references alone cannot meet the consistency benchmark. |
 | Animatic | A timed preview made from storyboard frames, dialogue, captions, and simple motion to check pacing before expensive final animation. |
 | Bible | The approved reference pack that defines how a character, voice, visual style, location, or prop should remain consistent. |
@@ -25,6 +26,7 @@
 | Manifest | The receipt for an output: exact inputs, model, workflow, versions, settings, hardware, runtime, and lineage. |
 | Model sheet | A reference board showing a character consistently from several views and with important details. |
 | Network volume | Paid cloud storage that persists while the rented GPU machine is gone. It caches large models; it is not the only copy of project work. |
+| Niche | The clear subject-and-experience space a production occupies, such as “African folklore family fantasy.” It is one part of creative direction, not a complete production plan. |
 | Pod | A temporary rented cloud computer. The studio creates and terminates it automatically. |
 | Production method | How a shot is made: hold, pan, loop, LTX animation, audio-driven dialogue, retake, lip-dub, or external work. |
 | Prompt | Instructions sent to a generative model. Prompts do not replace approved references and continuity data. |
@@ -32,6 +34,7 @@
 | Seed | A number that influences a generation's random choices. Saving it helps investigation but does not alone guarantee identical output across changed software or hardware. |
 | Shot | The smallest reviewed piece of the edited episode. A shot may have several generated takes. |
 | Stale | Still preserved, but no longer proven to match a newer upstream decision. The user must review the impact. |
+| Story promise | The reliable emotional or narrative experience viewers should expect from an episode or film. |
 | Storyboard | The visual and timing plan. It specifies intent, but production still needs exact approved assets, audio, workflows, and takes. |
 | Foley | Sound effects synchronized to visible actions, kept separate from dialogue and music. |
 | Submodule | A separate Git repository pinned inside this project at an exact commit. Updates are deliberate and reversible. |

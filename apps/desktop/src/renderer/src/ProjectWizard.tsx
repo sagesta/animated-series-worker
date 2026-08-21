@@ -7,6 +7,11 @@ import {
   type VisualDirection
 } from '@studio/contracts'
 import { normalizeProjectCode } from '@studio/domain'
+import { AudienceDirectionFields } from './CreativeDirectionForm'
+import {
+  createCreativeDirectionDraft,
+  creativeDirectionInputFromDraft
+} from './creativeDirectionModel'
 
 interface ProjectWizardProps {
   onClose(): void
@@ -73,6 +78,9 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
   const [visualDirection, setVisualDirection] = useState<VisualDirection>('2d')
   const [sourceMode, setSourceMode] = useState<SourceMode>('original')
   const [pilotBrief, setPilotBrief] = useState('')
+  const [creativeDirection, setCreativeDirection] = useState(() =>
+    createCreativeDirectionDraft('series')
+  )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
 
@@ -94,6 +102,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
   const chooseType = (nextType: ProjectType): void => {
     setType(nextType)
     setTargetDurationMinutes(nextType === 'series' ? 25 : 12)
+    setCreativeDirection(createCreativeDirectionDraft(nextType))
   }
 
   const handleTitle = (nextTitle: string): void => {
@@ -107,7 +116,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
     event.preventDefault()
     setError(undefined)
 
-    if (step < 4) {
+    if (step < 6) {
       setStep((current) => current + 1)
       return
     }
@@ -120,7 +129,8 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
       targetDurationMinutes,
       visualDirection,
       sourceMode,
-      pilotBrief
+      pilotBrief,
+      creativeDirection: creativeDirectionInputFromDraft(creativeDirection)
     }
 
     setBusy(true)
@@ -140,7 +150,14 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
           <p className="eyebrow eyebrow-light">New production</p>
           <h2>Give every story its own safe home.</h2>
           <ol className="step-list">
-            {['Format', 'Identity', 'Starting point', 'Review'].map((label, index) => {
+            {[
+              'Format',
+              'Identity',
+              'Audience',
+              'Creative direction',
+              'Starting point',
+              'Review'
+            ].map((label, index) => {
               const stepNumber = index + 1
               return (
                 <li
@@ -171,12 +188,14 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
           </button>
 
           <header className="wizard-header">
-            <p className="eyebrow">Step {step} of 4</p>
+            <p className="eyebrow">Step {step} of 6</p>
             <h1 id="wizard-title" ref={headingRef} tabIndex={-1}>
               {step === 1 && 'What are you making?'}
               {step === 2 && 'Name this production'}
-              {step === 3 && 'Where will the story begin?'}
-              {step === 4 && 'Create the production home'}
+              {step === 3 && 'Who are you making this for?'}
+              {step === 4 && 'What should make it unmistakably yours?'}
+              {step === 5 && 'Where will the story begin?'}
+              {step === 6 && 'Create the production home'}
             </h1>
             <p>
               {step === 1 &&
@@ -184,9 +203,13 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
               {step === 2 &&
                 'These details organise the project. You can refine the creative choices later.'}
               {step === 3 &&
-                'This only records your intended starting point. No import runs during setup.'}
+                'Audience and niche give every later story, character, board, and release task the same compass.'}
               {step === 4 &&
-                'Review the essentials. The studio will create local folders and a safe checkpoint.'}
+                'Set the promise, tone, boundaries, and distinctiveness without locking yourself into one plot.'}
+              {step === 5 &&
+                'This only records your intended starting point. No import runs during setup.'}
+              {step === 6 &&
+                'Review the essentials. The studio will create versioned local direction and a safe checkpoint.'}
             </p>
           </header>
 
@@ -288,6 +311,22 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
             )}
 
             {step === 3 && (
+              <AudienceDirectionFields
+                draft={creativeDirection}
+                onChange={setCreativeDirection}
+                section="audience"
+              />
+            )}
+
+            {step === 4 && (
+              <AudienceDirectionFields
+                draft={creativeDirection}
+                onChange={setCreativeDirection}
+                section="direction"
+              />
+            )}
+
+            {step === 5 && (
               <div className="source-list">
                 {sourceChoices.map((choice) => (
                   <button
@@ -308,7 +347,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
               </div>
             )}
 
-            {step === 4 && (
+            {step === 6 && (
               <div className="review-layout">
                 <div className="review-card">
                   <div>
@@ -328,6 +367,28 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
                     <strong>
                       {visualChoices.find((choice) => choice.value === visualDirection)?.label}
                     </strong>
+                  </div>
+                  <div>
+                    <span>Audience</span>
+                    <strong>{creativeDirection.targetAudience}</strong>
+                  </div>
+                  <div>
+                    <span>Primary niche</span>
+                    <strong>{creativeDirection.primaryNiche}</strong>
+                  </div>
+                  <div>
+                    <span>Genre</span>
+                    <strong>{creativeDirection.genres}</strong>
+                  </div>
+                </div>
+                <div className="safe-creation-note direction-review-note">
+                  <span>◎</span>
+                  <div>
+                    <strong>{creativeDirection.storyPromise}</strong>
+                    <p>
+                      This direction becomes a versioned project source. Later changes create a new
+                      version and do not rewrite old work.
+                    </p>
                   </div>
                 </div>
                 <label className="field field-wide">
@@ -369,7 +430,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
               {step === 1 ? 'Cancel' : 'Back'}
             </button>
             <button className="button button-primary" type="submit" disabled={busy}>
-              {busy ? 'Creating safely…' : step === 4 ? 'Create production' : 'Continue'}
+              {busy ? 'Creating safely…' : step === 6 ? 'Create production' : 'Continue'}
             </button>
           </footer>
         </form>

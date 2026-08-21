@@ -11,11 +11,11 @@
 
 ### Current controls
 
-The current source implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest/proposal writes, startup catalog reconciliation, separate protected RunPod/OpenAI/Anthropic/Gemini credential storage, an application single-instance guard, and a project-library writer lease that preserves and replaces only provably stale lock records.
+The current source implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest/proposal/creative-direction writes, startup catalog reconciliation, separate protected RunPod/OpenAI/Anthropic/Gemini credential storage, an application single-instance guard, and a project-library writer lease that preserves and replaces only provably stale lock records. Direction revisions use a current-profile optimistic check so an older open screen cannot quietly append from stale state.
 
 The RunPod connection flow validates through read-only API v2 calls before saving, uses Electron asynchronous `safeStorage` backed by Windows DPAPI, writes only encrypted bytes outside project roots, returns no key value to the renderer, and has tests proving the vault file and local settings contain no plaintext key. The current provider adapter exposes no create/start/stop/terminate operation, so this application version cannot start billable compute.
 
-OpenAI, Anthropic, and Gemini have distinct encrypted vault files. A replacement key must pass that provider's model-list check before becoming active; the result is intersected with the release-controlled catalogue and returns only opaque status/approved models before the input field is cleared. Enablement/removal is provider-specific. The main process obtains the key immediately before an adapter call; proposal records, projects, backups, diagnostics, and support bundles contain no key. OpenAI uses a Bearer header, Anthropic `x-api-key`, and Gemini `x-goog-api-key`; no key is placed in a request URL. The Creative Room shows the exact selected project context before one explicit paid-text confirmation. Provider responses are schema-validated and must be complete before a new no-overwrite local proposal is exposed; errors discard unreadable/partial output. Current automated evidence uses injected vaults and mocked HTTP, so packaged DPAPI persistence, live provider retention/billing behavior, and broader process-memory/packaged scans remain open.
+OpenAI, Anthropic, and Gemini have distinct encrypted vault files. A replacement key must pass that provider's model-list check before becoming active; the result is intersected with the release-controlled catalogue and returns only opaque status/approved models before the input field is cleared. Enablement/removal is provider-specific. The main process obtains the key immediately before an adapter call; proposal records, projects, backups, diagnostics, and support bundles contain no key. OpenAI uses a Bearer header, Anthropic `x-api-key`, and Gemini `x-goog-api-key`; no key is placed in a request URL. The Creative Room shows the exact selected manifest and Audience & Creative Direction text before one explicit paid-text confirmation, and the creator can exclude the profile from that disclosure. Provider responses are schema-validated and must be complete before a new no-overwrite local proposal is exposed; errors discard unreadable/partial output. Current automated evidence uses injected vaults and mocked HTTP, so packaged DPAPI persistence, live provider retention/billing behavior, and broader process-memory/packaged scans remain open.
 
 Verified full backup and non-overwriting restore are implemented for canonical project files, including local writing proposals: SQLite is checkpointed and integrity-checked, every copied file is flushed and SHA-256 verified, incomplete generations remain non-restorable, restore re-verifies before an atomic folder activation, and damaged copies are rejected. Structured diagnostic events are redacted before a flushed JSONL write; known RunPod/OpenAI/Anthropic/Gemini/Bearer patterns, protected context fields, and configured private paths are removed again before the local-only support JSON passes its known-secret scan. Incremental/release archives, clean-machine restore evidence, broader worker/skill redaction and packaged scans, worker authentication, remote cleanup, watchdogs, and the full security suite are not implemented. Those missing controls still block worker creation and media generation.
 
@@ -40,6 +40,7 @@ Verified full backup and non-overwriting restore are implemented for canonical p
 | Malicious or over-broad external skill | Manifest/schema validation, least-privilege grants, project scope, no code by default, isolation, time/output limits, exact-version receipts |
 | Skill silently ignored or falsely reported | Orchestrator-required execution plan, validated result, immutable receipt, and blocked completion when a required receipt is absent |
 | Excess project context sent to a writing provider/tool | User-visible context selection, task-scoped data pack, provider/skill permission preview, and recorded disclosure lineage |
+| Creative niche/age/style mistaken for canon or a platform decision | Separate immutable direction, canon, release-profile, and unresolved-capable attestation records; no automatic field mapping |
 | Media viewer path escape or original replacement | Project-scoped `studio://media` authorization, normalized paths, immutable original hashes, rebuildable derivatives |
 | YouTube OAuth token leakage or excessive channel authority | OS vault, exact read-only scope allowlist, opaque status, revocation, and adapter with no mutation methods in version 1 |
 | Wrong audience/disclosure or deceptive packaging silently accepted | Explicit unresolved-capable human attestations, factual-source view, ruleset version, and blocked package lock |
@@ -114,7 +115,7 @@ Voice reference and recognizable likeness use requires explicit authorization. T
 
 Pose/reference clips, adaptation datasets, generated/imported foley, and sound libraries also require project-scoped source/rights records. An adaptation dataset is never shared across projects or uploaded to a training job without an explicit preview and authorization.
 
-Before a YouTube package is locked, a human records made-for-kids status, applicable altered/synthetic-media disclosure, packaging truth, originality, complete rights/credits, and full-watch confirmation. The studio may explain current rules and flag missing evidence, but it never chooses a policy/legal answer, treats animation alone as the answer, or lets analytics waive an unresolved concern.
+Before a YouTube package is locked, a human records made-for-kids status, applicable altered/synthetic-media disclosure, packaging truth, originality, complete rights/credits, and full-watch confirmation. The studio may show the project profile as creative context, explain current rules, and flag missing evidence, but it never maps `ageBand`, `youtubePositioning`, animation style, or model output into a policy/legal answer or lets analytics waive an unresolved concern.
 
 ## 7. Backup policy
 
@@ -128,7 +129,7 @@ Backup types:
 
 | Type | Contents | Frequency |
 | --- | --- | --- |
-| Metadata checkpoint | JSON, manifests, SQLite snapshot, small docs | Before/after significant approval or migration |
+| Metadata checkpoint | JSON, manifests, creative-direction versions, SQLite snapshot, small docs | Before/after significant approval, direction revision, or migration |
 | Incremental media backup | New/changed approved assets and takes | Daily during active production or user policy |
 | Release archive | Master, selected public thumbnail, release details/chapters/captions, attestations, QC/checklist, manifests, bibles, timeline, rights, compatibility matrix, and attached platform identity/evidence | Every published episode/film |
 
@@ -245,6 +246,7 @@ Before creation, show included categories. Run automated secret scans. The bundl
 - Public-port scan confirms ComfyUI is unreachable externally.
 - External-skill permission, path, network, timeout, output-validation, required-receipt, and cross-project tests pass.
 - Writing-provider secret scans and task-context disclosure tests pass for the mocked OpenAI, Anthropic, and Gemini adapter boundary; packaged and live-provider scans remain required.
+- Creative-direction version files and writing source lineage reject wrong-project or stale-profile use; no direction field can satisfy a release attestation.
 - Local media protocol rejects unauthorized paths, and proxy failure/rebuild tests prove original hashes are unchanged.
 - Wrong-project and path-traversal tests pass.
 - Forced desktop/network/worker failures demonstrate bounded termination.

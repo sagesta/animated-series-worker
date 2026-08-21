@@ -63,7 +63,30 @@ const project: ProjectDetails = {
     createdAt: '2026-08-21T12:00:00.000Z',
     updatedAt: '2026-08-21T12:00:00.000Z'
   },
-  workspacePath: 'C:\\Studio\\projects\\lantern-keepers'
+  workspacePath: 'C:\\Studio\\projects\\lantern-keepers',
+  creativeDirection: {
+    schemaVersion: 1,
+    profileId: '01J00000000000000000000008',
+    projectId: '01J00000000000000000000000',
+    revision: 1,
+    createdAt: '2026-08-21T12:00:00.000Z',
+    direction: {
+      targetAudience: 'Families and viewers aged 9–15 who enjoy adventurous fantasy.',
+      ageBand: 'all-ages',
+      primaryNiche: 'African folklore fantasy adventures',
+      genres: ['fantasy', 'mystery'],
+      toneKeywords: ['warm', 'adventurous'],
+      coreThemes: ['belonging', 'memory'],
+      storyPromise: 'Every episode combines a magical mystery with an emotionally hopeful turn.',
+      culturalSetting: 'A fictional West African coastal kingdom.',
+      contentBoundaries: ['No graphic violence'],
+      episodeFormat: 'A recurring 24-minute animated episode.',
+      youtubePositioning: 'Original serialized fantasy for family co-viewing.',
+      visualStyleNotes: 'Graphic 2D shapes with painted light.',
+      comparableTitles: [],
+      differentiation: 'Memory is a physical force protected by a community of young keepers.'
+    }
+  }
 }
 
 function createFixture() {
@@ -198,11 +221,18 @@ describe('protected creative writing workflow', () => {
   it('previews exact selected context and saves immutable proposal lineage', async () => {
     const { setup, creative, generateDraft, saved } = createFixture()
     await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
-    const context = { includeProjectBrief: true, includeProductionSettings: false }
+    const context = {
+      includeProjectBrief: true,
+      includeProductionSettings: false,
+      includeCreativeDirection: true
+    }
     const preview = creative.previewContext({ projectId: project.manifest.id, context })
 
     expect(preview.text).toContain('A shy apprentice protects a city')
+    expect(preview.text).toContain('African folklore fantasy adventures')
+    expect(preview.text).toContain('not a YouTube made-for-kids')
     expect(preview.text).not.toContain('Target duration')
+    expect(preview.sourceVersions).toHaveLength(2)
 
     const result = await creative.generateDraft({
       projectId: project.manifest.id,
@@ -244,7 +274,11 @@ describe('protected creative writing workflow', () => {
         projectId: project.manifest.id,
         taskKind: 'draft_scene',
         instruction: 'Draft the opening scene with clear emotional actions and concise dialogue.',
-        context: { includeProjectBrief: true, includeProductionSettings: true },
+        context: {
+          includeProjectBrief: true,
+          includeProductionSettings: true,
+          includeCreativeDirection: true
+        },
         provider: 'openai',
         model: 'gpt-5.6-terra',
         profile: 'balanced',
