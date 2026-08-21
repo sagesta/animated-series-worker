@@ -75,11 +75,17 @@ importers:
 
   apps/desktop: {}
 
+  packages/cloud-setup: {}
+
   packages/contracts: {}
+
+  packages/credential-vault: {}
 
   packages/domain: {}
 
   packages/project-store: {}
+
+  packages/provider-runpod: {}
 
 packages:
 

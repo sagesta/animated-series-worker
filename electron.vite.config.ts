@@ -5,8 +5,11 @@ import { defineConfig } from 'electron-vite'
 const rootDirectory = process.cwd()
 const aliases = {
   '@studio/contracts': resolve(rootDirectory, 'packages/contracts/src/index.ts'),
+  '@studio/cloud-setup': resolve(rootDirectory, 'packages/cloud-setup/src/index.ts'),
+  '@studio/credential-vault': resolve(rootDirectory, 'packages/credential-vault/src/index.ts'),
   '@studio/domain': resolve(rootDirectory, 'packages/domain/src/index.ts'),
-  '@studio/project-store': resolve(rootDirectory, 'packages/project-store/src/index.ts')
+  '@studio/project-store': resolve(rootDirectory, 'packages/project-store/src/index.ts'),
+  '@studio/provider-runpod': resolve(rootDirectory, 'packages/provider-runpod/src/index.ts')
 }
 
 export default defineConfig({

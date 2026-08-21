@@ -2,7 +2,7 @@
 
 Animated Series Studio is a local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
 
-This repository now contains the **first working desktop foundation** plus the authoritative product and architecture specification. The current Windows application can create, list, and reopen isolated local series and one-off film projects. It does **not** yet generate storyboards, images, voices, video, lip sync, finished episodes, or cloud machines.
+This repository now contains a working local desktop foundation and the first safe RunPod account-connection slice, plus the authoritative product and architecture specification. The Windows application can create, list, and reopen isolated series and one-off film projects; encrypt a RunPod API key with Windows protection; perform an explicit no-cost account check; read current GPU planning prices; and save conservative local spending defaults. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, or finished episodes.
 
 ## Locked baseline
 
@@ -28,7 +28,7 @@ This repository now contains the **first working desktop foundation** plus the a
 ```text
 animated-series-studio/
 ├── apps/desktop/                 current Electron main/preload + React application
-├── packages/                     current contracts, domain, and project-store foundation
+├── packages/                     contracts, domain/store, secure vault, cloud setup, RunPod adapter
 ├── worker/                       planned remote GPU worker image and gateway
 ├── workflows/                    planned versioned ComfyUI/LTX workflows
 ├── config/                       current locks and future runtime defaults
@@ -39,7 +39,7 @@ animated-series-studio/
 
 The upstream repository can be pulled independently, but this project changes only when its pinned submodule commit is deliberately updated and verified. See [Upstream integration](docs/UPSTREAM_INTEGRATION.md).
 
-## Run the current foundation
+## Run the current application
 
 Developer prerequisites are Node.js 22 or newer and pnpm 10. Then:
 
@@ -69,8 +69,9 @@ node scripts/check-docs.mjs
 | Product scope and requirements | Baseline documented |
 | Architecture and contracts | Baseline documented |
 | Upstream dependency | Pinned and verified |
-| Desktop application | Working local foundation and unsigned test installer; production setup incomplete |
+| Desktop application | Local projects plus guided secure RunPod account connection; unsigned test installer; production setup incomplete |
 | Series/film project storage | Create/list/open implemented and tested; backup/restore incomplete |
-| Remote GPU worker | Not implemented |
+| RunPod provider | API v2 account validation and price reads implemented; Pod/storage/template creation and termination not implemented |
+| Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |
 | LTX/Qwen workflows | Not benchmarked or implemented |
 | Production readiness | Not achieved |

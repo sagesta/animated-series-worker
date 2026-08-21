@@ -124,6 +124,8 @@ Each batch has:
 - Maximum workers.
 - Stop threshold that leaves time to sync and terminate.
 
+Version 0.3.0 can read current RunPod catalogue rates for planning and report the aggregate current rate of already-active account Pods. These reads cost $0 and create nothing. They are not a generation quote: the future estimator must refresh compatibility, availability, the exact Pod rate, storage price, worker count, and reserve immediately before approval.
+
 Budget state:
 
 ```text

@@ -48,11 +48,13 @@ flowchart LR
 
 ## 4. Phase 1 — local application foundation
 
-### Current checkpoint — version 0.2.0
+### Current checkpoint — version 0.3.0
 
 - `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
 - `DATA-001` is in progress: series/film create, list, open, schema-1 manifest, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, and startup reconciliation are implemented and tested.
-- Phase 1 is **not complete**. Credential vault, structured redacted logging/support bundle, interruption tests, real migration preview/rollback, backup/restore, single-writer protection, signed installer, and clean-machine usability evidence remain.
+- `SEC-001` is in progress: the RunPod key is validated before save, encrypted through Electron asynchronous `safeStorage`/Windows DPAPI outside projects, never returned after submission, removable explicitly, and covered by plaintext non-leakage tests. Structured redacted logging/support bundles remain.
+- `CLOUD-001` has an intentionally early read-only foundation: API v2 account validation, aggregate existing-Pod/rate warning, GPU catalogue pricing, local guardrail defaults, and setup progress are implemented. No provider mutation or paid operation exists.
+- Phase 1 is **not complete**. Structured redacted logging/support bundle, interruption tests, real migration preview/rollback, backup/restore, single-writer protection, signed installer, and clean-machine usability evidence remain.
 
 ### Build
 
@@ -60,7 +62,7 @@ flowchart LR
 - Create Electron main, secure preload, React renderer, routing, UI kit, accessibility baseline, and error boundary.
 - Implement project creation/open/close and project types.
 - Implement project files, SQLite index, atomic writes, file hashes, schema versions, migrations, and startup reconciliation.
-- Implement Windows Credential Manager adapter.
+- Implement the accepted Electron `safeStorage`/Windows DPAPI credential adapter outside project roots.
 - Implement structured redacted logging and local support bundle foundation.
 - Implement documentation/link/traceability checks in standard quality command.
 
@@ -262,13 +264,13 @@ Do not:
 | --- | --- | --- | --- |
 | 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
 | 2 | `DATA-001` project store | In progress | Series/film create/open, files, SQLite, migrations |
-| 3 | `SEC-001` credential/logging | Not started | Vault adapter and redacted diagnostics |
+| 3 | `SEC-001` credential/logging | In progress — protected RunPod vault and non-leakage tests pass; redacted diagnostics remain | Vault adapter and redacted diagnostics |
 | 4 | `UP-001` adapter process runner | Not started | Pinned version and validation contract |
 | 5 | `UP-002` normalized domain import | Not started | Long-form project facts and source provenance |
 | 6 | `CONT-001` versions/dependencies | Not started | Locks, impact, stale propagation |
 | 7 | `BENCH-001` image/voice/video test harness | Not started | Repeatable quality/runtime/cost pack |
 | 8 | `WORKER-001` gateway/watchdog | Not started | Secure local GPU smoke worker |
-| 9 | `CLOUD-001` RunPod lifecycle | Not started | One-click create/reconcile/terminate |
+| 9 | `CLOUD-001` RunPod lifecycle | In progress — API v2 account/price reads and local limits pass mocked tests; every mutating lifecycle method remains locked | One-click create/reconcile/terminate |
 | 10 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
 | 11 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
 | 12 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |

@@ -9,11 +9,13 @@
 - Make remote execution temporary, authenticated, bounded, and auditable.
 - Record rights and consent for sensitive source material.
 
-### Current foundation controls
+### Current controls
 
-Version 0.2.0 implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest writes, and startup catalog reconciliation.
+Version 0.3.0 implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest writes, startup catalog reconciliation, and protected RunPod credential storage.
 
-Credential vault storage, structured redaction/support bundles, backups, restore, migration rollback, single-writer locks, worker authentication, remote cleanup, watchdogs, and security-suite evidence are not implemented. Generation and cloud setup remain unreachable, so the current application cannot start billable compute.
+The RunPod connection flow validates through read-only API v2 calls before saving, uses Electron asynchronous `safeStorage` backed by Windows DPAPI, writes only encrypted bytes outside project roots, returns no key value to the renderer, and has tests proving the vault file and local settings contain no plaintext key. The current provider adapter exposes no create/start/stop/terminate operation, so this application version cannot start billable compute.
+
+Structured redaction/support bundles, backups, restore, migration rollback, single-writer locks, worker authentication, remote cleanup, watchdogs, and the full security suite are not implemented. Those missing controls still block worker creation and generation.
 
 ## 2. Main threats
 
@@ -40,6 +42,7 @@ Credential vault storage, structured redaction/support bundles, backups, restore
 - Project export and backup exclude credential stores.
 - Credential test, rotation, and removal are explicit settings actions.
 - A worker receives a short-lived session token, never the main provider key unless a narrowly scoped termination design absolutely requires it and passes threat review.
+- On Windows, Electron `safeStorage` uses DPAPI: it protects the encrypted value from other Windows users, but it is not a defence against malicious software already running as the same signed-in user. Endpoint security and a protected Windows account remain necessary.
 
 ## 4. Worker network and runtime
 

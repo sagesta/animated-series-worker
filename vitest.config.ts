@@ -5,8 +5,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@studio/contracts': resolve(process.cwd(), 'packages/contracts/src/index.ts'),
+      '@studio/cloud-setup': resolve(process.cwd(), 'packages/cloud-setup/src/index.ts'),
+      '@studio/credential-vault': resolve(process.cwd(), 'packages/credential-vault/src/index.ts'),
       '@studio/domain': resolve(process.cwd(), 'packages/domain/src/index.ts'),
-      '@studio/project-store': resolve(process.cwd(), 'packages/project-store/src/index.ts')
+      '@studio/project-store': resolve(process.cwd(), 'packages/project-store/src/index.ts'),
+      '@studio/provider-runpod': resolve(process.cwd(), 'packages/provider-runpod/src/index.ts')
     }
   },
   test: {

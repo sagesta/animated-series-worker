@@ -34,17 +34,20 @@ Maintain small, rights-safe fixtures:
 
 Creative benchmark references are locked by hash. Changing them is a test-version change documented in the changelog.
 
-## 3.1 Foundation evidence — version 0.2.0
+## 3.1 Current development evidence — version 0.3.0
 
 | Evidence | Current result | Boundary |
 | --- | --- | --- |
 | Domain unit tests | Four passing tests for ULID shape/order, code normalization, safe manifest defaults, and invalid inputs | Does not cover creative asset versions/state machines |
 | Project-store integration tests | Three passing tests covering series+film create/reopen, canonical files/databases/folders, same-title isolation, and path-like identity rejection | Covers the create/open portion of AT-001 and folder portion of AT-031 only |
-| Renderer tests | Two passing tests covering honest no-paid-service empty state and the four-step one-off-film creation flow | Does not replace representative non-technical usability acceptance |
+| Renderer tests | Three passing tests covering honest no-paid-service empty state, four-step one-off-film creation, and the no-cost RunPod connection flow remaining generation-locked | Does not replace representative non-technical usability acceptance or live-provider test |
+| Credential-vault tests | Three passing tests prove encrypted storage contains no plaintext key, supports replacement/read/removal, and fails closed when OS protection is unavailable | Uses an injected protector in unit tests; packaged Windows DPAPI persistence still needs install/upgrade evidence |
+| RunPod provider contract tests | Seven passing API v2 tests cover read-only account aggregate, catalogue prices/4090 baseline flag, 401, 403, 429, 503, timeout, and secret-safe errors | Mocked HTTP only; no user's live key or provider resource is used in automated tests |
+| Cloud-setup tests | Three passing tests cover validate-before-store, no key in settings, local guardrails with generation lock, and disconnect retaining non-secret defaults | Storage/template/worker/watchdog/termination remain absent |
 | Static quality | Type check, lint, documentation check, and three-part Electron production build pass | Not a security audit or clean-machine test |
-| Windows package smoke | Unpacked executable stays running under a fresh temporary profile and initializes the local catalog; home/wizard visual-accessibility pass succeeds; 99.9 MiB NSIS installer builds | Installer is unsigned and was not clean-machine/upgrade/rollback tested |
+| Windows package smoke | Final version-0.3.0 unpacked executable stays running under a fresh temporary profile, initializes the local catalog, and exposes the correct local/no-spend home state; prior wizard visual-accessibility evidence and current RunPod renderer-flow tests pass; 100.0 MiB NSIS installer builds; one development-machine 0.2.0-to-0.3.0 user-scoped upgrade exits successfully and launches version 0.3.0 | Installer is unsigned and was not clean-machine or rollback tested; the locked Windows desktop prevented a fresh pixel-level Settings review |
 
-The suite contains nine automated tests. AT-001 remains open because backup/restore and interruption recovery are absent. AT-031 remains open because asset/query/token/cache and concurrent-worker isolation do not exist yet.
+The suite contains 23 automated tests. AT-001 remains open because backup/restore and interruption recovery are absent. AT-013 remains open because no provider resource, worker, job, purge, watchdog, termination, or charge has been tested. AT-031 remains open because asset/query/token/cache and concurrent-worker isolation do not exist yet.
 
 ## 4. Core acceptance tests
 

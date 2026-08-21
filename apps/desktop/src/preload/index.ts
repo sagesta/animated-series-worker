@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import {
+  CloudActionResultSchema,
+  CloudConnectInputSchema,
+  CloudConnectionStatusSchema,
+  CloudGuardrailsSchema,
   CreateProjectInputSchema,
   IPC_CHANNELS,
   ProjectDetailsSchema,
@@ -29,6 +33,31 @@ const studioApi: StudioApi = {
       const safeProjectId = UlidSchema.parse(projectId)
       return ProjectDetailsSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.projectsOpen, safeProjectId)
+      )
+    }
+  },
+  cloud: {
+    async getStatus() {
+      return CloudConnectionStatusSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.cloudGetStatus)
+      )
+    },
+    async connect(input) {
+      const safeInput = CloudConnectInputSchema.parse(input)
+      return CloudActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.cloudConnect, safeInput)
+      )
+    },
+    async refresh() {
+      return CloudActionResultSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.cloudRefresh))
+    },
+    async disconnect() {
+      return CloudActionResultSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.cloudDisconnect))
+    },
+    async saveGuardrails(guardrails) {
+      const safeGuardrails = CloudGuardrailsSchema.parse(guardrails)
+      return CloudActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.cloudSaveGuardrails, safeGuardrails)
       )
     }
   }

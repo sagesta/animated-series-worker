@@ -6,9 +6,9 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.2.0
+### Current implementation — version 0.3.0
 
-The production library, series/film creation wizard, project overview, primary navigation, local status, settings summary, focus states, reduced-motion handling, and friendly screen-level recovery boundary are implemented. Story, World & Cast, Storyboard, Generate, Review, and Edit & Export currently show explicit planned/locked explanations rather than simulated controls. Cloud setup and every paid action are absent and report `$0`/`Not configured`.
+The production library, series/film creation wizard, project overview, primary navigation, local status, focus states, reduced-motion handling, and friendly recovery boundary are implemented. Settings now provides a masked RunPod-key field, explicit free validation, Windows-protected storage, aggregate existing-Pod warning, current catalogue prices, conservative default safety limits, key refresh/removal, and an honest prepared-studio checklist. Story, World & Cast, Storyboard, Generate, Review, and Edit & Export remain planned/locked. Account connection is not described as GPU readiness, and every paid action remains absent.
 
 ## 2. Navigation
 

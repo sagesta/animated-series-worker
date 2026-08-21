@@ -4,7 +4,7 @@ Last updated: 2026-08-21
 
 ## Honest capability statement
 
-Animated Series Studio now has a working local Windows desktop foundation. It creates, lists, and reopens isolated series and one-off film workspaces using canonical JSON plus SQLite. It does **not** yet plan full stories, generate images, speech, video, lip sync, finished episodes, or cloud machines.
+Animated Series Studio now has a working local Windows desktop foundation and a safe RunPod account-connection slice. It creates, lists, and reopens isolated series and one-off film workspaces; validates and encrypts a RunPod API key; reads aggregate existing-Pod status and current GPU planning prices; and saves local safety defaults. It does **not** yet create a cloud machine, persistent model storage, a worker image, or any story/image/speech/video/lip-sync/export job.
 
 | Capability | Status | Evidence needed to advance |
 | --- | --- | --- |
@@ -13,12 +13,12 @@ Animated Series Studio now has a working local Windows desktop foundation. It cr
 | Product requirements | Complete baseline | User review and future controlled revisions |
 | Architecture | Complete baseline | Architecture review and implementation spikes |
 | Documentation governance | Complete baseline | Documentation checker passes |
-| Desktop shell | In progress — secure shell, guided project wizard, navigation, unpacked app smoke, and unsigned NSIS installer build pass on the development machine | Authenticode signing and clean-machine/non-technical install/launch evidence |
+| Desktop shell | In progress — secure shell, guided project wizard, RunPod account setup, navigation, unpacked app smoke, and unsigned NSIS installer build pass on the development machine | Authenticode signing and clean-machine/non-technical install/launch evidence |
 | Project and continuity store | In progress — create/list/open, atomic manifest, schema v1, per-project SQLite, catalog, and startup reconciliation tests pass | Interruption, migration rollback, backup, restore, and full continuity tests |
 | Upstream adapter | Not started | Contract tests pass against pinned upstream commit |
 | Qwen image workflow | Not started | Approved character-consistency benchmark passes |
 | Qwen3-TTS workflow | Not started | Approved recurring-voice benchmark passes |
-| RunPod automation | Not started | Provision, execute, download, watchdog, and terminate test passes |
+| RunPod automation | In progress — API v2 read-only account validation, aggregate active-Pod/rate warning, GPU catalogue prices, protected key storage, refresh/removal, and local default limits pass mocked tests; there is no billable method | Provision, execute, download, remote watchdog, purge, termination, and provider-cost test passes |
 | LTX video workflow | Not started | Draft, final, A2V, retake, and failure tests pass |
 | Rough-cut editor and export | Not started | YouTube-ready technical QC passes |
 | Multiple series isolation | In progress — identity-scoped project folders and same-title isolation tests pass locally | Asset/query/token/cache leakage and concurrent-worker tests |
@@ -26,14 +26,15 @@ Animated Series Studio now has a working local Windows desktop foundation. It cr
 
 No row may be changed to “Complete” solely because code was written. The named evidence must be captured in tests or a release record.
 
-## Foundation evidence captured
+## Development evidence captured
 
 - `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, and `pnpm docs:check` pass on 2026-08-21.
-- Nine automated tests cover project identity/validation, series and film persistence/reopen, same-title folder isolation, path-like identity rejection, empty-library language, and the guided one-off-film creation flow.
+- Twenty-three automated tests cover the prior project foundation plus encrypted credential non-leakage, fail-closed storage, RunPod API v2 success/401/403/429/503/timeout behavior, current GPU planning-price parsing, local guardrail persistence, disconnect behavior, and the guided no-cost connection flow.
 - `electron-builder --dir` produced `release/win-unpacked/Animated Series Studio.exe`.
 - The packaged executable remained healthy under a fresh temporary user-data profile and initialized `projects/.studio/catalog.sqlite`.
-- `electron-builder --win nsis` produced the 99.9 MiB unsigned test installer `release/Animated-Series-Studio-0.2.0-x64.exe`. Authenticode verification reports `NotSigned`, so this is not a production-distribution artifact.
-- A packaged-window visual/accessibility pass confirmed the 1429×915 home layout, explicit local/no-spend status, disabled project-dependent navigation, and the four-step series/film wizard; no production was created during that pass.
+- `electron-builder --win nsis` produced the 100.0 MiB unsigned version-0.3.0 test installer `release/Animated-Series-Studio-0.3.0-x64.exe` (SHA-256 `FA1081EA0BC0D21B3C2807976442E545FEDF0492259FC7C60219D1FC7AAF64F2`). Authenticode verification reports `NotSigned`, so this is not a production-distribution artifact.
+- A user-scoped silent upgrade over the development machine's version-0.2.0 installation exited successfully; the installed executable reports product version `0.3.0.0`, launches, and exposes the version-0.3.0 local/no-spend shell. This is an upgrade smoke on one machine, not clean-machine release evidence.
+- A final packaged-window accessibility smoke confirmed version 0.3.0, the explicit local/no-spend home state, and locked project-dependent generation navigation. Renderer tests cover the complete RunPod Settings flow; a fresh pixel-level Settings review could not be captured while the Windows desktop was locked. An earlier packaged pass covered the 1429×915 home layout and four-step series/film wizard; no production was created during either pass.
 
-This is development-machine evidence only. It does not satisfy the Phase 1 clean-machine, credential, backup/restore, migration-rollback, or production-signing gates.
+This is development-machine and mocked-provider evidence only. It does not satisfy the Phase 1 clean-machine credential-persistence, backup/restore, migration-rollback, or production-signing gates, and it does not satisfy the cloud worker/termination gate.
 The test installer also uses Electron's default icon; branded icon assets remain release work.

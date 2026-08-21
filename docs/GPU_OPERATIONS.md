@@ -12,11 +12,15 @@ After one guided setup, the user does not install LTX, Qwen, Python, CUDA, Comfy
 - Compute: temporary on-demand Pod created from a pinned template/worker image.
 - Model cache: persistent network volume.
 - Creative source and final results: authoritative local storage.
-- Control: provider REST API from the local orchestrator.
+- Control: current RunPod REST API v2 from the local orchestrator.
 - Execution: authenticated worker gateway; ComfyUI is internal.
 - Shutdown: terminate the Pod after drain/sync; do not rely on a stopped Pod with attached network volume.
 
 RunPod documents template-based Pod creation, REST start/stop/terminate operations, and network volumes that persist independently of compute. Current source links and prices are in `SOURCES.md`.
+
+### Current implementation boundary — version 0.3.0
+
+The desktop implements only the first account step: an explicit read-only `GET /v2/pods` key/account check, a read-only `GET /v2/catalog/gpus` planning-price check, Windows-protected encrypted key storage, local safety-default storage, refresh, removal, and aggregate warnings when the account already has active Pods. It has no Pod/template/volume create, state-transition, terminate, upload, worker, ComfyUI, or model endpoint. Therefore this version cannot start a charge.
 
 ## 3. One-time setup wizard
 
@@ -24,9 +28,11 @@ RunPod documents template-based Pod creation, REST start/stop/terminate operatio
 
 1. User creates/funds a RunPod account.
 2. User creates a least-privilege API key where provider controls permit.
-3. Desktop stores it in Windows Credential Manager.
-4. Desktop calls a read-only account/capability check.
+3. Desktop stores encrypted bytes through Electron asynchronous `safeStorage`; Windows protects the encryption key with DPAPI, and the bytes live outside all projects.
+4. Desktop calls the API v2 read-only Pod/account check; a separate read-only catalogue call supplies current planning prices.
 5. Key is never written to project files, `.env`, manifests, logs, screenshots, or support bundles.
+
+Steps 1–5 are implemented except that future create/terminate permissions cannot be proven without a controlled resource test. Storage, worker template, and the paid safety test below remain locked.
 
 ### Storage
 

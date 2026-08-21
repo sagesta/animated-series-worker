@@ -42,12 +42,14 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-013 | `ARCHITECTURE.md` §10, `UPSTREAM_INTEGRATION.md` | compatibility matrix and release tooling | AT-005, AT-008, AT-034 |
 | NFR-014 | `GPU_OPERATIONS.md` §6–7 | remote watchdog and provider guard | AT-015, AT-018, AT-019 |
 
-## Current implementation evidence — version 0.2.0
+## Current implementation evidence — version 0.3.0
 
 | Requirement slice | State | Implemented components/evidence | Remaining acceptance boundary |
 | --- | --- | --- | --- |
 | FR-001–FR-004 project foundation | Partial | `apps/desktop`, `contracts`, `domain`, `project-store`; project-store and renderer AT-001 foundation tests | Close, archive, backup/restore, production-unit hierarchy, and full cross-project access controls |
+| FR-024 cloud setup | Partial | `credential-vault`, `cloud-setup`, `provider-runpod`, typed IPC, and guided Settings UI validate/store/refresh/remove the key, read aggregate Pods and current catalogue prices, and save local defaults without a provider mutation | Network volume, pinned worker, minimum-cost smoke, purge, watchdog, termination, cost receipt, and full AT-013 |
 | NFR-001 non-technical operation | Partial | Guided series/film wizard and unpacked Windows application; no terminal inside the app | Installer/first-run/cloud/pilot usability acceptance AT-013/AT-024/AT-035 |
+| NFR-005 secret protection | Partial | Electron asynchronous `safeStorage`/Windows DPAPI adapter, encrypted bytes outside project roots, opaque renderer status, safe provider errors, explicit removal, and plaintext non-leakage tests | Redacted logging/support scan, clean-machine credential persistence/upgrade, worker tokens, gateway, and security suite |
 | NFR-006 project privacy/isolation | Partial | ULID-scoped folders, root-containment check, same-title isolation and invalid-identity tests | Asset/query/cache/token crossover and remote purge/security suite |
 | NFR-007 portability | Partial | Canonical schema-1 `project.json`, documented folder layout, rebuildable local catalog | Export, backup, restore, media inventory, and clean-machine AT-030 |
 | NFR-011 accessibility | Partial | Semantic controls, labels, focus-visible states, keyboard wizard navigation, non-color status text, reduced-motion CSS | Automated accessibility audit and representative-user AT-035 |

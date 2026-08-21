@@ -1,8 +1,21 @@
 import { join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { app, BrowserWindow, ipcMain, Menu, net, protocol, type IpcMainInvokeEvent } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  net,
+  protocol,
+  safeStorage,
+  type IpcMainInvokeEvent
+} from 'electron'
 import { ZodError } from 'zod'
 import {
+  CloudActionResultSchema,
+  CloudConnectInputSchema,
+  CloudConnectionStatusSchema,
+  CloudGuardrailsSchema,
   CreateProjectInputSchema,
   IPC_CHANNELS,
   ProjectDetailsSchema,
@@ -10,7 +23,10 @@ import {
   SystemStatusSchema,
   UlidSchema
 } from '@studio/contracts'
+import { CloudSettingsStore, CloudSetupService, toCloudActionError } from '@studio/cloud-setup'
+import { EncryptedCredentialVault } from '@studio/credential-vault'
 import { ProjectStore } from '@studio/project-store'
+import { RunPodClient } from '@studio/provider-runpod'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -27,6 +43,7 @@ app.enableSandbox()
 
 let mainWindow: BrowserWindow | null = null
 let projectStore: ProjectStore | null = null
+let cloudSetupService: CloudSetupService | null = null
 let storeClosed = false
 
 function registerStudioProtocol(): void {
@@ -92,6 +109,14 @@ function requireStore(): ProjectStore {
   return projectStore
 }
 
+function requireCloudSetup(): CloudSetupService {
+  if (!cloudSetupService) {
+    throw new Error('The cloud setup service is not ready.')
+  }
+
+  return cloudSetupService
+}
+
 function safeInputMessage(error: unknown): string {
   if (error instanceof ZodError) {
     return error.issues[0]?.message ?? 'Check the project details and try again.'
@@ -101,10 +126,21 @@ function safeInputMessage(error: unknown): string {
 }
 
 function registerIpcHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.systemGetStatus, (event) => {
+  ipcMain.handle(IPC_CHANNELS.systemGetStatus, async (event) => {
     assertTrustedSender(event)
     const store = requireStore()
     const indexedProjects = store.listProjects().length
+    let cloudGpuState: 'not-configured' | 'account-connected' | 'attention' = 'attention'
+
+    try {
+      const cloudStatus = await requireCloudSetup().getStatus()
+      cloudGpuState =
+        cloudStatus.connectionState === 'connected'
+          ? 'account-connected'
+          : cloudStatus.connectionState
+    } catch {
+      cloudGpuState = 'attention'
+    }
 
     return SystemStatusSchema.parse({
       appVersion: app.getVersion(),
@@ -113,10 +149,10 @@ function registerIpcHandlers(): void {
       storagePath: store.workspaceRoot,
       indexedProjects,
       catalogState: 'ready',
-      cloudGpuState: 'not-configured',
+      cloudGpuState,
       generationState: 'locked',
       generationReason:
-        'Cloud setup stays locked until local projects, recovery, and spending safeguards are ready.'
+        'Paid generation stays locked until the worker image, model storage, and independent shutdown guards pass a controlled test.'
     })
   })
 
@@ -146,6 +182,65 @@ function registerIpcHandlers(): void {
       return ProjectDetailsSchema.parse(requireStore().openProject(projectId))
     } catch {
       throw new Error('That project could not be opened safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.cloudGetStatus, async (event) => {
+    assertTrustedSender(event)
+    try {
+      return CloudConnectionStatusSchema.parse(await requireCloudSetup().getStatus())
+    } catch {
+      throw new Error('The local cloud settings could not be read. No paid action was started.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.cloudConnect, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = CloudConnectInputSchema.parse(unknownInput)
+      return CloudActionResultSchema.parse({
+        ok: true,
+        status: await requireCloudSetup().connect(input)
+      })
+    } catch (error) {
+      return CloudActionResultSchema.parse(toCloudActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.cloudRefresh, async (event) => {
+    assertTrustedSender(event)
+    try {
+      return CloudActionResultSchema.parse({
+        ok: true,
+        status: await requireCloudSetup().refresh()
+      })
+    } catch (error) {
+      return CloudActionResultSchema.parse(toCloudActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.cloudDisconnect, async (event) => {
+    assertTrustedSender(event)
+    try {
+      return CloudActionResultSchema.parse({
+        ok: true,
+        status: await requireCloudSetup().disconnect()
+      })
+    } catch (error) {
+      return CloudActionResultSchema.parse(toCloudActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.cloudSaveGuardrails, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = CloudGuardrailsSchema.parse(unknownInput)
+      return CloudActionResultSchema.parse({
+        ok: true,
+        status: await requireCloudSetup().saveGuardrails(input)
+      })
+    } catch (error) {
+      return CloudActionResultSchema.parse(toCloudActionError(error))
     }
   })
 }
@@ -185,8 +280,22 @@ function createWindow(): void {
 
 void app.whenReady().then(() => {
   Menu.setApplicationMenu(null)
-  const workspaceRoot = join(app.getPath('userData'), 'projects')
+  const userDataRoot = app.getPath('userData')
+  const workspaceRoot = join(userDataRoot, 'projects')
   projectStore = new ProjectStore({ workspaceRoot })
+  const credentialVault = new EncryptedCredentialVault({
+    filePath: join(userDataRoot, 'secure', 'runpod-api-key.bin'),
+    protector: {
+      isEncryptionAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
+      encryptString: (value) => safeStorage.encryptStringAsync(value),
+      decryptString: (value) => safeStorage.decryptStringAsync(value)
+    }
+  })
+  cloudSetupService = new CloudSetupService({
+    vault: credentialVault,
+    provider: new RunPodClient(),
+    settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json'))
+  })
 
   registerStudioProtocol()
   registerIpcHandlers()

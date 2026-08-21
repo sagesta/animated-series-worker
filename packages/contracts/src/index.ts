@@ -114,18 +114,157 @@ export const SystemStatusSchema = z
     storagePath: z.string(),
     indexedProjects: z.number().int().nonnegative(),
     catalogState: z.literal('ready'),
-    cloudGpuState: z.literal('not-configured'),
+    cloudGpuState: z.enum(['not-configured', 'account-connected', 'attention']),
     generationState: z.literal('locked'),
     generationReason: z.string()
   })
   .strict()
 export type SystemStatus = z.infer<typeof SystemStatusSchema>
 
+export const RunPodApiKeySchema = z
+  .string()
+  .trim()
+  .min(20, 'Paste the complete RunPod API key.')
+  .max(512, 'That API key is longer than expected.')
+  .regex(/^\S+$/, 'The API key cannot contain spaces or line breaks.')
+
+export const CloudGuardrailsSchema = z
+  .object({
+    maxSessionCostUsd: z
+      .number()
+      .min(1, 'The session limit must be at least $1.')
+      .max(1000, 'The session limit must be $1,000 or less.'),
+    maxRuntimeMinutes: z
+      .number()
+      .int()
+      .min(15, 'Maximum runtime must be at least 15 minutes.')
+      .max(1440, 'Maximum runtime must be 24 hours or less.'),
+    idleTimeoutMinutes: z
+      .number()
+      .int()
+      .min(2, 'Idle shutdown must be at least 2 minutes.')
+      .max(60, 'Idle shutdown must be 60 minutes or less.'),
+    maxConcurrentGpus: z
+      .number()
+      .int()
+      .min(1, 'At least one GPU must be allowed.')
+      .max(3, 'Version 1 supports no more than three GPUs.')
+  })
+  .strict()
+export type CloudGuardrails = z.infer<typeof CloudGuardrailsSchema>
+
+export const DEFAULT_CLOUD_GUARDRAILS: CloudGuardrails = Object.freeze({
+  maxSessionCostUsd: 10,
+  maxRuntimeMinutes: 120,
+  idleTimeoutMinutes: 10,
+  maxConcurrentGpus: 1
+})
+
+export const CloudConnectInputSchema = z
+  .object({
+    apiKey: RunPodApiKeySchema
+  })
+  .strict()
+export type CloudConnectInput = z.infer<typeof CloudConnectInputSchema>
+
+export const CloudGpuOptionSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    memoryGb: z.number().int().positive(),
+    secureHourlyUsd: z.number().nonnegative().nullable(),
+    communityHourlyUsd: z.number().nonnegative().nullable(),
+    ltxCompatibility: z.enum(['below-baseline', 'meets-baseline'])
+  })
+  .strict()
+export type CloudGpuOption = z.infer<typeof CloudGpuOptionSchema>
+
+export const CloudAccountSnapshotSchema = z
+  .object({
+    checkedAt: z.string().datetime({ offset: true }),
+    totalPods: z.number().int().nonnegative(),
+    activePods: z.number().int().nonnegative(),
+    activeHourlyCostUsd: z.number().nonnegative()
+  })
+  .strict()
+export type CloudAccountSnapshot = z.infer<typeof CloudAccountSnapshotSchema>
+
+export const CloudSetupChecklistSchema = z
+  .object({
+    accountConnected: z.boolean(),
+    guardrailsSaved: z.boolean(),
+    modelStorageReady: z.literal(false),
+    workerImageReady: z.literal(false),
+    automaticShutdownTested: z.literal(false)
+  })
+  .strict()
+
+export const CloudConnectionStatusSchema = z
+  .object({
+    provider: z.literal('runpod'),
+    connectionState: z.enum(['not-configured', 'connected', 'attention']),
+    credentialStored: z.boolean(),
+    guardrails: CloudGuardrailsSchema,
+    guardrailsSaved: z.boolean(),
+    account: CloudAccountSnapshotSchema.nullable(),
+    gpuCatalogCheckedAt: z.string().datetime({ offset: true }).nullable(),
+    gpuOptions: CloudGpuOptionSchema.array().max(12),
+    catalogMessage: z.string().nullable(),
+    validationCostUsd: z.literal(0),
+    setupChecklist: CloudSetupChecklistSchema,
+    generationState: z.literal('locked'),
+    generationReason: z.string()
+  })
+  .strict()
+export type CloudConnectionStatus = z.infer<typeof CloudConnectionStatusSchema>
+
+export const CloudErrorCodeSchema = z.enum([
+  'invalid-key',
+  'insufficient-permissions',
+  'timed-out',
+  'rate-limited',
+  'provider-unavailable',
+  'invalid-response',
+  'secure-storage-unavailable',
+  'secure-storage-error',
+  'settings-error',
+  'not-connected',
+  'invalid-input',
+  'unknown'
+])
+export type CloudErrorCode = z.infer<typeof CloudErrorCodeSchema>
+
+export const CloudActionResultSchema = z.discriminatedUnion('ok', [
+  z
+    .object({
+      ok: z.literal(true),
+      status: CloudConnectionStatusSchema
+    })
+    .strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: CloudErrorCodeSchema,
+          message: z.string().min(1)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type CloudActionResult = z.infer<typeof CloudActionResultSchema>
+
 export const IPC_CHANNELS = {
   systemGetStatus: 'studio:system:get-status',
   projectsList: 'studio:projects:list',
   projectsCreate: 'studio:projects:create',
-  projectsOpen: 'studio:projects:open'
+  projectsOpen: 'studio:projects:open',
+  cloudGetStatus: 'studio:cloud:get-status',
+  cloudConnect: 'studio:cloud:connect',
+  cloudRefresh: 'studio:cloud:refresh',
+  cloudDisconnect: 'studio:cloud:disconnect',
+  cloudSaveGuardrails: 'studio:cloud:save-guardrails'
 } as const
 
 export interface StudioApi {
@@ -136,5 +275,12 @@ export interface StudioApi {
     list(): Promise<ProjectSummary[]>
     create(input: CreateProjectInput): Promise<ProjectDetails>
     open(projectId: string): Promise<ProjectDetails>
+  }
+  cloud: {
+    getStatus(): Promise<CloudConnectionStatus>
+    connect(input: CloudConnectInput): Promise<CloudActionResult>
+    refresh(): Promise<CloudActionResult>
+    disconnect(): Promise<CloudActionResult>
+    saveGuardrails(guardrails: CloudGuardrails): Promise<CloudActionResult>
   }
 }

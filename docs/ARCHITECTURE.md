@@ -51,6 +51,8 @@ animated-series-studio/
 │   ├── domain/                   entities, invariants, state machines
 │   ├── contracts/                JSON Schemas and generated TypeScript types
 │   ├── project-store/            files, SQLite index, migrations, backup
+│   ├── credential-vault/         OS-protected provider secret storage
+│   ├── cloud-setup/              account check, local limits, setup state
 │   ├── upstream-adapter/         pinned skill invocation and normalization
 │   ├── orchestrator/             durable queues, dependencies, approvals
 │   ├── provider-runpod/          GPU lifecycle and cost polling
@@ -91,13 +93,13 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Media processing | FFmpeg/ffprobe | Deterministic assembly, normalization, probing, and export |
 | Worker packaging | Docker image pinned by digest | Repeatable GPU setup with no per-session installation |
 | Cloud provider | RunPod through an adapter | Temporary GPU lifecycle, templates, API control, persistent network cache |
-| Secrets | Windows Credential Manager through desktop keychain adapter | No plaintext project or repository credentials |
+| Secrets | Electron asynchronous `safeStorage`; Windows DPAPI protects encrypted vault bytes | No plaintext project or repository credentials; fail closed when protection is unavailable |
 
 Versions are chosen and pinned during implementation spikes. “Latest” is never a production version.
 
-### Implemented foundation boundary
+### Implemented boundary
 
-Version 0.2.0 implements `apps/desktop` plus `packages/contracts`, `packages/domain`, and `packages/project-store`. The packaged window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
+Version 0.3.0 implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, and the read-only portion of `packages/provider-runpod`. The packaged window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
 
 The local project store currently provides:
 
@@ -106,7 +108,9 @@ The local project store currently provides:
 - Temporary-file write, flush, SHA-256, atomic rename, then catalog transaction.
 - Startup reconciliation that indexes valid manifests and preserves invalid/unrecognized folders for later recovery.
 
-Backup/restore, migration preview/rollback, credential vault, redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. No remote/cloud component is implemented or reachable from the renderer.
+The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
+
+Backup/restore, migration preview/rollback, structured redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. Provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented.
 
 ## 6. Local component responsibilities
 

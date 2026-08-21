@@ -1,6 +1,6 @@
 # API and adapter contracts
 
-This document defines behavior and shapes. Version 0.2.0 adds runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle. Language-neutral JSON Schemas for worker/media contracts remain Phase 1/worker work and must remain consistent with this document.
+This document defines behavior and shapes. Version 0.3.0 provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle and no-cost cloud-account setup. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
 
 ## 1. Contract rules
 
@@ -16,7 +16,7 @@ This document defines behavior and shapes. Version 0.2.0 adds runtime Zod schema
 
 The React renderer can call only methods exposed by the Electron preload layer.
 
-### Implemented in version 0.2.0
+### Implemented in version 0.3.0
 
 | Preload method | Internal channel | Purpose |
 | --- | --- | --- |
@@ -24,8 +24,13 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `projects.list()` | `studio:projects:list` | List valid locally indexed projects |
 | `projects.create(input)` | `studio:projects:create` | Validate and create an isolated series/film project |
 | `projects.open(projectId)` | `studio:projects:open` | Validate identity and reopen canonical local metadata |
+| `cloud.getStatus()` | `studio:cloud:get-status` | Read opaque RunPod connection, last account check, price catalogue, setup checklist, and saved local limits |
+| `cloud.connect({ apiKey })` | `studio:cloud:connect` | Validate the key with `GET /v2/pods`, optionally read the GPU catalogue, then encrypt the key only after validation succeeds |
+| `cloud.refresh()` | `studio:cloud:refresh` | Recheck the saved key and current price catalogue without creating a resource |
+| `cloud.saveGuardrails(limits)` | `studio:cloud:save-guardrails` | Validate and save non-secret default cost/runtime/idle/concurrency limits locally |
+| `cloud.disconnect()` | `studio:cloud:disconnect` | Remove only the protected local key and connection snapshot; never mutate provider resources |
 
-The preload exposes no generic `send`, listener, filesystem, shell, or provider method. The main process validates that each call comes from the expected top frame and production/development application origin.
+The preload exposes no generic `send`, listener, filesystem, shell, or provider-resource method. The main process validates that each call comes from the expected top frame and production/development application origin. The submitted API key crosses the typed IPC boundary once for validation; success responses contain only opaque state and aggregate counts/prices. Action failures use stable safe codes and do not include provider payloads or the key.
 
 ### Planned surface
 
@@ -40,7 +45,6 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider 
 | `worker.setup/start/status/stopNow` | Guided cloud control |
 | `take.review/approve/reject/retake` | Candidate review |
 | `timeline.assemble/validate/export` | Rough cut and delivery |
-| `settings.credentials.test/remove` | Vault-backed credentials |
 | `support.bundle.create` | Redacted diagnostics |
 
 The renderer never receives a raw provider key. IPC validates caller, project scope, and payload schema.
@@ -61,6 +65,8 @@ interface GPUProvider {
 ```
 
 `createLease` must tag the provider resource with project, studio session, idempotency key, hard deadline, and worker-image version. A timeout is reconciled by tag before retry.
+
+Version 0.3.0 implements only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
 
 ## 4. Media-engine interfaces
 

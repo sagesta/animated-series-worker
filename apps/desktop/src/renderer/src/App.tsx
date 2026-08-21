@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type JSX } from 'react'
 import {
+  type CloudConnectionStatus,
   type ProjectDetails,
   type ProjectSummary,
   type SystemStatus,
   type VisualDirection
 } from '@studio/contracts'
+import { CloudSetup } from './CloudSetup'
 import { ProjectWizard } from './ProjectWizard'
 
 type Page = 'home' | 'story' | 'world' | 'storyboard' | 'generate' | 'review' | 'edit' | 'settings'
@@ -56,8 +58,8 @@ const pageCopy: Record<
     eyebrow: 'Generation',
     title: 'Paid generation is intentionally locked',
     description:
-      'GPU setup, estimates, spending approval, LTX workflows, TTS, and lip sync are not connected in this foundation build.',
-    next: 'The setup wizard and safety controls must pass their own release gate first.'
+      'You can now connect RunPod safely in Settings. Creating GPUs, LTX workflows, TTS, and lip sync remain unavailable until the prepared worker and shutdown guards pass a controlled test.',
+    next: 'Connect the account and save safety defaults in Settings; this still rents no GPU.'
   },
   review: {
     eyebrow: 'Review',
@@ -81,6 +83,15 @@ function formatDate(timestamp: string): string {
     day: 'numeric',
     year: 'numeric'
   }).format(new Date(timestamp))
+}
+
+function formatCurrencyForSidebar(value: number): string {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value)
 }
 
 function projectTypeLabel(project: Pick<ProjectSummary, 'type'>): string {
@@ -258,11 +269,17 @@ function ProjectLibrary({
 
 interface ProjectOverviewProps {
   project: ProjectDetails
+  cloudStatus?: CloudConnectionStatus
   onNavigate(page: Page): void
   onLibrary(): void
 }
 
-function ProjectOverview({ project, onNavigate, onLibrary }: ProjectOverviewProps): JSX.Element {
+function ProjectOverview({
+  project,
+  cloudStatus,
+  onNavigate,
+  onLibrary
+}: ProjectOverviewProps): JSX.Element {
   const { manifest, workspacePath } = project
 
   return (
@@ -308,8 +325,16 @@ function ProjectOverview({ project, onNavigate, onLibrary }: ProjectOverviewProp
           <span className="health-icon locked-icon">◇</span>
           <div>
             <span>Cloud GPU</span>
-            <strong>Not configured</strong>
-            <small>$0 active cloud spend</small>
+            <strong>
+              {cloudStatus?.connectionState === 'connected'
+                ? 'Account connected · generation locked'
+                : 'Not configured'}
+            </strong>
+            <small>
+              {cloudStatus?.account && cloudStatus.account.activePods > 0
+                ? `${cloudStatus.account.activePods} existing active RunPod ${cloudStatus.account.activePods === 1 ? 'Pod' : 'Pods'}`
+                : '$0 active cloud spend'}
+            </small>
           </div>
         </article>
       </section>
@@ -405,13 +430,23 @@ function WorkspacePlaceholder({
   )
 }
 
-function Settings({ status }: { status?: SystemStatus }): JSX.Element {
+function Settings({
+  status,
+  cloudStatus,
+  onCloudStatus
+}: {
+  status?: SystemStatus
+  cloudStatus?: CloudConnectionStatus
+  onCloudStatus(status: CloudConnectionStatus): void
+}): JSX.Element {
   return (
     <div className="settings-view">
       <header className="page-heading">
         <p className="eyebrow">Studio settings</p>
-        <h1>Clear status, no hidden activity.</h1>
-        <p>Only local project storage is active in this foundation build.</p>
+        <h1>Connect the GPU account without renting one.</h1>
+        <p>
+          The first safe step is a free account check. Paid generation remains separately locked.
+        </p>
       </header>
 
       <section className="settings-section">
@@ -437,26 +472,13 @@ function Settings({ status }: { status?: SystemStatus }): JSX.Element {
 
       <section className="settings-section">
         <div>
-          <h2>Cloud GPU</h2>
-          <p>Temporary workers will eventually handle image-to-video, voice, and lip sync.</p>
-        </div>
-        <div className="settings-card cloud-settings">
-          <div className="settings-row">
-            <span>Connection</span>
-            <strong className="neutral-status">Not configured</strong>
-          </div>
-          <div className="settings-row">
-            <span>Current spend</span>
-            <strong>$0.00</strong>
-          </div>
-          <p className="settings-explanation">
-            Setup stays locked until backup, recovery, cost approval, and automatic shutdown
-            safeguards are implemented and tested.
+          <h2>RunPod and spending</h2>
+          <p>
+            Store the API key securely, verify access, view current planning prices, and choose
+            conservative defaults.
           </p>
-          <button className="button button-disabled" disabled>
-            GPU setup coming later
-          </button>
         </div>
+        <CloudSetup status={cloudStatus} onStatus={onCloudStatus} />
       </section>
 
       <section className="settings-section">
@@ -482,6 +504,7 @@ function Settings({ status }: { status?: SystemStatus }): JSX.Element {
 export function App(): JSX.Element {
   const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [status, setStatus] = useState<SystemStatus>()
+  const [cloudStatus, setCloudStatus] = useState<CloudConnectionStatus>()
   const [activeProject, setActiveProject] = useState<ProjectDetails>()
   const [page, setPage] = useState<Page>('home')
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -492,23 +515,24 @@ export function App(): JSX.Element {
   useEffect(() => {
     let cancelled = false
 
-    void Promise.all([window.studio.projects.list(), window.studio.system.getStatus()])
-      .then(([storedProjects, systemStatus]) => {
-        if (!cancelled) {
-          setProjects(storedProjects)
-          setStatus(systemStatus)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError('The local project library could not be opened. No cloud service was started.')
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      })
+    void Promise.allSettled([
+      window.studio.projects.list(),
+      window.studio.system.getStatus(),
+      window.studio.cloud.getStatus()
+    ]).then(([projectsResult, systemResult, cloudResult]) => {
+      if (cancelled) return
+
+      if (projectsResult.status === 'fulfilled') setProjects(projectsResult.value)
+      if (systemResult.status === 'fulfilled') setStatus(systemResult.value)
+      if (cloudResult.status === 'fulfilled') setCloudStatus(cloudResult.value)
+
+      if (projectsResult.status === 'rejected' || systemResult.status === 'rejected') {
+        setError('The local project library could not be opened. No cloud service was started.')
+      } else if (cloudResult.status === 'rejected') {
+        setError('Cloud settings need attention. Local productions remain available and unchanged.')
+      }
+      setLoading(false)
+    })
 
     return () => {
       cancelled = true
@@ -554,7 +578,7 @@ export function App(): JSX.Element {
 
   const mainContent = (): JSX.Element => {
     if (page === 'settings') {
-      return <Settings status={status} />
+      return <Settings status={status} cloudStatus={cloudStatus} onCloudStatus={setCloudStatus} />
     }
 
     if (!activeProject) {
@@ -570,7 +594,12 @@ export function App(): JSX.Element {
 
     if (page === 'home') {
       return (
-        <ProjectOverview project={activeProject} onNavigate={setPage} onLibrary={goToLibrary} />
+        <ProjectOverview
+          project={activeProject}
+          cloudStatus={cloudStatus}
+          onNavigate={setPage}
+          onLibrary={goToLibrary}
+        />
       )
     }
 
@@ -588,6 +617,10 @@ export function App(): JSX.Element {
       </main>
     )
   }
+
+  const cloudConnected = cloudStatus?.connectionState === 'connected'
+  const reportedActivePods = cloudStatus?.account?.activePods ?? 0
+  const reportedHourlyCost = cloudStatus?.account?.activeHourlyCostUsd ?? 0
 
   return (
     <div className="app-shell">
@@ -635,13 +668,23 @@ export function App(): JSX.Element {
         <div className="sidebar-spacer" />
         <div className="cloud-summary">
           <div>
-            <span className="cloud-light" />
-            <strong>Local mode</strong>
+            <span className={`cloud-light ${cloudConnected ? 'connected' : ''}`} />
+            <strong>{cloudConnected ? 'RunPod linked' : 'Local mode'}</strong>
           </div>
-          <p>Cloud GPU is not configured</p>
-          <span>$0 current spend</span>
+          <p>
+            {cloudConnected
+              ? reportedActivePods > 0
+                ? `RunPod reports ${reportedActivePods} active ${reportedActivePods === 1 ? 'Pod' : 'Pods'}`
+                : 'No active Pods at last check'
+              : 'Cloud GPU is not configured'}
+          </p>
+          <span>
+            {cloudConnected
+              ? `${formatCurrencyForSidebar(reportedHourlyCost)}/hr reported · generation locked`
+              : '$0 current spend'}
+          </span>
         </div>
-        <div className="sidebar-version">Foundation build · v{status?.appVersion}</div>
+        <div className="sidebar-version">Safe connection build · v{status?.appVersion}</div>
       </aside>
 
       <main className="workspace">
@@ -650,7 +693,11 @@ export function App(): JSX.Element {
             <span className="topbar-dot" />
             Local workspace ready
           </div>
-          <div className="topbar-safety">No paid services active</div>
+          <div className="topbar-safety">
+            {reportedActivePods > 0
+              ? 'Existing RunPod activity found · generation locked'
+              : 'No paid services active'}
+          </div>
         </header>
         {error && (
           <div className="error-banner" role="alert">

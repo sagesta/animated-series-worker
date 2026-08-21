@@ -3,11 +3,16 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ProjectDetails, StudioApi, SystemStatus } from '@studio/contracts'
+import type {
+  CloudConnectionStatus,
+  ProjectDetails,
+  StudioApi,
+  SystemStatus
+} from '@studio/contracts'
 import { App } from './App'
 
 const systemStatus: SystemStatus = {
-  appVersion: '0.2.0',
+  appVersion: '0.3.0',
   electronVersion: '43.4.1',
   nodeVersion: '24.18.1',
   storagePath: 'C:\\Studio\\projects',
@@ -16,6 +21,51 @@ const systemStatus: SystemStatus = {
   cloudGpuState: 'not-configured',
   generationState: 'locked',
   generationReason: 'Local safety foundation first.'
+}
+
+const disconnectedCloudStatus: CloudConnectionStatus = {
+  provider: 'runpod',
+  connectionState: 'not-configured',
+  credentialStored: false,
+  guardrails: {
+    maxSessionCostUsd: 10,
+    maxRuntimeMinutes: 120,
+    idleTimeoutMinutes: 10,
+    maxConcurrentGpus: 1
+  },
+  guardrailsSaved: false,
+  account: null,
+  gpuCatalogCheckedAt: null,
+  gpuOptions: [],
+  catalogMessage: null,
+  validationCostUsd: 0,
+  setupChecklist: {
+    accountConnected: false,
+    guardrailsSaved: false,
+    modelStorageReady: false,
+    workerImageReady: false,
+    automaticShutdownTested: false
+  },
+  generationState: 'locked',
+  generationReason: 'Connect RunPod with a no-cost account check.'
+}
+
+const connectedCloudStatus: CloudConnectionStatus = {
+  ...disconnectedCloudStatus,
+  connectionState: 'connected',
+  credentialStored: true,
+  account: {
+    checkedAt: '2026-08-21T18:00:00.000Z',
+    totalPods: 0,
+    activePods: 0,
+    activeHourlyCostUsd: 0
+  },
+  gpuCatalogCheckedAt: '2026-08-21T18:00:00.000Z',
+  setupChecklist: {
+    ...disconnectedCloudStatus.setupChecklist,
+    accountConnected: true
+  },
+  generationReason: 'RunPod is connected. Paid generation stays locked.'
 }
 
 const createdFilm: ProjectDetails = {
@@ -46,9 +96,14 @@ const createdFilm: ProjectDetails = {
 }
 
 let createProject: ReturnType<typeof vi.fn<StudioApi['projects']['create']>>
+let connectCloud: ReturnType<typeof vi.fn<StudioApi['cloud']['connect']>>
 
 beforeEach(() => {
   createProject = vi.fn<StudioApi['projects']['create']>().mockResolvedValue(createdFilm)
+  connectCloud = vi.fn<StudioApi['cloud']['connect']>().mockResolvedValue({
+    ok: true,
+    status: connectedCloudStatus
+  })
   const studioApi: StudioApi = {
     system: {
       getStatus: vi.fn().mockResolvedValue(systemStatus)
@@ -57,6 +112,16 @@ beforeEach(() => {
       list: vi.fn().mockResolvedValue([]),
       create: createProject,
       open: vi.fn()
+    },
+    cloud: {
+      getStatus: vi.fn().mockResolvedValue(disconnectedCloudStatus),
+      connect: connectCloud,
+      refresh: vi.fn().mockResolvedValue({ ok: true, status: connectedCloudStatus }),
+      disconnect: vi.fn().mockResolvedValue({ ok: true, status: disconnectedCloudStatus }),
+      saveGuardrails: vi.fn().mockResolvedValue({
+        ok: true,
+        status: { ...disconnectedCloudStatus, guardrailsSaved: true }
+      })
     }
   }
 
@@ -109,5 +174,22 @@ describe('desktop project foundation', () => {
     expect(await screen.findByRole('heading', { name: 'The Last Kite' })).toBeTruthy()
     expect(screen.getByText('Cloud GPU')).toBeTruthy()
     expect(screen.getByText('$0 active cloud spend')).toBeTruthy()
+  })
+
+  it('SEC-001 connects RunPod with a free check while generation remains locked', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: /settings/i }))
+    await user.type(screen.getByLabelText('RunPod API key'), 'rpa_valid_secret_value_123456789')
+    await user.click(screen.getByRole('button', { name: 'Test and store securely' }))
+
+    await waitFor(() => expect(connectCloud).toHaveBeenCalledTimes(1))
+    expect(connectCloud).toHaveBeenCalledWith({
+      apiKey: 'rpa_valid_secret_value_123456789'
+    })
+    expect(await screen.findByText('RunPod account connected')).toBeTruthy()
+    expect(screen.getByText(/free check did not rent a GPU/i)).toBeTruthy()
+    expect(screen.getByText('Generation locked')).toBeTruthy()
   })
 })

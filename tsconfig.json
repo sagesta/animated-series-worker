@@ -18,8 +18,11 @@
     "baseUrl": ".",
     "paths": {
       "@studio/contracts": ["packages/contracts/src/index.ts"],
+      "@studio/cloud-setup": ["packages/cloud-setup/src/index.ts"],
+      "@studio/credential-vault": ["packages/credential-vault/src/index.ts"],
       "@studio/domain": ["packages/domain/src/index.ts"],
-      "@studio/project-store": ["packages/project-store/src/index.ts"]
+      "@studio/project-store": ["packages/project-store/src/index.ts"],
+      "@studio/provider-runpod": ["packages/provider-runpod/src/index.ts"]
     },
     "types": ["node"]
   },
