@@ -239,6 +239,8 @@ When a new version is locked, the impact engine does not mark everything stale b
 
 ```text
 projects/
+├── .studio/
+│   └── catalog.sqlite            rebuildable local project library
 └── <project-code>-<project-ulid>/
     ├── project.json
     ├── source/
@@ -265,6 +267,8 @@ projects/
 ```
 
 Media filenames are friendly, but identity comes from manifest IDs and hashes. No code relies on user-visible names being unique.
+
+Version 0.2.0 creates this directory skeleton, `project.json`, and `project.sqlite`. Creative entity/version records and media lineage remain planned; their folders are intentionally empty until those phases implement the corresponding contracts.
 
 ## 7. Multiple-series isolation
 

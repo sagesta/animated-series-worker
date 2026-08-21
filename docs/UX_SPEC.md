@@ -6,6 +6,10 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
+### Current implementation — version 0.2.0
+
+The production library, series/film creation wizard, project overview, primary navigation, local status, settings summary, focus states, reduced-motion handling, and friendly screen-level recovery boundary are implemented. Story, World & Cast, Storyboard, Generate, Review, and Edit & Export currently show explicit planned/locked explanations rather than simulated controls. Cloud setup and every paid action are absent and report `$0`/`Not configured`.
+
 ## 2. Navigation
 
 Primary navigation:

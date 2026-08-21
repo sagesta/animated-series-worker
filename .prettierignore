@@ -1,0 +1,12 @@
+vendor/
+node_modules/
+out/
+release/
+coverage/
+pnpm-lock.yaml
+docs/
+scripts/
+config/
+README.md
+CHANGELOG.md
+AGENTS.md

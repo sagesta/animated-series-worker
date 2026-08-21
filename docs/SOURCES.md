@@ -4,6 +4,17 @@ Last verified: 2026-08-21
 
 External models, APIs, prices, licenses, and platform recommendations can change. These links support the current baseline; implementation and every relevant update must reverify exact versions and terms. This document is technical evidence, not legal advice.
 
+## Desktop foundation
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| Electron security | Current Electron guidance recommends context isolation, renderer sandboxing, no Node integration for untrusted renderer content, restrictive content security policy, limited navigation/window creation, and IPC sender validation. | [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), [process sandboxing](https://www.electronjs.org/docs/latest/tutorial/sandbox), [context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation) |
+| Electron application protocol | Electron recommends avoiding `file://` privileges where practical; the packaged renderer is therefore served from the restricted `studio://app` protocol. | [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), [protocol API](https://www.electronjs.org/docs/latest/api/protocol) |
+| Local SQLite | Node's built-in `node:sqlite` module is available in the Node generation bundled by Electron 43 and provides `DatabaseSync`, prepared statements, and transactions without a separately compiled add-on. Its current Node documentation still identifies the API as release-candidate stability. | [Node SQLite API](https://nodejs.org/api/sqlite.html), [Electron 43 release](https://www.electronjs.org/blog/electron-43-0) |
+| Desktop build system | Electron Vite documents separate main, preload, and renderer builds; its dependency guidance supports bundling preload dependencies required by a sandboxed preload. | [Electron Vite guide](https://electron-vite.org/guide/), [dependency handling](https://electron-vite.org/guide/dependency-handling), [distribution](https://electron-vite.org/guide/distribution) |
+
+Implementation consequence: Electron is pinned at 43.4.1, Electron Vite at 5.0.0, Vite at compatible 7.3.6, and TypeScript at 5.9.3. The main process owns SQLite and files; the renderer receives only four schema-validated methods through the preload bridge.
+
 ## LTX
 
 | Topic | Current verified fact used by the design | Source |

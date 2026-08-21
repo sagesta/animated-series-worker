@@ -1,0 +1,672 @@
+import { useEffect, useMemo, useState, type JSX } from 'react'
+import {
+  type ProjectDetails,
+  type ProjectSummary,
+  type SystemStatus,
+  type VisualDirection
+} from '@studio/contracts'
+import { ProjectWizard } from './ProjectWizard'
+
+type Page = 'home' | 'story' | 'world' | 'storyboard' | 'generate' | 'review' | 'edit' | 'settings'
+
+const navigation: Array<{ id: Page; label: string; icon: string; needsProject: boolean }> = [
+  { id: 'home', label: 'Home', icon: 'H', needsProject: false },
+  { id: 'story', label: 'Story', icon: 'S', needsProject: true },
+  { id: 'world', label: 'World & Cast', icon: 'W', needsProject: true },
+  { id: 'storyboard', label: 'Storyboard', icon: 'B', needsProject: true },
+  { id: 'generate', label: 'Generate', icon: 'G', needsProject: true },
+  { id: 'review', label: 'Review', icon: 'R', needsProject: true },
+  { id: 'edit', label: 'Edit & Export', icon: 'E', needsProject: true },
+  { id: 'settings', label: 'Settings', icon: '⚙', needsProject: false }
+]
+
+const visualLabels: Record<VisualDirection, string> = {
+  '2d': '2D animation',
+  '3d-look': '3D-style animation',
+  mixed: 'Mixed 2D and 3D',
+  undecided: 'Direction not chosen'
+}
+
+const pageCopy: Record<
+  Exclude<Page, 'home' | 'settings'>,
+  { eyebrow: string; title: string; description: string; next: string }
+> = {
+  story: {
+    eyebrow: 'Story foundation',
+    title: 'Shape the story before generating anything',
+    description:
+      'Scripts, episodes, scenes, and dialogue will live here with clear versions and approvals.',
+    next: 'Story planning is the next application slice.'
+  },
+  world: {
+    eyebrow: 'World and cast',
+    title: 'Keep characters, voices, locations, and style consistent',
+    description:
+      'This workspace will hold approved character boards, voice profiles, style bibles, props, and locations.',
+    next: 'Character and style-board tools will unlock after story foundations.'
+  },
+  storyboard: {
+    eyebrow: 'Storyboard',
+    title: 'Plan every shot before paying for video generation',
+    description:
+      'Shots will connect story intent, dialogue, movement, framing, and approved references.',
+    next: 'Storyboard editing will arrive before any cloud generation.'
+  },
+  generate: {
+    eyebrow: 'Generation',
+    title: 'Paid generation is intentionally locked',
+    description:
+      'GPU setup, estimates, spending approval, LTX workflows, TTS, and lip sync are not connected in this foundation build.',
+    next: 'The setup wizard and safety controls must pass their own release gate first.'
+  },
+  review: {
+    eyebrow: 'Review',
+    title: 'Compare takes without losing earlier work',
+    description:
+      'This area will make approvals, rejection notes, retakes, continuity checks, and costs visible.',
+    next: 'Review tools will activate with the first local media pipeline.'
+  },
+  edit: {
+    eyebrow: 'Edit and export',
+    title: 'Assemble only approved material',
+    description:
+      'The final workspace will build timelines, sound, captions, quality checks, and YouTube-ready exports.',
+    next: 'Export stays locked until the media and review pipeline is verified.'
+  }
+}
+
+function formatDate(timestamp: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(timestamp))
+}
+
+function projectTypeLabel(project: Pick<ProjectSummary, 'type'>): string {
+  return project.type === 'series' ? 'Series' : 'One-off film'
+}
+
+function toSummary(project: ProjectDetails): ProjectSummary {
+  const { manifest, workspacePath } = project
+  return {
+    id: manifest.id,
+    code: manifest.code,
+    title: manifest.title,
+    type: manifest.type,
+    status: manifest.status,
+    targetDurationMinutes: manifest.targetDurationMinutes,
+    visualDirection: manifest.visualDirection,
+    safeCheckpointAt: manifest.safeCheckpoint.createdAt,
+    updatedAt: manifest.updatedAt,
+    workspacePath
+  }
+}
+
+function Logo(): JSX.Element {
+  return (
+    <div className="logo-mark" aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </div>
+  )
+}
+
+function EmptyLibrary({ onCreate }: { onCreate(): void }): JSX.Element {
+  return (
+    <div className="library-view">
+      <section className="welcome-panel">
+        <div>
+          <p className="eyebrow">Local production studio</p>
+          <h1>Your production library is ready.</h1>
+          <p className="welcome-copy">
+            Start an animated series or a one-off film. Each project remains separate, organised,
+            and stored on this computer before any paid tools are introduced.
+          </p>
+          <button className="button button-primary button-large" onClick={onCreate}>
+            <span>＋</span> Start a production
+          </button>
+        </div>
+        <div className="welcome-visual" aria-hidden="true">
+          <div className="frame-card frame-one">
+            <span>01</span>
+          </div>
+          <div className="frame-card frame-two">
+            <span>02</span>
+          </div>
+          <div className="frame-card frame-three">
+            <span>03</span>
+          </div>
+          <div className="story-line" />
+        </div>
+      </section>
+
+      <section className="getting-started">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">How it will grow</p>
+            <h2>One calm step at a time</h2>
+          </div>
+          <span className="status-chip local">No GPU cost</span>
+        </div>
+        <div className="stage-grid">
+          <article>
+            <span className="stage-number">1</span>
+            <h3>Create the production</h3>
+            <p>Choose series or film, give it a name, and create a safe local checkpoint.</p>
+            <span className="stage-state ready">Ready now</span>
+          </article>
+          <article>
+            <span className="stage-number">2</span>
+            <h3>Lock the creative plan</h3>
+            <p>Develop story, style, characters, voices, boards, and shot decisions.</p>
+            <span className="stage-state planned">Coming next</span>
+          </article>
+          <article>
+            <span className="stage-number">3</span>
+            <h3>Generate with approval</h3>
+            <p>See time and cost estimates before temporary cloud workers can start.</p>
+            <span className="stage-state locked">Safety locked</span>
+          </article>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+interface ProjectLibraryProps {
+  projects: ProjectSummary[]
+  onCreate(): void
+  onOpen(projectId: string): void
+  openingProjectId?: string
+}
+
+function ProjectLibrary({
+  projects,
+  onCreate,
+  onOpen,
+  openingProjectId
+}: ProjectLibraryProps): JSX.Element {
+  if (projects.length === 0) {
+    return <EmptyLibrary onCreate={onCreate} />
+  }
+
+  return (
+    <div className="library-view">
+      <section className="library-heading">
+        <div>
+          <p className="eyebrow">Production library</p>
+          <h1>Welcome back.</h1>
+          <p>Choose a production to continue, or give a new story its own workspace.</p>
+        </div>
+        <button className="button button-primary" onClick={onCreate}>
+          <span>＋</span> New production
+        </button>
+      </section>
+
+      <section>
+        <div className="section-heading">
+          <div>
+            <h2>Your productions</h2>
+            <p>
+              {projects.length} {projects.length === 1 ? 'project' : 'projects'} stored locally
+            </p>
+          </div>
+          <span className="status-chip local">Local only</span>
+        </div>
+        <div className="project-grid">
+          {projects.map((project, index) => (
+            <button
+              className="project-card"
+              key={project.id}
+              onClick={() => onOpen(project.id)}
+              disabled={openingProjectId === project.id}
+            >
+              <div className={`project-art art-${(index % 4) + 1}`}>
+                <span>{project.code.slice(0, 2)}</span>
+                <div className="project-art-lines" />
+              </div>
+              <div className="project-card-body">
+                <div className="project-card-meta">
+                  <span>{projectTypeLabel(project)}</span>
+                  <span>•</span>
+                  <span>{project.targetDurationMinutes} min</span>
+                </div>
+                <h3>{project.title}</h3>
+                <p>{visualLabels[project.visualDirection]}</p>
+                <div className="project-card-footer">
+                  <span className="checkpoint-mark">✓</span>
+                  Safe checkpoint {formatDate(project.safeCheckpointAt)}
+                </div>
+              </div>
+              <span className="open-arrow" aria-hidden="true">
+                {openingProjectId === project.id ? '…' : '→'}
+              </span>
+            </button>
+          ))}
+          <button className="project-card new-project-card" onClick={onCreate}>
+            <span className="new-project-plus">＋</span>
+            <strong>New production</strong>
+            <span>Series or one-off film</span>
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+interface ProjectOverviewProps {
+  project: ProjectDetails
+  onNavigate(page: Page): void
+  onLibrary(): void
+}
+
+function ProjectOverview({ project, onNavigate, onLibrary }: ProjectOverviewProps): JSX.Element {
+  const { manifest, workspacePath } = project
+
+  return (
+    <div className="project-overview">
+      <section className="project-hero">
+        <div>
+          <button className="text-button back-link" onClick={onLibrary}>
+            ← All productions
+          </button>
+          <div className="hero-title-row">
+            <span className="project-code">{manifest.code}</span>
+            <span className="status-chip development">In development</span>
+          </div>
+          <h1>{manifest.title}</h1>
+          <p>
+            {manifest.type === 'series' ? 'Animated series' : 'One-off film'} ·{' '}
+            {manifest.targetDurationMinutes} minutes · {visualLabels[manifest.visualDirection]}
+          </p>
+        </div>
+        <button className="button button-primary" onClick={() => onNavigate('story')}>
+          Start story planning <span>→</span>
+        </button>
+      </section>
+
+      <section className="health-grid">
+        <article className="health-card">
+          <span className="health-icon safe">✓</span>
+          <div>
+            <span>Last safe checkpoint</span>
+            <strong>{manifest.safeCheckpoint.label}</strong>
+            <small>{formatDate(manifest.safeCheckpoint.createdAt)}</small>
+          </div>
+        </article>
+        <article className="health-card">
+          <span className="health-icon local-icon">⌂</span>
+          <div>
+            <span>Storage</span>
+            <strong>Saved on this computer</strong>
+            <small title={workspacePath}>{workspacePath}</small>
+          </div>
+        </article>
+        <article className="health-card">
+          <span className="health-icon locked-icon">◇</span>
+          <div>
+            <span>Cloud GPU</span>
+            <strong>Not configured</strong>
+            <small>$0 active cloud spend</small>
+          </div>
+        </article>
+      </section>
+
+      <section className="production-roadmap">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Production path</p>
+            <h2>Build confidence before compute</h2>
+          </div>
+        </div>
+        <div className="roadmap-list">
+          <button onClick={() => onNavigate('story')}>
+            <span className="roadmap-number current">1</span>
+            <span>
+              <strong>Story foundation</strong>
+              <small>Structure the story, scenes, dialogue, and production intent.</small>
+            </span>
+            <span className="roadmap-state current">Next</span>
+          </button>
+          <button onClick={() => onNavigate('world')}>
+            <span className="roadmap-number">2</span>
+            <span>
+              <strong>World and cast</strong>
+              <small>Lock visual style, character boards, voices, locations, and props.</small>
+            </span>
+            <span className="roadmap-state">Planned</span>
+          </button>
+          <button onClick={() => onNavigate('storyboard')}>
+            <span className="roadmap-number">3</span>
+            <span>
+              <strong>Storyboard and shots</strong>
+              <small>Decide movement, framing, dialogue, and references shot by shot.</small>
+            </span>
+            <span className="roadmap-state">Planned</span>
+          </button>
+          <button onClick={() => onNavigate('generate')}>
+            <span className="roadmap-number">4</span>
+            <span>
+              <strong>Generate, review, and finish</strong>
+              <small>Paid work remains locked until estimates and safety controls are ready.</small>
+            </span>
+            <span className="roadmap-state locked">Locked</span>
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function WorkspacePlaceholder({
+  page,
+  project,
+  onHome
+}: {
+  page: Exclude<Page, 'home' | 'settings'>
+  project: ProjectDetails
+  onHome(): void
+}): JSX.Element {
+  const copy = pageCopy[page]
+  const locked = page === 'generate'
+
+  return (
+    <div className="placeholder-view">
+      <button className="text-button back-link" onClick={onHome}>
+        ← Production overview
+      </button>
+      <section className="placeholder-card">
+        <div className={`placeholder-symbol ${locked ? 'locked' : ''}`}>
+          {locked ? '◇' : navigation.find((item) => item.id === page)?.icon}
+        </div>
+        <p className="eyebrow">{copy.eyebrow}</p>
+        <h1>{copy.title}</h1>
+        <p>{copy.description}</p>
+        <div className="placeholder-project">
+          <span>{project.manifest.code}</span>
+          <div>
+            <strong>{project.manifest.title}</strong>
+            <small>This production remains safely stored and unchanged.</small>
+          </div>
+        </div>
+        <div className="planned-notice">
+          <span>i</span>
+          <p>{copy.next}</p>
+        </div>
+        {locked && (
+          <button className="button button-disabled" disabled>
+            GPU setup not available yet
+          </button>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function Settings({ status }: { status?: SystemStatus }): JSX.Element {
+  return (
+    <div className="settings-view">
+      <header className="page-heading">
+        <p className="eyebrow">Studio settings</p>
+        <h1>Clear status, no hidden activity.</h1>
+        <p>Only local project storage is active in this foundation build.</p>
+      </header>
+
+      <section className="settings-section">
+        <div>
+          <h2>Local workspace</h2>
+          <p>Every production is given an isolated folder inside this location.</p>
+        </div>
+        <div className="settings-card">
+          <div className="settings-row">
+            <span>Project storage</span>
+            <strong title={status?.storagePath}>{status?.storagePath ?? 'Loading…'}</strong>
+          </div>
+          <div className="settings-row">
+            <span>Local catalog</span>
+            <strong className="positive-status">● Ready</strong>
+          </div>
+          <div className="settings-row">
+            <span>Projects found</span>
+            <strong>{status?.indexedProjects ?? '—'}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <div>
+          <h2>Cloud GPU</h2>
+          <p>Temporary workers will eventually handle image-to-video, voice, and lip sync.</p>
+        </div>
+        <div className="settings-card cloud-settings">
+          <div className="settings-row">
+            <span>Connection</span>
+            <strong className="neutral-status">Not configured</strong>
+          </div>
+          <div className="settings-row">
+            <span>Current spend</span>
+            <strong>$0.00</strong>
+          </div>
+          <p className="settings-explanation">
+            Setup stays locked until backup, recovery, cost approval, and automatic shutdown
+            safeguards are implemented and tested.
+          </p>
+          <button className="button button-disabled" disabled>
+            GPU setup coming later
+          </button>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <div>
+          <h2>Application</h2>
+          <p>Useful when checking a future update or support report.</p>
+        </div>
+        <div className="settings-card">
+          <div className="settings-row">
+            <span>Studio version</span>
+            <strong>{status?.appVersion ?? '—'}</strong>
+          </div>
+          <div className="settings-row">
+            <span>Desktop runtime</span>
+            <strong>{status ? `Electron ${status.electronVersion}` : '—'}</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+export function App(): JSX.Element {
+  const [projects, setProjects] = useState<ProjectSummary[]>([])
+  const [status, setStatus] = useState<SystemStatus>()
+  const [activeProject, setActiveProject] = useState<ProjectDetails>()
+  const [page, setPage] = useState<Page>('home')
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>()
+  const [openingProjectId, setOpeningProjectId] = useState<string>()
+
+  useEffect(() => {
+    let cancelled = false
+
+    void Promise.all([window.studio.projects.list(), window.studio.system.getStatus()])
+      .then(([storedProjects, systemStatus]) => {
+        if (!cancelled) {
+          setProjects(storedProjects)
+          setStatus(systemStatus)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('The local project library could not be opened. No cloud service was started.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const activeSummary = useMemo(
+    () => (activeProject ? toSummary(activeProject) : undefined),
+    [activeProject]
+  )
+
+  const openProject = async (projectId: string): Promise<void> => {
+    setError(undefined)
+    setOpeningProjectId(projectId)
+    try {
+      const project = await window.studio.projects.open(projectId)
+      setActiveProject(project)
+      setPage('home')
+    } catch {
+      setError('That production could not be opened safely. Its files were not changed.')
+    } finally {
+      setOpeningProjectId(undefined)
+    }
+  }
+
+  const projectCreated = (project: ProjectDetails): void => {
+    setActiveProject(project)
+    setProjects((current) => [
+      toSummary(project),
+      ...current.filter((item) => item.id !== project.manifest.id)
+    ])
+    setStatus((current) =>
+      current ? { ...current, indexedProjects: current.indexedProjects + 1 } : current
+    )
+    setPage('home')
+    setWizardOpen(false)
+  }
+
+  const goToLibrary = (): void => {
+    setActiveProject(undefined)
+    setPage('home')
+  }
+
+  const mainContent = (): JSX.Element => {
+    if (page === 'settings') {
+      return <Settings status={status} />
+    }
+
+    if (!activeProject) {
+      return (
+        <ProjectLibrary
+          projects={projects}
+          onCreate={() => setWizardOpen(true)}
+          onOpen={(projectId) => void openProject(projectId)}
+          openingProjectId={openingProjectId}
+        />
+      )
+    }
+
+    if (page === 'home') {
+      return (
+        <ProjectOverview project={activeProject} onNavigate={setPage} onLibrary={goToLibrary} />
+      )
+    }
+
+    return (
+      <WorkspacePlaceholder page={page} project={activeProject} onHome={() => setPage('home')} />
+    )
+  }
+
+  if (loading) {
+    return (
+      <main className="loading-screen">
+        <Logo />
+        <h1>Opening your studio…</h1>
+        <p>Checking the local production library.</p>
+      </main>
+    )
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <Logo />
+          <div>
+            <strong>Animated</strong>
+            <span>Series Studio</span>
+          </div>
+        </div>
+
+        <button className="project-switcher" onClick={goToLibrary}>
+          <span className={`switcher-art ${activeProject ? 'active' : ''}`}>
+            {activeSummary?.code.slice(0, 1) ?? '＋'}
+          </span>
+          <span>
+            <small>{activeProject ? 'Current production' : 'Production library'}</small>
+            <strong>{activeProject?.manifest.title ?? 'Choose a project'}</strong>
+          </span>
+          <span className="switcher-arrow">⌄</span>
+        </button>
+
+        <nav aria-label="Studio sections">
+          <span className="nav-label">Workspace</span>
+          {navigation.map((item) => {
+            const disabled = item.needsProject && !activeProject
+            return (
+              <button
+                key={item.id}
+                className={page === item.id ? 'active' : ''}
+                aria-current={page === item.id ? 'page' : undefined}
+                disabled={disabled}
+                title={disabled ? 'Choose or create a production first' : undefined}
+                onClick={() => setPage(item.id)}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                {item.label}
+                {item.id === 'generate' && <span className="mini-lock">◇</span>}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="sidebar-spacer" />
+        <div className="cloud-summary">
+          <div>
+            <span className="cloud-light" />
+            <strong>Local mode</strong>
+          </div>
+          <p>Cloud GPU is not configured</p>
+          <span>$0 current spend</span>
+        </div>
+        <div className="sidebar-version">Foundation build · v{status?.appVersion}</div>
+      </aside>
+
+      <main className="workspace">
+        <header className="topbar">
+          <div>
+            <span className="topbar-dot" />
+            Local workspace ready
+          </div>
+          <div className="topbar-safety">No paid services active</div>
+        </header>
+        {error && (
+          <div className="error-banner" role="alert">
+            <span>!</span>
+            {error}
+            <button aria-label="Dismiss message" onClick={() => setError(undefined)}>
+              ×
+            </button>
+          </div>
+        )}
+        <div className="workspace-scroll">{mainContent()}</div>
+      </main>
+
+      {wizardOpen && (
+        <ProjectWizard onClose={() => setWizardOpen(false)} onCreated={projectCreated} />
+      )}
+    </div>
+  )
+}

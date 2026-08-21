@@ -23,6 +23,7 @@ Decisions are locked for the current baseline. A reversal requires an entry desc
 | D-017 | Accepted | Default delivery is 1920×1080, 16:9, 24 fps, SDR BT.709, H.264 video, AAC-LC 48 kHz stereo, with captions. | It is broadly compatible and matches the planned cinematic animation cadence and YouTube guidance. | A project deliberately selects another delivery profile and passes QC. |
 | D-018 | Accepted | Model, workflow, adapter, schema, and upstream updates apply prospectively; existing approved outputs keep their original manifests. | Reproducibility requires history not to mutate when defaults improve. | Never; a new render is a new take/version. |
 | D-019 | Accepted | Documentation changes are part of the same feature or fix, with no code-only behavioral hotfix exception. | The user explicitly requires future fixes to keep the plan accurate, and drift is most dangerous during emergency work. | Never; an emergency rollback can precede the completed incident change, but closure still includes docs and tests. |
+| D-020 | Accepted | Use the Electron-bundled `node:sqlite` implementation for the Phase 1 local catalog and per-project databases instead of a separately compiled SQLite add-on. | It keeps SQLite inside the pinned desktop runtime, avoids native add-on rebuild/installer fragility, and still provides synchronous transactions for infrequent project lifecycle operations. | The runtime API changes incompatibly, packaging/integrity tests fail, or measured workload needs require another maintained driver. |
 
 ## Open implementation selections
 

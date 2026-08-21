@@ -48,6 +48,12 @@ flowchart LR
 
 ## 4. Phase 1 — local application foundation
 
+### Current checkpoint — version 0.2.0
+
+- `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
+- `DATA-001` is in progress: series/film create, list, open, schema-1 manifest, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, and startup reconciliation are implemented and tested.
+- Phase 1 is **not complete**. Credential vault, structured redacted logging/support bundle, interruption tests, real migration preview/rollback, backup/restore, single-writer protection, signed installer, and clean-machine usability evidence remain.
+
 ### Build
 
 - Set up pnpm workspace, TypeScript configuration, formatting/linting, unit tests, and release versioning.
@@ -252,17 +258,17 @@ Do not:
 
 ## 15. First implementation backlog
 
-| Order | Work package | Output |
-| --- | --- | --- |
-| 1 | `FOUND-001` workspace/toolchain | Buildable TypeScript/Electron shell |
-| 2 | `DATA-001` project store | Series/film create/open, files, SQLite, migrations |
-| 3 | `SEC-001` credential/logging | Vault adapter and redacted diagnostics |
-| 4 | `UP-001` adapter process runner | Pinned version and validation contract |
-| 5 | `UP-002` normalized domain import | Long-form project facts and source provenance |
-| 6 | `CONT-001` versions/dependencies | Locks, impact, stale propagation |
-| 7 | `BENCH-001` image/voice/video test harness | Repeatable quality/runtime/cost pack |
-| 8 | `WORKER-001` gateway/watchdog | Secure local GPU smoke worker |
-| 9 | `CLOUD-001` RunPod lifecycle | One-click create/reconcile/terminate |
-| 10 | `MEDIA-001` image + voice vertical slice | Locked character and voice assets |
-| 11 | `VIDEO-001` LTX vertical slice | One reviewed dialogue/motion shot |
-| 12 | `PILOT-001` 60–90 second production | Full end-to-end proof |
+| Order | Work package | Current state | Output |
+| --- | --- | --- | --- |
+| 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
+| 2 | `DATA-001` project store | In progress | Series/film create/open, files, SQLite, migrations |
+| 3 | `SEC-001` credential/logging | Not started | Vault adapter and redacted diagnostics |
+| 4 | `UP-001` adapter process runner | Not started | Pinned version and validation contract |
+| 5 | `UP-002` normalized domain import | Not started | Long-form project facts and source provenance |
+| 6 | `CONT-001` versions/dependencies | Not started | Locks, impact, stale propagation |
+| 7 | `BENCH-001` image/voice/video test harness | Not started | Repeatable quality/runtime/cost pack |
+| 8 | `WORKER-001` gateway/watchdog | Not started | Secure local GPU smoke worker |
+| 9 | `CLOUD-001` RunPod lifecycle | Not started | One-click create/reconcile/terminate |
+| 10 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
+| 11 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
+| 12 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |

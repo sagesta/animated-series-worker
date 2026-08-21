@@ -1,8 +1,8 @@
 # Animated Series Studio
 
-Animated Series Studio is a planned, local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
+Animated Series Studio is a local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
 
-This repository is currently a **build-ready product and architecture specification**. The production application has not been implemented yet. That distinction must remain visible until the acceptance tests say otherwise.
+This repository now contains the **first working desktop foundation** plus the authoritative product and architecture specification. The current Windows application can create, list, and reopen isolated local series and one-off film projects. It does **not** yet generate storyboards, images, voices, video, lip sync, finished episodes, or cloud machines.
 
 ## Locked baseline
 
@@ -27,8 +27,8 @@ This repository is currently a **build-ready product and architecture specificat
 
 ```text
 animated-series-studio/
-├── apps/                         planned local desktop application
-├── packages/                     planned domain and orchestration modules
+├── apps/desktop/                 current Electron main/preload + React application
+├── packages/                     current contracts, domain, and project-store foundation
 ├── worker/                       planned remote GPU worker image and gateway
 ├── workflows/                    planned versioned ComfyUI/LTX workflows
 ├── config/                       current locks and future runtime defaults
@@ -38,6 +38,19 @@ animated-series-studio/
 ```
 
 The upstream repository can be pulled independently, but this project changes only when its pinned submodule commit is deliberately updated and verified. See [Upstream integration](docs/UPSTREAM_INTEGRATION.md).
+
+## Run the current foundation
+
+Developer prerequisites are Node.js 22 or newer and pnpm 10. Then:
+
+```powershell
+pnpm install
+pnpm dev
+```
+
+Run the governed quality suite with `pnpm quality`. Create an unpacked Windows test build with `pnpm package:dir`, or the current unsigned test installer with `pnpm package:win`. Generated artifacts are placed under `release/`.
+
+These commands are for development only. The finished product will provide a normal guided Windows installer and will not require the creator to use a terminal.
 
 ## Documentation is part of the product
 
@@ -56,7 +69,8 @@ node scripts/check-docs.mjs
 | Product scope and requirements | Baseline documented |
 | Architecture and contracts | Baseline documented |
 | Upstream dependency | Pinned and verified |
-| Desktop application | Not implemented |
+| Desktop application | Working local foundation and unsigned test installer; production setup incomplete |
+| Series/film project storage | Create/list/open implemented and tested; backup/restore incomplete |
 | Remote GPU worker | Not implemented |
 | LTX/Qwen workflows | Not benchmarked or implemented |
 | Production readiness | Not achieved |

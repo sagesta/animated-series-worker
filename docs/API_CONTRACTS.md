@@ -1,6 +1,6 @@
 # API and adapter contracts
 
-This document defines behavior and shapes. Machine-readable JSON Schemas will be added under `packages/contracts` during Phase 1 and must remain consistent with this document.
+This document defines behavior and shapes. Version 0.2.0 adds runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle. Language-neutral JSON Schemas for worker/media contracts remain Phase 1/worker work and must remain consistent with this document.
 
 ## 1. Contract rules
 
@@ -8,7 +8,7 @@ This document defines behavior and shapes. Machine-readable JSON Schemas will be
 - All timestamps are UTC RFC 3339.
 - Durations are integer frames plus an explicit frame rate, or integer milliseconds for audio and infrastructure time.
 - Content files use SHA-256 hashes.
-- Every request has `schemaVersion`, `requestId`, `projectId`, and `idempotencyKey` where it can cause work or spend.
+- Persisted external/worker requests have `schemaVersion`, `requestId`, `projectId`, and `idempotencyKey` where they can cause work or spend. The current local project IPC is schema-validated and writes a schema-versioned manifest but does not pretend to be a paid/durable job request.
 - Unknown required fields or unsupported versions fail closed with a useful error.
 - Error responses include a stable code, safe message, retry classification, and correlation ID; secrets and provider payloads are redacted.
 
@@ -16,9 +16,22 @@ This document defines behavior and shapes. Machine-readable JSON Schemas will be
 
 The React renderer can call only methods exposed by the Electron preload layer.
 
-| Channel | Purpose |
+### Implemented in version 0.2.0
+
+| Preload method | Internal channel | Purpose |
+| --- | --- | --- |
+| `system.getStatus()` | `studio:system:get-status` | Read local version/storage/catalog state and explicit cloud lock |
+| `projects.list()` | `studio:projects:list` | List valid locally indexed projects |
+| `projects.create(input)` | `studio:projects:create` | Validate and create an isolated series/film project |
+| `projects.open(projectId)` | `studio:projects:open` | Validate identity and reopen canonical local metadata |
+
+The preload exposes no generic `send`, listener, filesystem, shell, or provider method. The main process validates that each call comes from the expected top frame and production/development application origin.
+
+### Planned surface
+
+| Channel family | Purpose |
 | --- | --- |
-| `project.create/open/close/list` | Project lifecycle |
+| `project.close` | Remaining project lifecycle behavior |
 | `project.backup/restore/verify` | Safe recovery |
 | `import.preview/apply` | Upstream import with validation and impact preview |
 | `asset.createVersion/submitReview/approve/lock/archive` | Versioned creative assets |

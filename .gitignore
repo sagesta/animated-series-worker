@@ -16,6 +16,8 @@ tmp/
 
 # Dependencies and builds
 node_modules/
+out/
+coverage/
 dist/
 build/
 release/

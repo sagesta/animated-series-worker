@@ -1,0 +1,42 @@
+import { resolve } from 'node:path'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'electron-vite'
+
+const rootDirectory = process.cwd()
+const aliases = {
+  '@studio/contracts': resolve(rootDirectory, 'packages/contracts/src/index.ts'),
+  '@studio/domain': resolve(rootDirectory, 'packages/domain/src/index.ts'),
+  '@studio/project-store': resolve(rootDirectory, 'packages/project-store/src/index.ts')
+}
+
+export default defineConfig({
+  main: {
+    resolve: { alias: aliases },
+    build: {
+      externalizeDeps: false,
+      rollupOptions: {
+        input: resolve(rootDirectory, 'apps/desktop/src/main/index.ts')
+      }
+    }
+  },
+  preload: {
+    resolve: { alias: aliases },
+    build: {
+      externalizeDeps: false,
+      rollupOptions: {
+        input: resolve(rootDirectory, 'apps/desktop/src/preload/index.ts')
+      }
+    }
+  },
+  renderer: {
+    root: resolve(rootDirectory, 'apps/desktop/src/renderer'),
+    base: './',
+    resolve: { alias: aliases },
+    plugins: [react()],
+    build: {
+      rollupOptions: {
+        input: resolve(rootDirectory, 'apps/desktop/src/renderer/index.html')
+      }
+    }
+  }
+})

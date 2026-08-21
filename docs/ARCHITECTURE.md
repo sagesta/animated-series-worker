@@ -41,7 +41,7 @@ flowchart LR
 
 The desktop must be able to recover the project even if the worker and network volume disappear.
 
-## 4. Planned repository structure
+## 4. Target repository structure
 
 ```text
 animated-series-studio/
@@ -81,11 +81,11 @@ The existing upstream requirement that each skill remain self-contained is respe
 
 | Layer | Baseline | Reason |
 | --- | --- | --- |
-| Desktop shell | Electron | Single Windows installer, local process/file integration, credential-vault access |
-| UI | React + TypeScript | Maintainable non-technical workflows and accessible components |
-| Local services | Node.js/TypeScript | Matches upstream `.mjs` tooling and desktop runtime |
-| Durable index | SQLite | Local transactions, dependency queries, queue recovery, no server administration |
-| Canonical contracts | JSON Schema | Language-neutral validation across TypeScript and Python |
+| Desktop shell | Electron 43.4.1 | Single Windows installer, local process/file integration, credential-vault access |
+| UI | React 19.2.8 + TypeScript 5.9.3 | Maintainable non-technical workflows and accessible components |
+| Local services | Electron-bundled Node.js/TypeScript | Matches upstream `.mjs` tooling and desktop runtime |
+| Durable index | SQLite through `node:sqlite` | Local transactions without a separately compiled native add-on; canonical files remain portable |
+| Canonical contracts | Runtime Zod now; JSON Schema target | Validates current TypeScript IPC/manifests while preserving a language-neutral worker target |
 | Worker gateway | Python 3.12 service | Matches LTX/Qwen ecosystems and provides a narrow authenticated API |
 | Workflow engine | ComfyUI bound to loopback | Versionable graphs and current model integration without exposing its UI publicly |
 | Media processing | FFmpeg/ffprobe | Deterministic assembly, normalization, probing, and export |
@@ -94,6 +94,19 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Secrets | Windows Credential Manager through desktop keychain adapter | No plaintext project or repository credentials |
 
 Versions are chosen and pinned during implementation spikes. “Latest” is never a production version.
+
+### Implemented foundation boundary
+
+Version 0.2.0 implements `apps/desktop` plus `packages/contracts`, `packages/domain`, and `packages/project-store`. The packaged window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
+
+The local project store currently provides:
+
+- A rebuildable global catalog at `projects/.studio/catalog.sqlite`.
+- A schema-1 `project.json` plus `project.sqlite` inside every identity-scoped project folder.
+- Temporary-file write, flush, SHA-256, atomic rename, then catalog transaction.
+- Startup reconciliation that indexes valid manifests and preserves invalid/unrecognized folders for later recovery.
+
+Backup/restore, migration preview/rollback, credential vault, redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. No remote/cloud component is implemented or reachable from the renderer.
 
 ## 6. Local component responsibilities
 

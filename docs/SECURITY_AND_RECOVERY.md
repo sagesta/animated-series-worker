@@ -9,6 +9,12 @@
 - Make remote execution temporary, authenticated, bounded, and auditable.
 - Record rights and consent for sensitive source material.
 
+### Current foundation controls
+
+Version 0.2.0 implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest writes, and startup catalog reconciliation.
+
+Credential vault storage, structured redaction/support bundles, backups, restore, migration rollback, single-writer locks, worker authentication, remote cleanup, watchdogs, and security-suite evidence are not implemented. Generation and cloud setup remain unreachable, so the current application cannot start billable compute.
+
 ## 2. Main threats
 
 | Threat | Primary control |

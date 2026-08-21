@@ -34,6 +34,18 @@ Maintain small, rights-safe fixtures:
 
 Creative benchmark references are locked by hash. Changing them is a test-version change documented in the changelog.
 
+## 3.1 Foundation evidence — version 0.2.0
+
+| Evidence | Current result | Boundary |
+| --- | --- | --- |
+| Domain unit tests | Four passing tests for ULID shape/order, code normalization, safe manifest defaults, and invalid inputs | Does not cover creative asset versions/state machines |
+| Project-store integration tests | Three passing tests covering series+film create/reopen, canonical files/databases/folders, same-title isolation, and path-like identity rejection | Covers the create/open portion of AT-001 and folder portion of AT-031 only |
+| Renderer tests | Two passing tests covering honest no-paid-service empty state and the four-step one-off-film creation flow | Does not replace representative non-technical usability acceptance |
+| Static quality | Type check, lint, documentation check, and three-part Electron production build pass | Not a security audit or clean-machine test |
+| Windows package smoke | Unpacked executable stays running under a fresh temporary profile and initializes the local catalog; home/wizard visual-accessibility pass succeeds; 99.9 MiB NSIS installer builds | Installer is unsigned and was not clean-machine/upgrade/rollback tested |
+
+The suite contains nine automated tests. AT-001 remains open because backup/restore and interruption recovery are absent. AT-031 remains open because asset/query/token/cache and concurrent-worker isolation do not exist yet.
+
 ## 4. Core acceptance tests
 
 ### Project and continuity
