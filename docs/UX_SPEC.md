@@ -6,9 +6,9 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.3.0
+### Current implementation — version 0.4.0
 
-The production library, series/film creation wizard, project overview, primary navigation, local status, focus states, reduced-motion handling, and friendly recovery boundary are implemented. A project overview now creates a verified full backup with a plain-language progress/result state; an older schema-1 project also receives one plain-language format-update card listing its exact changes, one-file scope, no-data-loss expectation, and mandatory backup before the user approves. Settings lists verified recovery copies, disables restore while the project is present, and restores only into a missing project folder. Settings also provides a masked RunPod-key field, explicit free validation, Windows-protected storage, aggregate existing-Pod warning, current catalogue prices, conservative default safety limits, key refresh/removal, an honest prepared-studio checklist, and a local-only redacted support-file action that states exactly what it excludes and never uploads automatically. Story, World & Cast, Storyboard, Generate, Review, Edit & Export, and Release remain planned/locked. Account connection is not described as GPU readiness, and every paid action remains absent.
+The production library, series/film wizard, project overview, navigation, backup/recovery/migration, RunPod setup, and local support flow are implemented. Settings now also provides separate masked OpenAI and Anthropic cards with free model-list validation, independent refresh/disable/enable/remove, and an explicit provider/model/depth preference without claiming a benchmark winner. Story is a working Creative Room for character, world, outline, scene, dialogue, and continuity proposals: it shows exact selected project context, explains the additional instruction/format information, requires a checkbox for one potentially paid text request, and labels the locally saved result “proposal, not canon” with model/token/skill-use lineage. World & Cast, Storyboard, Generate, Review, Edit & Export, Release, canon promotion/version comparison, exact text-dollar quotes, and external skills remain planned/locked. GPU generation remains unavailable.
 
 ## 2. Navigation
 
@@ -57,7 +57,7 @@ Explain in one page:
 - Explain plainly: “These services charge separately for text usage. They are not covered by your RunPod GPU balance.”
 - Accept each key in a masked field and return only opaque connected/error status after the main process stores it with OS protection.
 - Let the creator choose a default `Balanced`, `Best draft`, or later benchmarked custom writing profile, while keeping a provider/model selector available per task.
-- Where a provider cannot perform a free credential check, show the maximum token/cost of the smallest test before asking for approval.
+- Both first adapters use a no-cost model-list check. Any future provider that cannot do so must show the smallest test's maximum token/cost before approval.
 
 ### Step 4: Spending guardrails
 

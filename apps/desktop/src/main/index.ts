@@ -31,11 +31,30 @@ import {
   RendererErrorInputSchema,
   SupportBundleSummarySchema,
   SystemStatusSchema,
-  UlidSchema
+  UlidSchema,
+  WritingConnectInputSchema,
+  WritingContextPreviewInputSchema,
+  WritingContextPreviewSchema,
+  WritingDefaultProfileSchema,
+  WritingDraftActionResultSchema,
+  WritingDraftRecordSchema,
+  WritingDraftRequestSchema,
+  WritingProviderEnabledInputSchema,
+  WritingProviderInputSchema,
+  WritingSettingsActionResultSchema,
+  WritingSettingsStatusSchema
 } from '@studio/contracts'
 import { CloudSettingsStore, CloudSetupService, toCloudActionError } from '@studio/cloud-setup'
+import {
+  CreativeWritingService,
+  WritingSettingsStore,
+  WritingSetupService,
+  toWritingActionError
+} from '@studio/creative-writing'
 import { EncryptedCredentialVault } from '@studio/credential-vault'
 import { ProjectStore } from '@studio/project-store'
+import { AnthropicClient } from '@studio/provider-anthropic'
+import { OpenAiClient } from '@studio/provider-openai'
 import { RunPodClient } from '@studio/provider-runpod'
 import { SafeDiagnostics, type DiagnosticEventInput } from '@studio/support-diagnostics'
 
@@ -59,6 +78,8 @@ if (!hasSingleInstanceLock) {
 let mainWindow: BrowserWindow | null = null
 let projectStore: ProjectStore | null = null
 let cloudSetupService: CloudSetupService | null = null
+let writingSetupService: WritingSetupService | null = null
+let creativeWritingService: CreativeWritingService | null = null
 let diagnostics: SafeDiagnostics | null = null
 let storeClosed = false
 
@@ -141,6 +162,16 @@ function requireCloudSetup(): CloudSetupService {
   }
 
   return cloudSetupService
+}
+
+function requireWritingSetup(): WritingSetupService {
+  if (!writingSetupService) throw new Error('The writing setup service is not ready.')
+  return writingSetupService
+}
+
+function requireCreativeWriting(): CreativeWritingService {
+  if (!creativeWritingService) throw new Error('The creative writing service is not ready.')
+  return creativeWritingService
 }
 
 function requireDiagnostics(): SafeDiagnostics {
@@ -518,6 +549,157 @@ function registerIpcHandlers(): void {
       return CloudActionResultSchema.parse(toCloudActionError(error))
     }
   })
+
+  ipcMain.handle(IPC_CHANNELS.writingGetStatus, async (event) => {
+    assertTrustedSender(event)
+    return WritingSettingsStatusSchema.parse(await requireWritingSetup().getStatus())
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingConnect, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = WritingConnectInputSchema.parse(unknownInput)
+      const result = WritingSettingsActionResultSchema.parse({
+        ok: true,
+        status: await requireWritingSetup().connect(input)
+      })
+      recordDiagnostic({
+        level: 'info',
+        area: 'writing',
+        eventName: 'writing.connection.completed',
+        message: 'A writing provider passed the no-cost model-list check.',
+        context: { provider: input.provider, validationCostUsd: 0 }
+      })
+      return result
+    } catch (error) {
+      const result = WritingSettingsActionResultSchema.parse(toWritingActionError(error))
+      recordDiagnostic({
+        level: 'warning',
+        area: 'writing',
+        eventName: 'writing.connection.failed',
+        message: 'A writing provider connection check failed safely.',
+        context: { errorCode: result.ok ? 'unknown' : result.error.code }
+      })
+      return result
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingRefresh, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = WritingProviderInputSchema.parse(unknownInput)
+      return WritingSettingsActionResultSchema.parse({
+        ok: true,
+        status: await requireWritingSetup().refresh(input)
+      })
+    } catch (error) {
+      return WritingSettingsActionResultSchema.parse(toWritingActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingDisconnect, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = WritingProviderInputSchema.parse(unknownInput)
+      const result = WritingSettingsActionResultSchema.parse({
+        ok: true,
+        status: await requireWritingSetup().disconnect(input)
+      })
+      recordDiagnostic({
+        level: 'info',
+        area: 'security',
+        eventName: `credential.${input.provider}.removed`,
+        message: 'A protected writing-provider credential was removed.'
+      })
+      return result
+    } catch (error) {
+      return WritingSettingsActionResultSchema.parse(toWritingActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingSetEnabled, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = WritingProviderEnabledInputSchema.parse(unknownInput)
+      return WritingSettingsActionResultSchema.parse({
+        ok: true,
+        status: await requireWritingSetup().setEnabled(input)
+      })
+    } catch (error) {
+      return WritingSettingsActionResultSchema.parse(toWritingActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingSaveDefaultProfile, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = WritingDefaultProfileSchema.parse(unknownInput)
+      return WritingSettingsActionResultSchema.parse({
+        ok: true,
+        status: await requireWritingSetup().saveDefaultProfile(input)
+      })
+    } catch (error) {
+      return WritingSettingsActionResultSchema.parse(toWritingActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingPreviewContext, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = WritingContextPreviewInputSchema.parse(unknownInput)
+      return WritingContextPreviewSchema.parse(requireCreativeWriting().previewContext(input))
+    } catch {
+      throw new Error('The selected local story context could not be previewed safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingGenerateDraft, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const correlationId = randomUUID()
+    try {
+      const input = WritingDraftRequestSchema.parse(unknownInput)
+      const draft = await requireCreativeWriting().generateDraft(input)
+      const result = WritingDraftActionResultSchema.parse({ ok: true, draft })
+      await requireDiagnostics().record({
+        correlationId,
+        level: 'info',
+        area: 'writing',
+        eventName: 'writing.draft.saved',
+        message: 'A provider response was validated and saved as a local proposal.',
+        context: {
+          projectId: draft.projectId,
+          draftId: draft.draftId,
+          provider: draft.provider,
+          model: draft.model,
+          inputTokens: draft.usage.inputTokens,
+          outputTokens: draft.usage.outputTokens,
+          skillsUsed: 0
+        }
+      })
+      return result
+    } catch (error) {
+      const result = WritingDraftActionResultSchema.parse(toWritingActionError(error))
+      recordDiagnostic({
+        correlationId,
+        level: 'warning',
+        area: 'writing',
+        eventName: 'writing.draft.failed',
+        message: 'A writing request failed before a local proposal was saved.',
+        context: { errorCode: result.ok ? 'unknown' : result.error.code }
+      })
+      return result
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.writingListDrafts, (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const projectId = UlidSchema.parse(unknownProjectId)
+      return WritingDraftRecordSchema.array().parse(requireCreativeWriting().listDrafts(projectId))
+    } catch {
+      throw new Error('The saved writing proposals could not be read safely.')
+    }
+  })
 }
 
 function createWindow(): void {
@@ -590,6 +772,31 @@ void app
       vault: credentialVault,
       provider: new RunPodClient(),
       settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json'))
+    })
+    const secretProtector = {
+      isEncryptionAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
+      encryptString: (value: string) => safeStorage.encryptStringAsync(value),
+      decryptString: (value: Buffer) => safeStorage.decryptStringAsync(value)
+    }
+    writingSetupService = new WritingSetupService({
+      vaults: {
+        openai: new EncryptedCredentialVault({
+          filePath: join(userDataRoot, 'secure', 'openai-api-key.bin'),
+          protector: secretProtector
+        }),
+        anthropic: new EncryptedCredentialVault({
+          filePath: join(userDataRoot, 'secure', 'anthropic-api-key.bin'),
+          protector: secretProtector
+        })
+      },
+      providers: { openai: new OpenAiClient(), anthropic: new AnthropicClient() },
+      settingsStore: new WritingSettingsStore(
+        join(userDataRoot, 'settings', 'creative-writing.json')
+      )
+    })
+    creativeWritingService = new CreativeWritingService({
+      setup: writingSetupService,
+      projectStore
     })
     recordDiagnostic({
       level: 'info',

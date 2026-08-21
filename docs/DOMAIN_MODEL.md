@@ -177,6 +177,8 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 
 A creative writing job proposes a new local version; it never edits a locked version or treats a provider conversation as canonical.
 
+Current version 0.4.0 persists the first `WritingDraftRecord` subset as a no-overwrite JSON file under `provenance/writing`. It includes one normalized project-manifest source version/hash, exact context-selection/hash, provider/model/profile, request ID, token usage, uncalculated dollar-cost state, and validated proposal sections. `skillsPlanned` and `skillsUsed` must both be empty until the skill runtime exists. Promotion of selected proposal content into separate versioned canon is still planned.
+
 | Field | Meaning |
 | --- | --- |
 | `taskKind` | Story, character, world, outline, scene, dialogue rewrite, continuity, or storyboard planning |

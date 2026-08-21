@@ -17,6 +17,17 @@ import {
   SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema,
+  WritingConnectInputSchema,
+  WritingContextPreviewInputSchema,
+  WritingContextPreviewSchema,
+  WritingDefaultProfileSchema,
+  WritingDraftActionResultSchema,
+  WritingDraftRecordSchema,
+  WritingDraftRequestSchema,
+  WritingProviderEnabledInputSchema,
+  WritingProviderInputSchema,
+  WritingSettingsActionResultSchema,
+  WritingSettingsStatusSchema,
   type StudioApi
 } from '@studio/contracts'
 
@@ -105,6 +116,61 @@ const studioApi: StudioApi = {
       const safeGuardrails = CloudGuardrailsSchema.parse(guardrails)
       return CloudActionResultSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.cloudSaveGuardrails, safeGuardrails)
+      )
+    }
+  },
+  writing: {
+    async getStatus() {
+      return WritingSettingsStatusSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingGetStatus)
+      )
+    },
+    async connect(input) {
+      const safeInput = WritingConnectInputSchema.parse(input)
+      return WritingSettingsActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingConnect, safeInput)
+      )
+    },
+    async refresh(input) {
+      const safeInput = WritingProviderInputSchema.parse(input)
+      return WritingSettingsActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingRefresh, safeInput)
+      )
+    },
+    async disconnect(input) {
+      const safeInput = WritingProviderInputSchema.parse(input)
+      return WritingSettingsActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingDisconnect, safeInput)
+      )
+    },
+    async setEnabled(input) {
+      const safeInput = WritingProviderEnabledInputSchema.parse(input)
+      return WritingSettingsActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingSetEnabled, safeInput)
+      )
+    },
+    async saveDefaultProfile(input) {
+      const safeInput = WritingDefaultProfileSchema.parse(input)
+      return WritingSettingsActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingSaveDefaultProfile, safeInput)
+      )
+    },
+    async previewContext(input) {
+      const safeInput = WritingContextPreviewInputSchema.parse(input)
+      return WritingContextPreviewSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingPreviewContext, safeInput)
+      )
+    },
+    async generateDraft(input) {
+      const safeInput = WritingDraftRequestSchema.parse(input)
+      return WritingDraftActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingGenerateDraft, safeInput)
+      )
+    },
+    async listDrafts(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return WritingDraftRecordSchema.array().parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.writingListDrafts, safeProjectId)
       )
     }
   }

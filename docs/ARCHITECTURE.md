@@ -68,6 +68,7 @@ animated-series-studio/
 │   ├── project-store/            files, SQLite index, migrations, backup
 │   ├── credential-vault/         OS-protected provider secret storage
 │   ├── cloud-setup/              account check, local limits, setup state
+│   ├── creative-writing/         protected setup, context compiler, local proposal lineage
 │   ├── upstream-adapter/         pinned skill invocation and normalization
 │   ├── skill-runtime/             registry, routing, permissions, receipts
 │   ├── orchestrator/             durable queues, dependencies, approvals
@@ -129,7 +130,7 @@ Versions are chosen and pinned during implementation spikes. “Latest” is nev
 
 ### Implemented boundary
 
-The current source implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, `packages/support-diagnostics`, and the read-only portion of `packages/provider-runpod`. The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
+The current source implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, `packages/support-diagnostics`, `packages/creative-writing`, `packages/provider-openai`, `packages/provider-anthropic`, and the read-only portion of `packages/provider-runpod`. The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
 
 The local project store currently provides:
 
@@ -144,7 +145,9 @@ The local project store currently provides:
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, project-scoped adaptation, YouTube release profiles/ideas/thumbnails/details/packages, policy attestations, analytics import, and learning are also documented only and remain unimplemented.
+OpenAI and Anthropic use separate encrypted vault files and one non-secret atomic settings record. Their adapters first use model-list reads for connection validation, then accept only the provider-neutral writing request. A confirmed request is compiled from the user's instruction plus the exact previewed project-context snapshot, sent through OpenAI Responses or Anthropic Messages with a strict creative-draft JSON shape, validated locally, and written as a new proposal under the owning project's `provenance/writing` folder. The record includes context/source hashes, provider/model/profile, token usage, and request ID; price remains explicitly uncalculated until benchmarked model pricing profiles exist. The external-skill plan/receipt arrays are empty by contract in this slice.
+
+Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. Live writing benchmarks, actual model-cost profiles, canon promotion/version comparison, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, project-scoped adaptation, YouTube release profiles/ideas/thumbnails/details/packages, policy attestations, analytics import, and learning are also documented only and remain unimplemented.
 
 ## 6. Local component responsibilities
 

@@ -8,12 +8,14 @@ import type {
   ProjectBackupSummary,
   ProjectDetails,
   StudioApi,
-  SystemStatus
+  SystemStatus,
+  WritingSettingsStatus
 } from '@studio/contracts'
 import { App } from './App'
+import { CreativeRoom } from './CreativeRoom'
 
 const systemStatus: SystemStatus = {
-  appVersion: '0.3.0',
+  appVersion: '0.4.0',
   electronVersion: '43.4.1',
   nodeVersion: '24.18.1',
   storagePath: 'C:\\Studio\\projects',
@@ -67,6 +69,48 @@ const connectedCloudStatus: CloudConnectionStatus = {
     accountConnected: true
   },
   generationReason: 'RunPod is connected. Paid generation stays locked.'
+}
+
+const disconnectedWritingStatus: WritingSettingsStatus = {
+  providers: {
+    openai: {
+      provider: 'openai',
+      connectionState: 'not-configured',
+      credentialStored: false,
+      enabled: true,
+      checkedAt: null,
+      models: [],
+      validationCostUsd: 0
+    },
+    anthropic: {
+      provider: 'anthropic',
+      connectionState: 'not-configured',
+      credentialStored: false,
+      enabled: true,
+      checkedAt: null,
+      models: [],
+      validationCostUsd: 0
+    }
+  },
+  defaultProfile: null,
+  paidDraftsRequireConfirmation: true
+}
+
+const connectedWritingStatus: WritingSettingsStatus = {
+  ...disconnectedWritingStatus,
+  providers: {
+    ...disconnectedWritingStatus.providers,
+    openai: {
+      provider: 'openai',
+      connectionState: 'connected',
+      credentialStored: true,
+      enabled: true,
+      checkedAt: '2026-08-21T18:00:00.000Z',
+      models: [{ id: 'gpt-test', displayName: 'GPT Test' }],
+      validationCostUsd: 0
+    }
+  },
+  defaultProfile: { provider: 'openai', model: 'gpt-test', profile: 'balanced' }
 }
 
 const createdFilm: ProjectDetails = {
@@ -187,6 +231,29 @@ beforeEach(() => {
         ok: true,
         status: { ...disconnectedCloudStatus, guardrailsSaved: true }
       })
+    },
+    writing: {
+      getStatus: vi.fn().mockResolvedValue(disconnectedWritingStatus),
+      connect: vi.fn(),
+      refresh: vi.fn(),
+      disconnect: vi.fn(),
+      setEnabled: vi.fn(),
+      saveDefaultProfile: vi.fn(),
+      previewContext: vi.fn().mockResolvedValue({
+        text: 'No local project context selected.',
+        sha256: 'a'.repeat(64),
+        sourceVersions: [
+          {
+            kind: 'project-manifest',
+            id: createdFilm.manifest.id,
+            schemaVersion: 1,
+            updatedAt: createdFilm.manifest.updatedAt,
+            sha256: 'b'.repeat(64)
+          }
+        ]
+      }),
+      generateDraft: vi.fn(),
+      listDrafts: vi.fn().mockResolvedValue([])
     }
   }
 
@@ -208,7 +275,7 @@ describe('desktop project foundation', () => {
     expect(
       await screen.findByRole('heading', { name: 'Your production library is ready.' })
     ).toBeTruthy()
-    expect(screen.getByText('No paid services active')).toBeTruthy()
+    expect(screen.getByText('GPU off · text calls require approval')).toBeTruthy()
     expect(screen.getByText('$0 current spend')).toBeTruthy()
   })
 
@@ -323,5 +390,89 @@ describe('desktop project foundation', () => {
       })
     )
     expect(await screen.findByText('Project format updated safely')).toBeTruthy()
+  })
+})
+
+describe('creative room', () => {
+  it('requires explicit paid confirmation and shows the saved response as a proposal', async () => {
+    const user = userEvent.setup()
+    const draft = {
+      schemaVersion: 1 as const,
+      draftId: '01J00000000000000000000009',
+      projectId: createdFilm.manifest.id,
+      taskKind: 'outline_episode' as const,
+      status: 'proposal' as const,
+      provider: 'openai' as const,
+      model: 'gpt-test',
+      profile: 'balanced' as const,
+      createdAt: '2026-08-21T19:00:00.000Z',
+      instruction: 'Outline the film with a strong emotional turn and a memorable final image.',
+      contextSelection: { includeProjectBrief: true, includeProductionSettings: true },
+      contextSnapshotSha256: 'a'.repeat(64),
+      sourceVersions: [
+        {
+          kind: 'project-manifest' as const,
+          id: createdFilm.manifest.id,
+          schemaVersion: createdFilm.manifest.schemaVersion,
+          updatedAt: createdFilm.manifest.updatedAt,
+          sha256: 'b'.repeat(64)
+        }
+      ],
+      output: {
+        title: 'The Kite Above the Storm',
+        summary: 'A structured film outline proposal.',
+        sections: [{ heading: 'Beginning', body: 'A child repairs a wind-torn kite.' }],
+        continuityQuestions: [],
+        suggestedNextSteps: []
+      },
+      usage: { inputTokens: 100, outputTokens: 80, totalTokens: 180, cachedInputTokens: 0 },
+      cost: {
+        currency: 'USD' as const,
+        estimatedUsd: null,
+        actualUsd: null,
+        state: 'not-calculated' as const
+      },
+      providerRequestId: 'request-creative-room',
+      skillsPlanned: [] as never[],
+      skillsUsed: [] as never[]
+    }
+    window.studio.writing.previewContext = vi.fn().mockResolvedValue({
+      text: 'PROJECT BRIEF\nTitle: The Last Kite',
+      sha256: 'a'.repeat(64),
+      sourceVersions: draft.sourceVersions
+    })
+    window.studio.writing.listDrafts = vi.fn().mockResolvedValue([])
+    const generateDraft = vi.fn().mockResolvedValue({ ok: true, draft })
+    window.studio.writing.generateDraft = generateDraft
+
+    render(
+      <CreativeRoom
+        project={createdFilm}
+        writingStatus={connectedWritingStatus}
+        onHome={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    )
+
+    const createButton = await screen.findByRole('button', {
+      name: 'Create writing proposal'
+    })
+    await user.type(
+      screen.getByLabelText(/Your instruction/),
+      'Outline the film with a strong emotional turn and a memorable final image.'
+    )
+    expect((createButton as HTMLButtonElement).disabled).toBe(true)
+    await user.click(
+      screen.getByLabelText('I approve one paid text request using the model shown above.')
+    )
+    expect((createButton as HTMLButtonElement).disabled).toBe(false)
+    await user.click(createButton)
+
+    await screen.findByRole('heading', { name: 'The Kite Above the Storm' })
+    expect(generateDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ paidConfirmed: true, provider: 'openai', model: 'gpt-test' })
+    )
+    expect(screen.getByText('Proposal · not canon')).toBeTruthy()
+    expect(screen.getByText(/External skills used: none/)).toBeTruthy()
   })
 })

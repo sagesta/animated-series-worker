@@ -79,13 +79,21 @@ importers:
 
   packages/contracts: {}
 
+  packages/creative-writing: {}
+
   packages/credential-vault: {}
 
   packages/domain: {}
 
   packages/project-store: {}
 
+  packages/provider-anthropic: {}
+
+  packages/provider-openai: {}
+
   packages/provider-runpod: {}
+
+  packages/support-diagnostics: {}
 
 packages:
 

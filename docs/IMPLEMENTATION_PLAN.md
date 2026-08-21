@@ -56,12 +56,13 @@ flowchart LR
 
 ## 4. Phase 1 — local application foundation
 
-### Current checkpoint — version 0.3.0
+### Current checkpoint — version 0.4.0
 
 - `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
 - `DATA-001` is in progress: series/film create, list, open, current schema-2/backward-compatible schema-1 manifests, a guided v1→v2 preview with automatic verified backup and rollback at four injected failure points, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, startup reconciliation, verified full backup/restore, tamper refusal, and live/stale single-writer handling are implemented and tested.
 - `SEC-001` is in progress: the RunPod key is validated before save, encrypted through Electron asynchronous `safeStorage`/Windows DPAPI outside projects, never returned after submission, removable explicitly, and covered by plaintext non-leakage tests. Structured flushed diagnostics, protected-field/known-provider-secret/private-path redaction, renderer-boundary capture, and a local-only support JSON with a plain-language Settings flow are implemented and tested; broader worker/skill patterns, retention, and packaged scans remain.
 - `CLOUD-001` has an intentionally early read-only foundation: API v2 account validation, aggregate existing-Pod/rate warning, GPU catalogue pricing, local guardrail defaults, and setup progress are implemented. No provider mutation or paid operation exists.
+- `WRITE-001` is in progress: separate protected OpenAI/Anthropic setup, provider model-list validation, Responses/Messages structured adapters, exact context preview, explicit per-call approval, immutable project proposal records, usage/source lineage, and safe mocked tests are implemented. Live account switching, actual cost profiles, benchmark defaults, canon promotion/version comparison, and full AT-036/AT-039 evidence remain.
 - Phase 1 is **not complete**. Archive UI, future-migration registry/upgrade breadth, broader non-migration interruption tests, broader diagnostic coverage/retention and packaged secret scans, incremental/release archives, clean-machine restore/usability evidence, and a signed installer remain.
 
 ### Build
@@ -304,8 +305,8 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 | --- | --- | --- | --- |
 | 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
 | 2 | `DATA-001` project store | In progress — verified full backup/restore, writer lock, and guided v1→v2 migration rollback matrix pass; archive/future migration/recovery breadth remain | Series/film create/open, files, SQLite, migrations, recovery |
-| 3 | `SEC-001` credential/logging | In progress — protected RunPod vault plus local redacted diagnostics/support file pass; broader provider/worker/skill and packaged scans remain | Vault adapter and redacted diagnostics |
-| 4 | `WRITE-001` provider-neutral creative writing | Not started | Protected OpenAI/Anthropic accounts and structured story/character/script drafts |
+| 3 | `SEC-001` credential/logging | In progress — separate protected RunPod/OpenAI/Anthropic vaults plus local redacted diagnostics/support file pass; broader provider/worker/skill and packaged scans remain | Vault adapter and redacted diagnostics |
+| 4 | `WRITE-001` provider-neutral creative writing | In progress — setup, structured adapters, context preview, explicit approval, local proposal lineage, and mocked tests pass | Live provider switching/benchmark/cost evidence plus canon promotion and full AT-036/AT-039 |
 | 5 | `SKILL-001` external-skill runtime | Not started | Safe install, routing, required execution, validation, and receipts |
 | 6 | `UP-001` adapter process runner | Not started | Pinned version and validation contract |
 | 7 | `UP-002` normalized domain import | Not started | Long-form project facts and source provenance |

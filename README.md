@@ -2,7 +2,7 @@
 
 Animated Series Studio is a local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
 
-This repository now contains a working local desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, and the first safe RunPod account-connection slice, plus the authoritative product and architecture specification. The Windows application can create, list, reopen, back up, verify, and non-destructively restore isolated series and one-off film projects; create a local-only redacted support file; encrypt a RunPod API key with Windows protection; perform an explicit no-cost account check; read current GPU planning prices; and save conservative local spending defaults. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, finished episodes, public thumbnails, upload packages, or analytics.
+This repository now contains a working local desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, safe RunPod account connection, and the first protected creative-writing slice. The Windows application can create isolated series/film projects; protect separate OpenAI, Anthropic, and RunPod keys; check available writing models for no charge; preview the exact local context for a text request; require approval for one paid call; and save a validated GPT/Claude response locally as a proposal with source/model/token lineage. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, finished episodes, public thumbnails, upload packages, or analytics.
 
 ## Locked baseline
 
@@ -36,7 +36,7 @@ This repository now contains a working local desktop foundation, verified projec
 ```text
 animated-series-studio/
 ├── apps/desktop/                 current Electron main/preload + React application
-├── packages/                     contracts, domain/store, secure vault, diagnostics, cloud setup, RunPod adapter
+├── packages/                     contracts, domain/store, secure vault, writing/provider adapters, diagnostics, cloud setup
 ├── worker/                       planned remote GPU worker image and gateway
 ├── workflows/                    planned versioned ComfyUI/LTX workflows
 ├── config/                       current locks and future runtime defaults
@@ -77,11 +77,11 @@ node scripts/check-docs.mjs
 | Product scope and requirements | Baseline documented |
 | Architecture and contracts | Baseline documented |
 | Upstream dependency | Pinned and verified |
-| Desktop application | Local projects plus guided secure RunPod account connection; unsigned test installer; production setup incomplete |
+| Desktop application | Local projects, guided GPT/Claude writing, and secure RunPod account connection; unsigned test installer; production setup incomplete |
 | Series/film project storage | Create/list/open, schema-2/backward-compatible schema-1 data, guided backed-up v1→v2 migration with rollback tests, verified full backup/non-overwriting restore, and single-writer protection implemented; archive/future migrations, incremental archives, and clean-machine recovery remain |
 | Diagnostics and support | Structured pre-write redaction and local-only support JSON implemented/tested; broader worker/skill coverage, retention, and packaged scan remain |
 | RunPod provider | API v2 account validation and price reads implemented; Pod/storage/template creation and termination not implemented |
-| Writing providers and external skills | OpenAI/Anthropic and enforced skill-runtime architecture documented; not implemented |
+| Writing providers and external skills | Protected OpenAI/Anthropic connections and proposal drafting implemented with mocked adapter tests; live benchmark/cost profiles and the external-skill runtime remain unimplemented |
 | Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |
 | In-app media review | Gallery/player/proxy architecture documented; not implemented |
 | Animatic, advanced controls, creative QC, foley, and optional adaptation | Fully specified and test-mapped; not implemented |

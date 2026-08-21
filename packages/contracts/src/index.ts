@@ -248,7 +248,7 @@ export const SupportEventSchema = z
     correlationId: z.string().uuid(),
     timestamp: z.string().datetime({ offset: true }),
     level: z.enum(['info', 'warning', 'error']),
-    area: z.enum(['application', 'project', 'backup', 'cloud', 'security', 'renderer']),
+    area: z.enum(['application', 'project', 'backup', 'cloud', 'writing', 'security', 'renderer']),
     eventName: z
       .string()
       .regex(/^[a-z][a-z0-9]*(?:\.[a-z0-9]+)*$/)
@@ -427,6 +427,296 @@ export const CloudActionResultSchema = z.discriminatedUnion('ok', [
 ])
 export type CloudActionResult = z.infer<typeof CloudActionResultSchema>
 
+export const WritingProviderSchema = z.enum(['openai', 'anthropic'])
+export type WritingProvider = z.infer<typeof WritingProviderSchema>
+
+export const WritingApiKeySchema = z
+  .string()
+  .trim()
+  .min(20, 'Paste the complete API key.')
+  .max(512, 'That API key is longer than expected.')
+  .regex(/^\S+$/, 'The API key cannot contain spaces or line breaks.')
+
+export const WritingModelOptionSchema = z
+  .object({
+    id: z.string().min(1).max(200),
+    displayName: z.string().min(1).max(200)
+  })
+  .strict()
+export type WritingModelOption = z.infer<typeof WritingModelOptionSchema>
+
+export const WritingProviderConnectionStatusSchema = z
+  .object({
+    provider: WritingProviderSchema,
+    connectionState: z.enum(['not-configured', 'connected', 'disabled', 'attention']),
+    credentialStored: z.boolean(),
+    enabled: z.boolean(),
+    checkedAt: z.string().datetime({ offset: true }).nullable(),
+    models: WritingModelOptionSchema.array().max(100),
+    validationCostUsd: z.literal(0)
+  })
+  .strict()
+export type WritingProviderConnectionStatus = z.infer<typeof WritingProviderConnectionStatusSchema>
+
+export const WritingProfileSchema = z.enum(['balanced', 'best-draft', 'custom'])
+export type WritingProfile = z.infer<typeof WritingProfileSchema>
+
+export const WritingDefaultProfileSchema = z
+  .object({
+    provider: WritingProviderSchema,
+    model: z.string().min(1).max(200),
+    profile: WritingProfileSchema
+  })
+  .strict()
+export type WritingDefaultProfile = z.infer<typeof WritingDefaultProfileSchema>
+
+export const WritingSettingsStatusSchema = z
+  .object({
+    providers: z
+      .object({
+        openai: WritingProviderConnectionStatusSchema,
+        anthropic: WritingProviderConnectionStatusSchema
+      })
+      .strict(),
+    defaultProfile: WritingDefaultProfileSchema.nullable(),
+    paidDraftsRequireConfirmation: z.literal(true)
+  })
+  .strict()
+export type WritingSettingsStatus = z.infer<typeof WritingSettingsStatusSchema>
+
+export const WritingConnectInputSchema = z
+  .object({
+    provider: WritingProviderSchema,
+    apiKey: WritingApiKeySchema
+  })
+  .strict()
+export type WritingConnectInput = z.infer<typeof WritingConnectInputSchema>
+
+export const WritingProviderInputSchema = z.object({ provider: WritingProviderSchema }).strict()
+export type WritingProviderInput = z.infer<typeof WritingProviderInputSchema>
+
+export const WritingProviderEnabledInputSchema = z
+  .object({
+    provider: WritingProviderSchema,
+    enabled: z.boolean()
+  })
+  .strict()
+export type WritingProviderEnabledInput = z.infer<typeof WritingProviderEnabledInputSchema>
+
+export const WritingTaskKindSchema = z.enum([
+  'develop_character',
+  'build_world',
+  'outline_episode',
+  'draft_scene',
+  'rewrite_dialogue',
+  'check_continuity'
+])
+export type WritingTaskKind = z.infer<typeof WritingTaskKindSchema>
+
+export const WritingContextSelectionSchema = z
+  .object({
+    includeProjectBrief: z.boolean(),
+    includeProductionSettings: z.boolean()
+  })
+  .strict()
+export type WritingContextSelection = z.infer<typeof WritingContextSelectionSchema>
+
+export const CreativeDraftSectionSchema = z
+  .object({
+    heading: z.string().trim().min(1).max(160),
+    body: z.string().trim().min(1).max(20_000)
+  })
+  .strict()
+
+export const CreativeDraftContentSchema = z
+  .object({
+    title: z.string().trim().min(1).max(200),
+    summary: z.string().trim().min(1).max(4_000),
+    sections: CreativeDraftSectionSchema.array().min(1).max(20),
+    continuityQuestions: z.array(z.string().trim().min(1).max(500)).max(20),
+    suggestedNextSteps: z.array(z.string().trim().min(1).max(500)).max(20)
+  })
+  .strict()
+export type CreativeDraftContent = z.infer<typeof CreativeDraftContentSchema>
+
+export const WritingDraftRequestSchema = z
+  .object({
+    projectId: UlidSchema,
+    taskKind: WritingTaskKindSchema,
+    instruction: z
+      .string()
+      .trim()
+      .min(10, 'Describe what you want the writing assistant to help with.')
+      .max(12_000),
+    context: WritingContextSelectionSchema,
+    provider: WritingProviderSchema,
+    model: z.string().trim().min(1).max(200),
+    profile: WritingProfileSchema,
+    maxOutputTokens: z.number().int().min(256).max(4_000),
+    paidConfirmed: z.literal(true)
+  })
+  .strict()
+export type WritingDraftRequest = z.infer<typeof WritingDraftRequestSchema>
+
+export const WritingUsageSchema = z
+  .object({
+    inputTokens: z.number().int().nonnegative(),
+    outputTokens: z.number().int().nonnegative(),
+    totalTokens: z.number().int().nonnegative(),
+    cachedInputTokens: z.number().int().nonnegative()
+  })
+  .strict()
+export type WritingUsage = z.infer<typeof WritingUsageSchema>
+
+export const WritingProviderDraftInputSchema = z
+  .object({
+    model: z.string().min(1).max(200),
+    systemInstruction: z.string().min(1).max(12_000),
+    userPrompt: z.string().min(1).max(30_000),
+    maxOutputTokens: z.number().int().min(256).max(4_000)
+  })
+  .strict()
+export type WritingProviderDraftInput = z.infer<typeof WritingProviderDraftInputSchema>
+
+export const WritingProviderDraftResponseSchema = z
+  .object({
+    output: CreativeDraftContentSchema,
+    usage: WritingUsageSchema,
+    requestId: z.string().min(1).max(240)
+  })
+  .strict()
+export type WritingProviderDraftResponse = z.infer<typeof WritingProviderDraftResponseSchema>
+
+export interface WritingTextProvider {
+  listModels(apiKey: string): Promise<WritingModelOption[]>
+  generateDraft(
+    apiKey: string,
+    input: WritingProviderDraftInput
+  ): Promise<WritingProviderDraftResponse>
+}
+
+export const CREATIVE_DRAFT_JSON_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'summary', 'sections', 'continuityQuestions', 'suggestedNextSteps'],
+  properties: {
+    title: { type: 'string' },
+    summary: { type: 'string' },
+    sections: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['heading', 'body'],
+        properties: {
+          heading: { type: 'string' },
+          body: { type: 'string' }
+        }
+      }
+    },
+    continuityQuestions: { type: 'array', items: { type: 'string' } },
+    suggestedNextSteps: { type: 'array', items: { type: 'string' } }
+  }
+} as const
+
+export const WritingContextPreviewInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    context: WritingContextSelectionSchema
+  })
+  .strict()
+export type WritingContextPreviewInput = z.infer<typeof WritingContextPreviewInputSchema>
+
+export const WritingSourceVersionSchema = z
+  .object({
+    kind: z.literal('project-manifest'),
+    id: UlidSchema,
+    schemaVersion: z.number().int().positive(),
+    updatedAt: z.string().datetime({ offset: true }),
+    sha256: Sha256Schema
+  })
+  .strict()
+export type WritingSourceVersion = z.infer<typeof WritingSourceVersionSchema>
+
+export const WritingContextPreviewSchema = z
+  .object({
+    text: z.string().min(1).max(20_000),
+    sha256: Sha256Schema,
+    sourceVersions: WritingSourceVersionSchema.array().length(1)
+  })
+  .strict()
+export type WritingContextPreview = z.infer<typeof WritingContextPreviewSchema>
+
+export const WritingDraftRecordSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    draftId: UlidSchema,
+    projectId: UlidSchema,
+    taskKind: WritingTaskKindSchema,
+    status: z.literal('proposal'),
+    provider: WritingProviderSchema,
+    model: z.string().min(1).max(200),
+    profile: WritingProfileSchema,
+    createdAt: z.string().datetime({ offset: true }),
+    instruction: z.string().min(10).max(12_000),
+    contextSelection: WritingContextSelectionSchema,
+    contextSnapshotSha256: Sha256Schema,
+    sourceVersions: WritingSourceVersionSchema.array().length(1),
+    output: CreativeDraftContentSchema,
+    usage: WritingUsageSchema,
+    cost: z
+      .object({
+        currency: z.literal('USD'),
+        estimatedUsd: z.number().nonnegative().nullable(),
+        actualUsd: z.number().nonnegative().nullable(),
+        state: z.literal('not-calculated')
+      })
+      .strict(),
+    providerRequestId: z.string().min(1).max(240),
+    skillsPlanned: z.array(z.never()).length(0),
+    skillsUsed: z.array(z.never()).length(0)
+  })
+  .strict()
+export type WritingDraftRecord = z.infer<typeof WritingDraftRecordSchema>
+
+export const WritingErrorCodeSchema = z.enum([
+  'invalid-key',
+  'insufficient-permissions',
+  'timed-out',
+  'rate-limited',
+  'provider-unavailable',
+  'invalid-response',
+  'unsupported-model',
+  'secure-storage-unavailable',
+  'secure-storage-error',
+  'settings-error',
+  'not-connected',
+  'disabled',
+  'invalid-input',
+  'project-error',
+  'unknown'
+])
+export type WritingErrorCode = z.infer<typeof WritingErrorCodeSchema>
+
+const WritingActionErrorSchema = z
+  .object({
+    code: WritingErrorCodeSchema,
+    message: z.string().min(1).max(600)
+  })
+  .strict()
+
+export const WritingSettingsActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), status: WritingSettingsStatusSchema }).strict(),
+  z.object({ ok: z.literal(false), error: WritingActionErrorSchema }).strict()
+])
+export type WritingSettingsActionResult = z.infer<typeof WritingSettingsActionResultSchema>
+
+export const WritingDraftActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), draft: WritingDraftRecordSchema }).strict(),
+  z.object({ ok: z.literal(false), error: WritingActionErrorSchema }).strict()
+])
+export type WritingDraftActionResult = z.infer<typeof WritingDraftActionResultSchema>
+
 export const IPC_CHANNELS = {
   systemGetStatus: 'studio:system:get-status',
   projectsList: 'studio:projects:list',
@@ -443,7 +733,16 @@ export const IPC_CHANNELS = {
   cloudConnect: 'studio:cloud:connect',
   cloudRefresh: 'studio:cloud:refresh',
   cloudDisconnect: 'studio:cloud:disconnect',
-  cloudSaveGuardrails: 'studio:cloud:save-guardrails'
+  cloudSaveGuardrails: 'studio:cloud:save-guardrails',
+  writingGetStatus: 'studio:writing:get-status',
+  writingConnect: 'studio:writing:connect',
+  writingRefresh: 'studio:writing:refresh',
+  writingDisconnect: 'studio:writing:disconnect',
+  writingSetEnabled: 'studio:writing:set-enabled',
+  writingSaveDefaultProfile: 'studio:writing:save-default-profile',
+  writingPreviewContext: 'studio:writing:preview-context',
+  writingGenerateDraft: 'studio:writing:generate-draft',
+  writingListDrafts: 'studio:writing:list-drafts'
 } as const
 
 export interface StudioApi {
@@ -470,5 +769,16 @@ export interface StudioApi {
     refresh(): Promise<CloudActionResult>
     disconnect(): Promise<CloudActionResult>
     saveGuardrails(guardrails: CloudGuardrails): Promise<CloudActionResult>
+  }
+  writing: {
+    getStatus(): Promise<WritingSettingsStatus>
+    connect(input: WritingConnectInput): Promise<WritingSettingsActionResult>
+    refresh(input: WritingProviderInput): Promise<WritingSettingsActionResult>
+    disconnect(input: WritingProviderInput): Promise<WritingSettingsActionResult>
+    setEnabled(input: WritingProviderEnabledInput): Promise<WritingSettingsActionResult>
+    saveDefaultProfile(input: WritingDefaultProfile): Promise<WritingSettingsActionResult>
+    previewContext(input: WritingContextPreviewInput): Promise<WritingContextPreview>
+    generateDraft(input: WritingDraftRequest): Promise<WritingDraftActionResult>
+    listDrafts(projectId: string): Promise<WritingDraftRecord[]>
   }
 }

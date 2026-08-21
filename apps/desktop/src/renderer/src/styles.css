@@ -24,6 +24,288 @@
   --white: #ffffff;
 }
 
+/* Protected writing providers and local creative proposals */
+.writing-setup-stack,
+.creative-request,
+.creative-results {
+  display: grid;
+  gap: 20px;
+}
+
+.writing-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.writing-provider-card,
+.writing-profile-card,
+.creative-form-card,
+.creative-draft {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 12px 28px rgb(28 38 54 / 7%);
+}
+
+.writing-provider-card,
+.writing-profile-card,
+.creative-form-card {
+  padding: 22px;
+}
+
+.writing-provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.writing-provider-card > .button-primary {
+  align-self: flex-start;
+}
+
+.provider-card-heading,
+.provider-actions,
+.draft-heading,
+.draft-provenance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.provider-card-heading h3,
+.writing-profile-card h3,
+.creative-form-card h2,
+.creative-draft h2,
+.creative-draft h3 {
+  margin: 0;
+}
+
+.provider-state {
+  display: inline-block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.provider-state.connected {
+  color: var(--mint);
+}
+
+.provider-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.writing-profile-grid,
+.creative-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.creative-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.writing-profile-grid label,
+.creative-form-grid label,
+.instruction-field,
+.token-limit {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.writing-profile-grid select,
+.creative-form-grid select,
+.token-limit select,
+.instruction-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  padding: 11px 12px;
+}
+
+.instruction-field {
+  margin-top: 4px;
+}
+
+.instruction-field textarea {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.instruction-field small {
+  justify-self: end;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.creative-room {
+  display: grid;
+  gap: 22px;
+  padding-bottom: 50px;
+}
+
+.creative-form-card {
+  display: grid;
+  gap: 16px;
+}
+
+.context-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+}
+
+.context-options label,
+.paid-confirmation-card > label:not(.token-limit) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.context-options input,
+.paid-confirmation-card input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--coral);
+}
+
+.context-preview {
+  overflow: auto;
+  max-height: 300px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--muted);
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font:
+    13px/1.55 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+}
+
+.paid-confirmation-card {
+  border-color: color-mix(in srgb, var(--coral) 42%, var(--line));
+}
+
+.paid-confirmation-card > div:first-child p {
+  margin-bottom: 0;
+}
+
+.token-limit {
+  max-width: 260px;
+}
+
+.creative-results {
+  margin-top: 12px;
+}
+
+.creative-draft {
+  overflow: hidden;
+}
+
+.draft-heading {
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, var(--white), var(--paper));
+}
+
+.draft-heading > div:first-child {
+  max-width: 720px;
+}
+
+.draft-heading h2 {
+  margin-top: 12px;
+  font-size: 24px;
+}
+
+.draft-heading p,
+.draft-sections p {
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+
+.draft-meta {
+  display: grid;
+  gap: 5px;
+  min-width: 210px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.draft-sections,
+.draft-review-list {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.draft-sections section {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.draft-sections section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.draft-review-list {
+  margin: 0 24px 24px;
+  border-radius: 12px;
+  background: var(--soft);
+}
+
+.draft-review-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.draft-provenance {
+  flex-wrap: wrap;
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 1180px) {
+  .writing-provider-grid,
+  .writing-profile-grid,
+  .creative-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-heading {
+    flex-direction: column;
+  }
+
+  .draft-meta {
+    text-align: left;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

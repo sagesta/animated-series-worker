@@ -1,5 +1,5 @@
 {
-  "name": "@studio/credential-vault",
+  "name": "@studio/provider-openai",
   "version": "0.4.0",
   "private": true,
   "type": "module",

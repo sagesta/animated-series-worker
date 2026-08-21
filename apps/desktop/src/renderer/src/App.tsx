@@ -7,10 +7,13 @@ import {
   type ProjectSummary,
   type SupportBundleSummary,
   type SystemStatus,
-  type VisualDirection
+  type VisualDirection,
+  type WritingSettingsStatus
 } from '@studio/contracts'
 import { CloudSetup } from './CloudSetup'
+import { CreativeRoom } from './CreativeRoom'
 import { ProjectWizard } from './ProjectWizard'
+import { WritingSetup } from './WritingSetup'
 
 type Page = 'home' | 'story' | 'world' | 'storyboard' | 'generate' | 'review' | 'edit' | 'settings'
 
@@ -37,11 +40,11 @@ const pageCopy: Record<
   { eyebrow: string; title: string; description: string; next: string }
 > = {
   story: {
-    eyebrow: 'Story foundation',
-    title: 'Shape the story before generating anything',
+    eyebrow: 'Creative room',
+    title: 'Shape the story with protected GPT or Claude connections',
     description:
-      'Scripts, episodes, scenes, and dialogue will live here with clear versions and approvals.',
-    next: 'Story planning is the next application slice.'
+      'Create locally stored character, world, outline, scene, dialogue, and continuity proposals.',
+    next: 'The first guided writing workflow is ready.'
   },
   world: {
     eyebrow: 'World and cast',
@@ -771,25 +774,41 @@ function SupportDiagnosticsPanel(): JSX.Element {
 function Settings({
   status,
   cloudStatus,
+  writingStatus,
   projectIds,
   onCloudStatus,
+  onWritingStatus,
   onProjectRestored
 }: {
   status?: SystemStatus
   cloudStatus?: CloudConnectionStatus
+  writingStatus?: WritingSettingsStatus
   projectIds: ReadonlySet<string>
   onCloudStatus(status: CloudConnectionStatus): void
+  onWritingStatus(status: WritingSettingsStatus): void
   onProjectRestored(project: ProjectDetails): void
 }): JSX.Element {
   return (
     <div className="settings-view">
       <header className="page-heading">
         <p className="eyebrow">Studio settings</p>
-        <h1>Connect the GPU account without renting one.</h1>
+        <h1>Connect creative AI and the GPU account safely.</h1>
         <p>
-          The first safe step is a free account check. Paid generation remains separately locked.
+          Connection checks are free. Text requests need separate approval, and GPU generation
+          remains locked.
         </p>
       </header>
+
+      <section className="settings-section">
+        <div>
+          <h2>GPT and Claude writing</h2>
+          <p>
+            Connect either service, see the models available to your own account, and choose what
+            the Story room should use.
+          </p>
+        </div>
+        <WritingSetup status={writingStatus} onStatus={onWritingStatus} />
+      </section>
 
       <section className="settings-section">
         <div>
@@ -866,6 +885,7 @@ export function App(): JSX.Element {
   const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [status, setStatus] = useState<SystemStatus>()
   const [cloudStatus, setCloudStatus] = useState<CloudConnectionStatus>()
+  const [writingStatus, setWritingStatus] = useState<WritingSettingsStatus>()
   const [activeProject, setActiveProject] = useState<ProjectDetails>()
   const [page, setPage] = useState<Page>('home')
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -879,18 +899,22 @@ export function App(): JSX.Element {
     void Promise.allSettled([
       window.studio.projects.list(),
       window.studio.system.getStatus(),
-      window.studio.cloud.getStatus()
-    ]).then(([projectsResult, systemResult, cloudResult]) => {
+      window.studio.cloud.getStatus(),
+      window.studio.writing.getStatus()
+    ]).then(([projectsResult, systemResult, cloudResult, writingResult]) => {
       if (cancelled) return
 
       if (projectsResult.status === 'fulfilled') setProjects(projectsResult.value)
       if (systemResult.status === 'fulfilled') setStatus(systemResult.value)
       if (cloudResult.status === 'fulfilled') setCloudStatus(cloudResult.value)
+      if (writingResult.status === 'fulfilled') setWritingStatus(writingResult.value)
 
       if (projectsResult.status === 'rejected' || systemResult.status === 'rejected') {
         setError('The local project library could not be opened. No cloud service was started.')
       } else if (cloudResult.status === 'rejected') {
         setError('Cloud settings need attention. Local productions remain available and unchanged.')
+      } else if (writingResult.status === 'rejected') {
+        setError('Writing connections need attention. Local productions remain unchanged.')
       }
       setLoading(false)
     })
@@ -968,8 +992,10 @@ export function App(): JSX.Element {
         <Settings
           status={status}
           cloudStatus={cloudStatus}
+          writingStatus={writingStatus}
           projectIds={projectIds}
           onCloudStatus={setCloudStatus}
+          onWritingStatus={setWritingStatus}
           onProjectRestored={projectRestored}
         />
       )
@@ -994,6 +1020,17 @@ export function App(): JSX.Element {
           onNavigate={setPage}
           onLibrary={goToLibrary}
           onProjectUpdated={projectUpdated}
+        />
+      )
+    }
+
+    if (page === 'story') {
+      return (
+        <CreativeRoom
+          project={activeProject}
+          writingStatus={writingStatus}
+          onHome={() => setPage('home')}
+          onSettings={() => setPage('settings')}
         />
       )
     }
@@ -1091,7 +1128,7 @@ export function App(): JSX.Element {
           <div className="topbar-safety">
             {reportedActivePods > 0
               ? 'Existing RunPod activity found · generation locked'
-              : 'No paid services active'}
+              : 'GPU off · text calls require approval'}
           </div>
         </header>
         {error && (

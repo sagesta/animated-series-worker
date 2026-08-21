@@ -22,6 +22,7 @@ import {
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
   UlidSchema,
+  WritingDraftRecordSchema,
   type CreateProjectInput,
   type ProjectBackupSummary,
   type ProjectDetails,
@@ -30,7 +31,8 @@ import {
   type ProjectMigrationPreview,
   type ProjectMigrationResult,
   type ProjectRestoreResult,
-  type ProjectSummary
+  type ProjectSummary,
+  type WritingDraftRecord
 } from '@studio/contracts'
 import { buildProjectManifest } from '@studio/domain'
 import { ProjectBackupService } from './backup'
@@ -420,6 +422,44 @@ export class ProjectStore {
     }
 
     return ProjectDetailsSchema.parse({ manifest, workspacePath })
+  }
+
+  saveWritingDraft(unknownDraft: WritingDraftRecord): WritingDraftRecord {
+    this.assertAvailableForWrite()
+    const draft = WritingDraftRecordSchema.parse(unknownDraft)
+    const project = this.openProject(draft.projectId)
+    const draftPath = join(
+      project.workspacePath,
+      'provenance',
+      'writing',
+      `draft-${draft.draftId}.json`
+    )
+    if (existsSync(draftPath)) {
+      throw new Error('That writing proposal already exists and will not be overwritten.')
+    }
+    atomicWriteJson(draftPath, draft)
+    return draft
+  }
+
+  listWritingDrafts(projectId: string): WritingDraftRecord[] {
+    const project = this.openProject(projectId)
+    const writingDirectory = join(project.workspacePath, 'provenance', 'writing')
+    const drafts: WritingDraftRecord[] = []
+    for (const entry of readdirSync(writingDirectory, { withFileTypes: true })) {
+      if (!entry.isFile() || !/^draft-[0-9A-HJKMNP-TV-Z]{26}\.json$/.test(entry.name)) {
+        continue
+      }
+      try {
+        drafts.push(
+          WritingDraftRecordSchema.parse(
+            JSON.parse(readFileSync(join(writingDirectory, entry.name), 'utf8'))
+          )
+        )
+      } catch {
+        // Damaged proposal records stay on disk for recovery and are not shown as healthy drafts.
+      }
+    }
+    return drafts.sort((left, right) => right.createdAt.localeCompare(left.createdAt))
   }
 
   reconcile(): void {

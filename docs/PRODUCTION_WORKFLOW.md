@@ -63,7 +63,7 @@ Select a pilot scene that is difficult enough to be honest. A silent landscape s
 
 ## 4. Stage 1 — story development and upstream import
 
-Choose a connected OpenAI or Anthropic writing profile, select the local context the request may use, and preview the matched external-skill plan. The studio then uses the provider as a drafting assistant while locally versioned facts remain authoritative. Every proposed draft shows provider/model, usage/cost, and `Skills used`; accepting a proposal creates a new local version rather than replacing an approved version silently.
+Choose a connected OpenAI or Anthropic writing profile and select the local context the request may use. Current version 0.4.0 previews that exact context, requires approval for one potentially paid text request, validates the structured response, and saves it locally as a proposal with provider/model, token usage, uncalculated dollar cost, and `Skills used: none`. The provider remains a drafting assistant; it cannot approve canon. Selective acceptance into versioned local facts and the matched external-skill plan/receipts remain the next writing/skill slices, not current behavior.
 
 Use the pinned upstream skills and other enabled compatible skills where they help:
 

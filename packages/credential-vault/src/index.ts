@@ -126,7 +126,7 @@ export class EncryptedCredentialVault {
       }
       throw new CredentialVaultError(
         'read-failed',
-        'The saved API key could not be unlocked. Reconnect RunPod with a fresh key.'
+        'The saved API key could not be unlocked. Reconnect this service with a fresh key.'
       )
     }
   }

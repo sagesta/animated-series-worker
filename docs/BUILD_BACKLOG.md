@@ -30,7 +30,7 @@ The detailed phase order remains authoritative in [IMPLEMENTATION_PLAN.md](IMPLE
 
 ## 4. Current verified checkpoint
 
-The current source provides a working local Windows shell, isolated series/film project creation, verified full backup/non-overwriting restore, single-writer protection, protected RunPod-key storage, and read-only RunPod account/pricing checks. It cannot yet provision a GPU, run ComfyUI, generate media, call a writing provider, execute an external creative skill, or assemble an episode.
+The current source provides a working local Windows shell, isolated series/film projects, verified backup/non-overwriting restore, single-writer protection, protected RunPod/OpenAI/Anthropic keys, read-only RunPod checks, and provider-neutral local writing proposals. It cannot yet provision a GPU, run ComfyUI, generate media, execute an external creative skill, promote proposals into versioned canon, or assemble an episode.
 
 ## 5. Master work stack
 
@@ -39,7 +39,7 @@ The current source provides a working local Windows shell, isolated series/film 
 | 1 | FOUND-001 desktop foundation completion | 1 | In progress | Stable packaged shell, structured safe errors, support diagnostics, and responsive non-technical UI | Clean-machine launch, accessibility, interruption, and signed-package evidence |
 | 2 | DATA-001 durable project store | 1 | In progress — full verified backup/restore, writer lock, and guided v1→v2 rollback matrix pass locally | Atomic files, single-writer protection, migrations, archive, backup, restore, and reconciliation | Archive/future-migration breadth, incremental/release policy, and clean-machine restore pass |
 | 3 | SEC-001 complete credential and logging boundary | 1–2 | In progress — RunPod vault and local redacted diagnostics/support JSON pass | Protected RunPod/OpenAI/Anthropic credentials and redacted logs/support bundles | Broader provider/worker/skill secret scans, retention, and clean-machine persistence/upgrade tests pass |
-| 4 | WRITE-001 provider-neutral writing | 2 | Ready | Guided GPT/Claude connection plus structured story, character, world, script, rewrite, and continuity jobs | AT-036 and AT-039 pass with usage/cost lineage |
+| 4 | WRITE-001 provider-neutral writing | 2 | In progress — protected setup, structured adapters, context preview, paid-call confirmation, and local proposal lineage pass mocked tests | Guided GPT/Claude connection plus structured story, character, world, script, rewrite, and continuity jobs | Live provider/account switching, actual cost benchmark, canon promotion, and full AT-036/AT-039 pass |
 | 5 | SKILL-001 external creative-skill runtime | 2 | Ready | Safe install, inspection, task routing, required-use enforcement, permissions, validation, and receipts | AT-037 plus extension security suite pass |
 | 6 | UP-001 pinned upstream adapter runner | 2 | Planned | Invoke supported shuohao-skills without editing the submodule and preserve exact source evidence | AT-005, AT-006, and update rollback pass |
 | 7 | UP-002 long-form normalization | 2 | Planned | Convert upstream reports into local acts, scenes, characters, dialogue, storyboards, and neutral shot intent | Representative 20–35 minute fixture normalizes deterministically |

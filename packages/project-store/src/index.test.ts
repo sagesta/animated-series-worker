@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   ProjectManifestSchema,
   ProjectManifestV1Schema,
+  WritingDraftRecordSchema,
   type ProjectDetails
 } from '@studio/contracts'
 import { PROJECT_DIRECTORIES, ProjectStore, type ProjectMigrationFailurePoint } from './index'
@@ -120,6 +121,62 @@ describe('ProjectStore', () => {
 
     expect(() => store.openProject('../../another-project')).toThrow()
     expect(store.listProjects()).toEqual([])
+    store.close()
+  })
+
+  it('stores writing proposals inside only their owning project without overwrite', () => {
+    const workspaceRoot = createRoot()
+    const store = new ProjectStore({ workspaceRoot })
+    const first = store.createProject(input('First Story', 'series'))
+    const second = store.createProject(input('Second Story', 'series'))
+    const draft = WritingDraftRecordSchema.parse({
+      schemaVersion: 1,
+      draftId: '01J00000000000000000000009',
+      projectId: first.manifest.id,
+      taskKind: 'develop_character',
+      status: 'proposal',
+      provider: 'openai',
+      model: 'gpt-test',
+      profile: 'balanced',
+      createdAt: '2026-08-21T14:00:00.000Z',
+      instruction: 'Develop the lead character with a clear flaw, desire, and emotional arc.',
+      contextSelection: { includeProjectBrief: true, includeProductionSettings: true },
+      contextSnapshotSha256: 'a'.repeat(64),
+      sourceVersions: [
+        {
+          kind: 'project-manifest',
+          id: first.manifest.id,
+          schemaVersion: first.manifest.schemaVersion,
+          updatedAt: first.manifest.updatedAt,
+          sha256: 'b'.repeat(64)
+        }
+      ],
+      output: {
+        title: 'Lead character proposal',
+        summary: 'A reviewable character direction.',
+        sections: [{ heading: 'Core', body: 'The lead hides uncertainty behind precision.' }],
+        continuityQuestions: [],
+        suggestedNextSteps: []
+      },
+      usage: { inputTokens: 20, outputTokens: 30, totalTokens: 50, cachedInputTokens: 0 },
+      cost: {
+        currency: 'USD',
+        estimatedUsd: null,
+        actualUsd: null,
+        state: 'not-calculated'
+      },
+      providerRequestId: 'request-1',
+      skillsPlanned: [],
+      skillsUsed: []
+    })
+
+    expect(store.saveWritingDraft(draft)).toEqual(draft)
+    expect(store.listWritingDrafts(first.manifest.id)).toEqual([draft])
+    expect(store.listWritingDrafts(second.manifest.id)).toEqual([])
+    expect(() => store.saveWritingDraft(draft)).toThrow(/will not be overwritten/i)
+    expect(
+      existsSync(join(first.workspacePath, 'provenance', 'writing', `draft-${draft.draftId}.json`))
+    ).toBe(true)
     store.close()
   })
 

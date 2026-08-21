@@ -4,6 +4,22 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-21 (protected GPT/Claude creative room)
+
+- Added separate Windows-protected OpenAI and Anthropic credential records with validate-before-store model-list checks, independent refresh/disable/enable/remove actions, and no provider/model choice hidden as a benchmarked default.
+- Added provider-neutral adapters for OpenAI Responses and Anthropic Messages using structured JSON output, bounded timeouts, safe errors, request IDs, and token usage without retaining a provider conversation as canonical project data.
+- Replaced the Story placeholder with a non-technical Creative Room for character, world, outline, scene, dialogue, and continuity proposals. It previews the exact selected project context and requires a fresh checkbox approval for each potentially paid text request.
+- Added immutable per-project writing proposal records with project/provider/model/profile/source hashes, context hash, token usage, provider request ID, and explicit `not-calculated` dollar cost. External skills are recorded as unused because their runtime remains locked.
+- Added adapter, service, project-isolation/no-overwrite, and renderer approval tests. The full suite now contains 48 automated tests.
+
+User impact: a creator can bring an OpenAI or Anthropic key, select an available model, and create reviewable story-development proposals entirely through the application. This spends no GPU money. A text provider may charge for a confirmed proposal request; the application does not yet claim an exact dollar quote.
+
+Migration impact: no existing project schema changes. Successful setup creates separate encrypted OpenAI/Anthropic vault files and one non-secret writing-settings file under application user data. Each successful request adds one new JSON proposal under that project's `provenance/writing` folder; existing files are never overwritten.
+
+Documentation impact: README, status, architecture, API/UX/security contracts, implementation/backlog, tests, traceability, sources, and changelog now describe the implemented boundary and the still-open live benchmark, actual-cost, skill-runtime, canon-approval, packaging, and GPU gates.
+
+Rollback: close the app and revert this feature commit. Existing proposal JSON files are inert and may be retained; removing them is optional and not automatic. Protected provider keys can be removed in Settings before rollback. No RunPod resource or media is created by this slice.
+
 ### Changed — 2026-08-21 (YouTube release workflow audit and expansion)
 
 - Audited `darkzOGx/youtube-automation-agent` at exact commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` and compared its implemented channel operations with the studio's accepted animation architecture.
