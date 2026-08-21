@@ -2,7 +2,7 @@
 
 Animated Series Studio is a local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
 
-This repository now contains a working local desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, and the first safe RunPod account-connection slice, plus the authoritative product and architecture specification. The Windows application can create, list, reopen, back up, verify, and non-destructively restore isolated series and one-off film projects; create a local-only redacted support file; encrypt a RunPod API key with Windows protection; perform an explicit no-cost account check; read current GPU planning prices; and save conservative local spending defaults. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, or finished episodes.
+This repository now contains a working local desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, and the first safe RunPod account-connection slice, plus the authoritative product and architecture specification. The Windows application can create, list, reopen, back up, verify, and non-destructively restore isolated series and one-off film projects; create a local-only redacted support file; encrypt a RunPod API key with Windows protection; perform an explicit no-cost account check; read current GPU planning prices; and save conservative local spending defaults. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, finished episodes, public thumbnails, upload packages, or analytics.
 
 ## Locked baseline
 
@@ -16,6 +16,7 @@ This repository now contains a working local desktop foundation, verified projec
 - External creative skills are versioned and permissioned. The studio routes applicable enabled skills and records exact execution receipts, so an attached required skill cannot be silently ignored.
 - Images, audio, and videos are reviewed inside Animated Series Studio. ComfyUI runs headlessly as an internal worker engine rather than the required viewing interface.
 - Timed animatics, pose/depth/edge/mask/motion controls, layered parallax, advanced benchmark-approved LTX profiles, warning-only creative QC, separate foley, and optional project-scoped adaptation are part of the planned rich production workflow.
+- YouTube delivery includes versioned release profiles, an Idea Library, truthful public-thumbnail candidates, factual release details and timeline chapters, explicit audience/disclosure/originality/rights review, and an immutable manual-upload package. Version 1 does not auto-publish; optional analytics are read-only/evidence-based and cannot change creative work automatically.
 - Production workers never repair themselves with “Install Missing Nodes”; exact dependencies are built, tested, pinned, and rollback-capable before billing begins.
 - The upstream `shuohao-skills` project is a pinned Git submodule under `vendor/` and is never edited in place.
 - A 20–35 minute episode is assembled from approved generated motion, lip-synced dialogue, reusable loops, held frames, pans, reaction shots, sound, and editorial timing. The system does not assume that every second must be newly generated video.
@@ -28,6 +29,7 @@ This repository now contains a working local desktop foundation, verified projec
 4. [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 5. [Production workflow](docs/PRODUCTION_WORKFLOW.md)
 6. [Master build backlog](docs/BUILD_BACKLOG.md)
+7. [YouTube release, packaging, and learning workflow](docs/YOUTUBE_RELEASE_WORKFLOW.md)
 
 ## Repository boundary
 
@@ -83,5 +85,7 @@ node scripts/check-docs.mjs
 | Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |
 | In-app media review | Gallery/player/proxy architecture documented; not implemented |
 | Animatic, advanced controls, creative QC, foley, and optional adaptation | Fully specified and test-mapped; not implemented |
+| YouTube thumbnails, release details, policy review, and upload package | Fully specified and test-mapped; not implemented; version 1 remains manual upload |
+| YouTube performance evidence and learning | Manual/read-only design documented; not implemented; no automatic creative or paid action |
 | LTX/Qwen workflows | Not benchmarked or implemented |
 | Production readiness | Not achieved |

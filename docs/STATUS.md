@@ -4,7 +4,7 @@ Last updated: 2026-08-21
 
 ## Honest capability statement
 
-Animated Series Studio now has a working local Windows desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, and a safe RunPod account-connection slice. It creates, lists, reopens, backs up, verifies, and non-destructively restores isolated series and one-off film workspaces; validates and encrypts a RunPod API key; reads aggregate existing-Pod status and current GPU planning prices; saves local safety defaults; and creates a local-only support file after secret/path redaction. It does **not** yet create a cloud machine, persistent model storage, a worker image, or any story/image/speech/video/lip-sync/export job.
+Animated Series Studio now has a working local Windows desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, and a safe RunPod account-connection slice. It creates, lists, reopens, backs up, verifies, and non-destructively restores isolated series and one-off film workspaces; validates and encrypts a RunPod API key; reads aggregate existing-Pod status and current GPU planning prices; saves local safety defaults; and creates a local-only support file after secret/path redaction. It does **not** yet create a cloud machine, persistent model storage, a worker image, any story/image/speech/video/lip-sync/export job, a public thumbnail, a YouTube upload package, or an analytics connection.
 
 | Capability | Status | Evidence needed to advance |
 | --- | --- | --- |
@@ -29,6 +29,8 @@ Animated Series Studio now has a working local Windows desktop foundation, verif
 | Ambience/effects/foley generation | Not started — separate rights-aware audio-effects contract is documented; current LTX Foley compatibility is not assumed | AT-047 and exact engine/license compatibility pass |
 | Optional character/style adaptation | Not started — project-scoped benchmark-gated LoRA lifecycle is documented | AT-048/AT-049 plus dataset-rights and rollback evidence pass |
 | Rough-cut editor and export | Not started | YouTube-ready technical QC passes |
+| YouTube thumbnail and release packaging | Not started — release profiles, Idea Library, Thumbnail Room, factual Release Details, human policy attestations, readiness, and immutable manual-upload package are specified | AT-050–AT-057 plus clean-machine package verification pass |
+| YouTube performance evidence and learning | Not started — manual evidence import, optional read-only connector, and human-approved prospective recommendations are specified; automatic publishing is outside version 1 | AT-058, OAuth/isolation tests, and real evidence-linked learning review pass |
 | Multiple series isolation | In progress — identity-scoped project folders and same-title isolation tests pass locally | Asset/query/token/cache leakage and concurrent-worker tests |
 | Production-ready 20–35 minute episode | Not started | Full pilot episode meets quality, recovery, and budget gates |
 
@@ -44,7 +46,7 @@ No row may be changed to “Complete” solely because code was written. The nam
 - A user-scoped silent upgrade over the development machine's version-0.2.0 installation exited successfully; the installed executable reports product version `0.3.0.0`, launches, and exposes the version-0.3.0 local/no-spend shell. This is an upgrade smoke on one machine, not clean-machine release evidence.
 - A final packaged-window accessibility smoke confirmed version 0.3.0, the explicit local/no-spend home state, and locked project-dependent generation navigation. Renderer tests cover the complete RunPod Settings flow; a fresh pixel-level Settings review could not be captured while the Windows desktop was locked. An earlier packaged pass covered the 1429×915 home layout and four-step series/film wizard; no production was created during either pass.
 
-The OpenAI/Anthropic, external-skill, ComfyUI, media-viewing, animatic/control, layered-parallax, advanced-LTX, creative-QC, foley, and adaptation additions in the current documents are design decisions only; no new provider credential, text request, skill execution, media/training job, or charge was created by documenting them.
+The OpenAI/Anthropic, external-skill, ComfyUI, media-viewing, animatic/control, layered-parallax, advanced-LTX, creative-QC, foley, adaptation, YouTube packaging, analytics, and prospective-learning additions in the current documents are design decisions only; no new provider credential, OAuth token, text request, skill execution, media/training job, upload, analytics request, or charge was created by documenting them.
 
 This is development-machine and mocked-provider evidence only. The automated local AT-001 backup/restore and v1→v2 migration rollback matrix pass, but this does not satisfy the clean-machine AT-030 restore drill, future-migration/upgrade breadth, incremental/release archives, credential-persistence, production-signing, or cloud worker/termination gates.
 The test installer also uses Electron's default icon; branded icon assets remain release work.

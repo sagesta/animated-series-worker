@@ -33,6 +33,13 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | FR-056 | `ARCHITECTURE.md` creative QC, `MEDIA_PIPELINE.md` assistive checks, `API_CONTRACTS.md` artifact contract | creative-qc, media probes, speech verifier, review UI | AT-046 |
 | FR-057 | `MEDIA_PIPELINE.md` ambience/effects/foley, `DOMAIN_MODEL.md` audio-effects cue | engine-audio-fx, rights registry, timeline/mix | AT-047 |
 | FR-058 | `MEDIA_PIPELINE.md` optional adaptation, `DOMAIN_MODEL.md` adaptation profile, `SECURITY_AND_RECOVERY.md` dataset controls | adaptation, benchmark store, project store | AT-048, AT-049 |
+| FR-059 | `YOUTUBE_RELEASE_WORKFLOW.md` release profile/Idea Library, `DOMAIN_MODEL.md`, `UX_SPEC.md` | release-profile store, idea library, research adapters | AT-050 |
+| FR-060 | `YOUTUBE_RELEASE_WORKFLOW.md` Thumbnail Room, `UX_SPEC.md`, `MEDIA_PIPELINE.md` | thumbnail compositor, image adapter, responsive preview, release validator | AT-051, AT-052 |
+| FR-061 | `YOUTUBE_RELEASE_WORKFLOW.md` Release Details, `API_CONTRACTS.md`, `PRODUCTION_WORKFLOW.md` | release-details editor, chapter/metadata validator | AT-053 |
+| FR-062 | `YOUTUBE_RELEASE_WORKFLOW.md` attestation gate, `SECURITY_AND_RECOVERY.md`, `SOURCES.md` | release-readiness and policy/rights attestation service | AT-054, security suite |
+| FR-063 | `YOUTUBE_RELEASE_WORKFLOW.md` release package, `DOMAIN_MODEL.md`, `PRODUCTION_WORKFLOW.md` | release packager, inventory verifier, upload checklist | AT-055, AT-027, AT-030 |
+| FR-064, FR-065 | `YOUTUBE_RELEASE_WORKFLOW.md` measurement/learning, `ARCHITECTURE.md`, `API_CONTRACTS.md` | performance importer, optional read-only connector, learning registry | AT-056, AT-057, security suite |
+| FR-066 | `YOUTUBE_RELEASE_WORKFLOW.md` readiness, `UX_SPEC.md`, `ARCHITECTURE.md` | readiness aggregator, prerequisite/probe registry | AT-058, AT-013, AT-026 |
 
 ## Non-functional requirements
 
@@ -57,6 +64,8 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-017 | `ARCHITECTURE.md` media-review flow, `MEDIA_PIPELINE.md` artifact handling | local media protocol, proxy service, review UI | AT-038, AT-040 |
 | NFR-018 | `ARCHITECTURE.md` remote worker, `SECURITY_AND_RECOVERY.md` worker controls, `GPU_OPERATIONS.md` execution | worker image, gateway, workflow registry | AT-045, AT-049, security suite |
 | NFR-019 | `ARCHITECTURE.md` creative QC, `API_CONTRACTS.md` authorization boundary, `UX_SPEC.md` review warnings | creative-qc, review UI, authorization service | AT-046, security suite |
+| NFR-020 | `YOUTUBE_RELEASE_WORKFLOW.md`, `SOURCES.md`, `CHANGE_CONTROL.md` | versioned release rules, validation, attestation UI | AT-051–AT-055, security suite |
+| NFR-021 | `YOUTUBE_RELEASE_WORKFLOW.md`, `DOMAIN_MODEL.md`, `API_CONTRACTS.md` | performance snapshot and learning registry | AT-056, AT-057, isolation suite |
 
 ## Current implementation evidence — version 0.3.0
 
@@ -72,6 +81,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-012 documentation | Implemented for this slice | `pnpm docs:check` passes with synchronized status/decision/source/test/changelog updates | Continuous enforcement on every later change |
 | FR-044–FR-051 and NFR-015–NFR-017 provider/skill/media-viewing/style-change design | Documented; not implemented | Provider-neutral writing, enforced external-skill provenance, in-app media review, and scoped character redesign are now locked requirements and architecture decisions | Provider adapters, skill runtime, media protocol/player, scoped presentation bindings, tests AT-036–AT-041, and non-technical acceptance |
 | FR-052–FR-058 and NFR-018–NFR-019 rich previsualization/control/QC/sound/adaptation design | Documented; not implemented | Timed animatic, neutral controls, layered parallax, advanced LTX, warning-only creative QC, separate foley, optional adaptation, and immutable runtime are locked | Packages/workflows, compatibility benchmarks, tests AT-042–AT-049, and non-technical acceptance |
+| FR-059–FR-066 and NFR-020–NFR-021 YouTube release/learning design | Documented; not implemented | Reference-repo audit plus official-source review now define profiles/ideas, truthful thumbnails, release details, human policy attestations, immutable upload packages, optional evidence import, approved learning, and unified readiness | Release components, optional read-only OAuth review, tests AT-050–AT-058, clean-machine package verification, and non-technical acceptance |
 
 ## Change rule
 

@@ -32,6 +32,13 @@ erDiagram
     ASSET_VERSION ||--o{ DEPENDENCY_EDGE : source
     DEPENDENCY_EDGE }o--|| ASSET_VERSION : dependant
     ASSET_VERSION ||--o{ APPROVAL : receives
+    PROJECT }o--o{ CHANNEL_RELEASE_PROFILE_VERSION : explicitly_binds
+    PROJECT ||--o{ RELEASE_PACKAGE_VERSION : packages
+    RELEASE_PACKAGE_VERSION ||--o{ THUMBNAIL_CANDIDATE_VERSION : considers
+    RELEASE_PACKAGE_VERSION ||--|| RELEASE_DETAILS_VERSION : selects
+    RELEASE_PACKAGE_VERSION ||--|| RELEASE_ATTESTATION_VERSION : requires
+    RELEASE_PACKAGE_VERSION ||--o{ PERFORMANCE_SNAPSHOT : may_measure
+    PERFORMANCE_SNAPSHOT ||--o{ LEARNING_RECOMMENDATION : supports
 ```
 
 ## 3. Core records
@@ -215,6 +222,24 @@ An `AdaptationProfileVersion` records the project scope, purpose (`character` or
 
 The manifest is the immutable receipt for a take or derived export. It contains the exact lineage listed in `ARCHITECTURE.md` and must be stored beside the output. A manifest schema change creates a new schema version; old manifests remain readable.
 
+### YouTube release and learning records
+
+`ChannelReleaseProfileVersion` stores a channel/profile's intended audience, locale/timezone, promise, packaging voice/visual direction, CTA/credit/link blocks, blocked claims/topics, category/playlist conventions, and the project IDs explicitly allowed to bind it. The profile is not a character/style bible and cannot override project facts.
+
+`ReleaseIdea` stores project/profile scope, topic or story premise, source/evidence links, rationale, duplicate similarity, continuity/brand checks, editorial status, and optional planned production binding. Research signals never create that binding automatically.
+
+`ThumbnailCandidateVersion` stores release/project/profile scope; hypothesis; approved source-frame/reference IDs and hashes; generated image job when applicable; exact local text/layout/font recipe; responsive preview derivatives; technical/policy/rights checks; cost; status; and selected/rejected decision. Candidate review and platform experiment evidence are different records.
+
+`ReleaseDetailsVersion` stores title candidates/selection, description, timeline-derived chapters, captions/languages, credits/links, category, tags/hashtags, playlist/episode placement, end-screen/card notes, factual-support links, validation ruleset, and reviewer decision.
+
+`ReleaseAttestationVersion` stores the creator's explicit child-directed audience, applicable altered/synthetic-media disclosure, truthfulness, originality/non-template, rights/credits, and full-watch decisions plus the external-ruleset versions reviewed. An unresolved value cannot be represented as `false`.
+
+`ReleasePackageVersion` binds one immutable master, caption set, selected thumbnail/details/attestation versions, QC/rights artifacts, upload checklist, file inventory/hashes, approvals, and optional later platform video ID. Any input change creates a new version; locking never mutates an earlier package.
+
+`PerformanceSnapshot` stores release/profile/project/platform identity; measurement window; collection time; metric names/values/definitions version; source (`report_import` or `read_only_connector`); missing-data notes; reliability/sample status; and immutable raw-evidence hash. Rehearsal or simulated data is explicitly ineligible for baselines.
+
+`LearningRecommendation` separates observation, inference, confidence, supporting snapshot/release IDs, proposed prospective scope, status (`proposed`, `approved`, `rejected`, `superseded`), and reviewer. Approval can create a future planning constraint but never modifies the evidence or locked creative/release records.
+
 ## 4. State machines
 
 ### Creative asset
@@ -269,6 +294,16 @@ failure paths -> quarantine -> terminating -> terminated
 ```
 
 `terminated` requires provider confirmation or an explicit unresolved incident state.
+
+### Release package
+
+```text
+draft -> validating -> needs_attention -> ready_for_attestation -> locked
+  |             |                |                 |
+  +----------> archived <--------+-----------------+
+
+locked -> new draft version only; never edit in place
+```
 
 ## 5. Dependency and stale propagation
 
@@ -330,6 +365,11 @@ projects/
     ├── jobs/
     ├── timelines/
     ├── exports/
+    ├── release/
+    │   ├── profiles-and-ideas/
+    │   ├── thumbnails/
+    │   ├── packages/<release-id>/
+    │   └── performance/
     └── project.sqlite
 ```
 
@@ -353,6 +393,7 @@ Incomplete backup and restore staging folders are never indexed as healthy proje
 - The worker receives a session-scoped project token and a project-specific temporary root.
 - Shared asset reuse is a copy operation that creates new project ownership plus lineage back to the source.
 - Global model caches contain models/workflows only, never project bibles or voice references.
+- Release profiles require explicit project bindings; idea, thumbnail, release-details, package, platform-ID, performance, and learning records always carry both project and profile/brief scope so one series cannot inherit another channel identity accidentally.
 - Automated tests attempt path traversal, wrong-project IDs, cache collisions, and concurrent jobs across projects.
 
 ## 8. SQLite and file consistency

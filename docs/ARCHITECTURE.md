@@ -15,6 +15,7 @@ Animated Series Studio is a local control plane with disposable cloud execution 
 - The **studio media viewer** serves verified local images, audio, proxies, and video through the restricted application protocol. ComfyUI executes workflows but is not the creator-facing review platform.
 - The **previsualization and control layer** owns timed animatics plus engine-neutral pose, depth, edge, segmentation, mask, motion-track, reference-clip, and layered-parallax assets.
 - The **creative-QC layer** produces evidence-backed warnings without creating approvals, while the **audio-effects adapter** keeps ambience/foley separate from immutable dialogue masters.
+- The **release layer** owns channel/profile bindings, the Idea Library, public thumbnails, release details, policy attestations, immutable upload packages, and optional evidence-only post-release learning. It has no version-1 publishing authority.
 
 ## 2. Context diagram
 
@@ -35,6 +36,8 @@ flowchart LR
     Desktop --> Review[In-app image gallery\naudio/video player\nA/B review]
     Desktop --> Previz[Timed animatic\ncontrol packs + layered assets]
     Desktop --> Export[YouTube-ready package\nand optional editor handoff]
+    Desktop --> Release[Thumbnail Room\nrelease details + policy gate\nversioned upload package]
+    Release -. optional read-only/manual .-> Analytics[YouTube performance evidence]
 ```
 
 ## 3. Trust and ownership boundaries
@@ -49,6 +52,7 @@ flowchart LR
 | GPU worker | Active job workspace and runtime logs until synchronized | Model memory, temporary intermediates, failed partial outputs |
 | Network volume | Pinned model/workflow cache | Never the only copy of project source or approved output |
 | Upstream submodule | Exact upstream source at a pinned commit | Generated upstream reports are rebuildable |
+| YouTube/manual analytics input | Only explicitly connected read-only metrics or user-selected reports tied to a release/profile | API response caches and derived recommendations; no platform state is canonical project data |
 
 The desktop must be able to recover the project even if the worker and network volume disappear.
 
@@ -78,6 +82,8 @@ animated-series-studio/
 │   ├── engine-audio-fx/          neutral ambience/effects/foley job
 │   ├── adaptation/               optional project-scoped LoRA training/evaluation
 │   ├── media/                    local serving/proxies, players, FFmpeg, captions, probing, QC
+│   ├── release/                  profiles, ideas, thumbnails, metadata, policy gate, packages, learning
+│   ├── provider-youtube-readonly/ optional least-privilege analytics adapter; no v1 publishing calls
 │   └── ui-kit/                   accessible shared controls and language
 ├── worker/
 │   ├── gateway/                  authenticated job API and watchdog
@@ -116,6 +122,7 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Media review | Restricted `studio://` local media routes plus native image/audio/video elements and derived proxies | Review remains available after the GPU/ComfyUI worker is gone |
 | Previsualization/control | Versioned animatic and engine-neutral control-asset contracts | Rich pose/motion/compositing control without exposing node graphs |
 | Creative QC | Deterministic probes plus benchmarked assistive vision/speech checks | Finds likely defects while preserving human approval authority |
+| YouTube release | Local versioned profiles/details/packages plus optional report import/read-only analytics adapter | Complete handoff and evidence-backed learning without automatic public mutation |
 | Secrets | Electron asynchronous `safeStorage`; Windows DPAPI protects encrypted vault bytes | No plaintext project or repository credentials; fail closed when protection is unavailable |
 
 Versions are chosen and pinned during implementation spikes. “Latest” is never a production version.
@@ -137,13 +144,13 @@ The local project store currently provides:
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
+Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, project-scoped adaptation, YouTube release profiles/ideas/thumbnails/details/packages, policy attestations, analytics import, and learning are also documented only and remain unimplemented.
 
 ## 6. Local component responsibilities
 
 ### Desktop renderer
 
-- Presents guided project, bible, episode, shot, review, cost, and export screens.
+- Presents guided project, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens.
 - Never receives raw provider secrets.
 - Communicates only through typed Electron IPC exposed by the preload boundary.
 - Keeps technical details behind an optional expert drawer.
@@ -215,6 +222,16 @@ Declarative instruction/schema skills cannot execute arbitrary code. Executable 
 - The media package creates rebuildable thumbnails, waveforms, poster frames, and lightweight review proxies. Originals are immutable inputs to those derivatives.
 - The renderer provides image zoom/pan, side-by-side comparison, audio playback/waveform/captions, and video playback, scrubbing, frame/time navigation, synchronized A/B review, approval, rejection, and targeted retake.
 - During generation, bounded preview frames and progress events may be relayed from the worker. A preview is never accepted as the final artifact.
+
+### YouTube release and learning
+
+- A versioned release profile is separate from the series style/story bible and can be bound only to explicitly selected projects. Ideas, metadata, thumbnails, analytics, and learnings remain project/profile scoped.
+- The Thumbnail Room uses approved project assets and the image adapter for visual work, then applies exact text/layout locally. Candidate comparison is not represented as an audience experiment without imported platform evidence.
+- The release-details service validates title/description/tags/language/category fields and creates chapters from the locked final timeline. It supplies deterministic warnings, not a universal ranking score.
+- The policy/rights gate requires human audience, applicable synthetic-media, truthfulness, originality, rights/credits, and full-watch attestations. Models and defaults have no attestation authority.
+- The packager writes a new hash-inventoried release directory containing master, captions, selected thumbnail, details, chapters, credits, attestations, QC, checklist, and manifests; a locked version is immutable.
+- The optional analytics adapter is read-only and least privilege. A file importer is available without an account connection. Snapshots and recommendations are separate immutable records; only a reviewed approval can create a prospective learning constraint.
+- No version-1 service has a video/thumbnail/caption insert, update, schedule, delete, playlist-mutation, or public-publish operation.
 
 ### Previsualization and control assets
 
@@ -290,6 +307,8 @@ sequenceDiagram
 
 The orchestrator does not mark a job `succeeded` until the local artifact, manifest, and hash have been verified. Provider termination is a separate recorded state.
 
+After picture/sound lock, the release layer works entirely from verified local media: build thumbnail candidates and release details, resolve policy/rights attestations, lock a new release-package version, and hand it to the creator for manual upload. Post-release evidence returns only through an explicit report import or optional read-only connector and cannot mutate the locked production flow.
+
 ## 9. Long-form normalization of the upstream pipeline
 
 The upstream repository is valuable but has different production assumptions:
@@ -325,6 +344,7 @@ Every production manifest records:
 - Writing provider/model/profile, token usage/cost, selected canonical context versions, and external-skill execution receipts where applicable.
 - Original media hash plus derived thumbnail/proxy recipes and hashes; derived files never replace the original identity.
 - Animatic version, resolved control-pack assets/hashes, layered-composite recipe, prompt-enhancer input/output, advanced LTX adapter/profile, adaptation artifact, and creative-QC evidence where applicable.
+- Release profile/brief, thumbnail candidate/source/layout hashes, selected release-details version, ruleset/attestation versions, package inventory, linked platform ID, performance snapshot, and approved-learning IDs where applicable.
 - Start/end timestamps, retries, provider IDs, measured GPU runtime, and actual/estimated cost.
 
 A compatibility matrix in `config/` will declare tested combinations. The UI may warn about or block untested combinations; it never silently substitutes a model.

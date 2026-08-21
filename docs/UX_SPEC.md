@@ -8,7 +8,7 @@ The UI does not hide consequences. Before a paid or destructive action it explai
 
 ### Current implementation — version 0.3.0
 
-The production library, series/film creation wizard, project overview, primary navigation, local status, focus states, reduced-motion handling, and friendly recovery boundary are implemented. A project overview now creates a verified full backup with a plain-language progress/result state; an older schema-1 project also receives one plain-language format-update card listing its exact changes, one-file scope, no-data-loss expectation, and mandatory backup before the user approves. Settings lists verified recovery copies, disables restore while the project is present, and restores only into a missing project folder. Settings also provides a masked RunPod-key field, explicit free validation, Windows-protected storage, aggregate existing-Pod warning, current catalogue prices, conservative default safety limits, key refresh/removal, an honest prepared-studio checklist, and a local-only redacted support-file action that states exactly what it excludes and never uploads automatically. Story, World & Cast, Storyboard, Generate, Review, and Edit & Export remain planned/locked. Account connection is not described as GPU readiness, and every paid action remains absent.
+The production library, series/film creation wizard, project overview, primary navigation, local status, focus states, reduced-motion handling, and friendly recovery boundary are implemented. A project overview now creates a verified full backup with a plain-language progress/result state; an older schema-1 project also receives one plain-language format-update card listing its exact changes, one-file scope, no-data-loss expectation, and mandatory backup before the user approves. Settings lists verified recovery copies, disables restore while the project is present, and restores only into a missing project folder. Settings also provides a masked RunPod-key field, explicit free validation, Windows-protected storage, aggregate existing-Pod warning, current catalogue prices, conservative default safety limits, key refresh/removal, an honest prepared-studio checklist, and a local-only redacted support-file action that states exactly what it excludes and never uploads automatically. Story, World & Cast, Storyboard, Generate, Review, Edit & Export, and Release remain planned/locked. Account connection is not described as GPU readiness, and every paid action remains absent.
 
 ## 2. Navigation
 
@@ -21,7 +21,8 @@ Primary navigation:
 5. **Generate** — ready queue, estimates, cloud session.
 6. **Review** — images, voice lines, video takes, retakes.
 7. **Edit & Export** — timeline, sound, captions, QC, delivery.
-8. **Settings** — cloud connection, storage, budgets, backups, expert mode.
+8. **Release** — public thumbnail, title, description, chapters, policy review, upload package, and later performance evidence.
+9. **Settings** — cloud connection, storage, budgets, backups, optional read-only analytics connection, expert mode.
 
 The currently open project and production unit are always visible. Switching projects requires an explicit action so the user does not unknowingly work in the wrong series.
 
@@ -265,7 +266,23 @@ Export readiness is a checklist:
 
 The app creates a video, captions, manifest, and QC report. Public upload remains outside version 1.
 
-## 10. Error language
+## 10. YouTube release room
+
+The Release room opens only when an approved master exists. It keeps public packaging separate from story and shot production while retaining exact links to the final episode or film.
+
+The normal flow is:
+
+1. Select or create the correct versioned channel release profile; a one-off film may use a project-local release brief.
+2. Open **Thumbnail Room**, choose approved source frames or an authorized new illustration, compare candidates at large/desktop/phone sizes, and select one. The screen says `Candidate review`, never `A/B test`, unless a real YouTube Test & Compare report has been imported.
+3. Open **Release Details** to review title variants, description, timeline-derived chapters, captions/languages, category, playlist placement, credits, links, tags, hashtags, and end-screen notes. The studio shows a factual checklist and truncation previews, not a universal `SEO score`.
+4. Complete explicit human questions for audience, altered/synthetic-media disclosure, truthful packaging, originality, rights/credits, and the full-master watch. `Unresolved` blocks the package.
+5. Preview **Release Readiness**. It distinguishes missing files, stale versions, technical failures, unresolved human decisions, and optional suggestions.
+6. Select **Lock upload package**. The studio writes an immutable, hash-verified folder with the master, selected thumbnail, captions, copy-ready details, chapters, credits/rights, attestations, QC report, checklist, and manifests.
+7. Select **Open package folder** and follow the plain-language YouTube Studio checklist. Version 1 does not sign in, paste fields, schedule, or publish for the creator.
+
+After publication, the creator may attach the video URL/ID and import an official report. A later optional read-only connection can collect eligible analytics without permission to edit the channel. Performance observations and proposed lessons show their evidence and confidence; only a human can approve a lesson for future work. They cannot rewrite a released episode or start paid generation.
+
+## 11. Error language
 
 Every error answers:
 
@@ -280,7 +297,7 @@ Example:
 
 Never show only a stack trace, provider code, or “unknown error.” Expert details can accompany the plain explanation.
 
-## 11. Accessibility and calm operation
+## 12. Accessibility and calm operation
 
 - Keyboard access and visible focus for all primary actions.
 - Labels in addition to color for status.
@@ -290,7 +307,7 @@ Never show only a stack trace, provider code, or “unknown error.” Expert det
 - Spend notifications are factual, not alarming; hard limits remain prominent.
 - A `Pause after current job` control allows a calm stop without abandoning verified work.
 
-## 12. Usability acceptance
+## 13. Usability acceptance
 
 A representative non-technical user must be able to:
 
@@ -303,5 +320,6 @@ A representative non-technical user must be able to:
 - Understand a stale-dependency impact message.
 - Connect or skip a writing provider, attach a fixture skill, verify that it was used, and review image/audio/video entirely inside the studio.
 - Build and revise a timed animatic, attach a supported motion/control pack, understand an assistive QC warning, and confirm that no warning approved a take automatically.
+- Prepare and verify a truthful YouTube upload package, explain every unresolved policy question, and distinguish a local thumbnail comparison from a real platform experiment.
 
 No facilitator may use a terminal or cloud console during the acceptance session.

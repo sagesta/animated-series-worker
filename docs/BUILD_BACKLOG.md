@@ -69,12 +69,22 @@ The current source provides a working local Windows shell, isolated series/film 
 | 31 | FOLEY-001 rights-aware synchronized effects | 0–7 | Planned | Import/generate separate ambience/effects/foley cues without changing dialogue or music | AT-047 passes and exact engine compatibility is recorded |
 | 32 | SOUND-001 dialogue, ambience, effects, and music layers | 7 | Planned | Preserve source audio, create versioned mixes, and track rights/source information | Mix QC and rights-readiness checks pass |
 | 33 | CAPTION-001 captions and pronunciation timing | 7 | Planned | Generate editable SRT/VTT from approved script/line timings; ASR is QC only | Caption overlap, reading-speed, sync, and export tests pass |
-| 34 | EXPORT-001 YouTube delivery and editor handoff | 7 | Planned | Render the approved 1080p package, manifest, captions, QC report, and selected interchange format | AT-026–AT-028 pass and full human watch is signed |
+| 34 | EXPORT-001 master delivery and editor handoff | 7 | Planned | Render the approved 1080p master, production manifest, captions, QC report, rights/credits, and selected interchange format as inputs to release packaging | AT-026–AT-028 pass and full human watch is signed |
 | 35 | MULTI-001 multiple-series and one-off-film isolation | 8 | In progress | Keep every project's characters, styles, voices, controls, adaptations, caches, costs, and outputs separate | Cross-project path/query/token/cache/control/dataset attack tests pass |
 | 36 | SCALE-001 two- and three-GPU scheduling | 8 | Planned | Run independent compatible jobs concurrently with deterministic result ordering and hard budget limits | One/two/three-worker benchmark has accurate combined GPU-hours and no collisions |
 | 37 | RECOVERY-001 full backup, restore, and disaster drill | 8 | Planned | Restore projects and approved assets without the GPU worker or network model cache | Clean-machine restore and interrupted-job recovery pass |
 | 38 | EPISODE-001 representative 20–35 minute validation episode | 8 | Planned | Prove continuity, cost, review load, storage, recovery, and export at the intended duration | Full episode meets creative, technical, recovery, and budget gates |
 | 39 | RELEASE-001 non-technical production release | 9 | Planned | Signed installer, first-run guidance, updates, rollback, help, privacy, licenses, and support | Clean-account/clean-machine usability and release rehearsal pass |
+| 40 | YT-PROFILE-001 channel release profiles | 2–7 | Planned | Version channel promise, audience, packaging voice/visual rules, defaults, project permissions, and explicit multi-series bindings; allow film-local briefs | AT-050 profile/version/isolation scenarios pass |
+| 41 | IDEA-001 source-labelled release Idea Library | 2 | Planned | Store manual/research ideas, dated sources, rationale, duplicate/continuity warnings, and human editorial state without production authority | AT-050 proves a signal cannot create/rewrite/queue paid work |
+| 42 | THUMB-001 public Thumbnail Room | 7 | Planned | Create/import truthful candidates from approved/authorized sources, apply deterministic typography/layout, preview realistic sizes, validate, and select with lineage | AT-051–AT-052 pass; candidate review cannot claim an experiment winner without platform evidence |
+| 43 | YT-META-001 Release Details and discovery validation | 7 | Planned | Draft/select factual titles/descriptions, timeline chapters, captions/languages, category/playlist/tags/hashtags/credits/links/end-screen notes without a universal SEO score | AT-053 passes against versioned official-rule fixtures |
+| 44 | YT-POLICY-001 human release attestations | 7 | Planned | Record explicit audience, synthetic-media, truth, originality, rights/credits, and full-watch decisions; unresolved answers block package lock | AT-054 passes and no policy answer is silently defaulted |
+| 45 | READY-001 unified Prepared Studio and Release Readiness | 5–7 | Planned | Explain setup, cost, input, stale, QC, rights, policy, and human-decision blockers in one calm view without granting approval | AT-058 and denial/paid-consent tests pass |
+| 46 | YT-PACKAGE-001 immutable manual-upload package | 7 | Planned | Lock and verify the exact master, selected thumbnail, details, chapters, captions, rights, attestations, QC, checklist, and hash inventory | AT-055 plus clean-machine package verification pass |
+| 47 | YT-ANALYTICS-001 real performance evidence | 8 | Planned | Attach platform identity and import validated official reports; optionally collect through a separately approved least-privilege read-only connector | AT-056 plus OAuth-scope, tamper, duplicate, and cross-project tests pass |
+| 48 | YT-LEARN-001 human-approved prospective learning | 8 | Planned | Turn comparable real observations into evidence/confidence-labelled proposals applied only to a chosen future scope | AT-057 proves simulated data cannot enter baselines and recommendations cannot mutate history or spend |
+| 49 | YT-PUBLISH-001 optional private upload/scheduling | Post-v1 | Blocked — O-010 | If separately accepted, upload only a reviewed package privately/scheduled with idempotent reconciliation and no public-publish shortcut | Product decision, least-privilege OAuth, duplicate/quota/privacy/rollback tests, and explicit final authorization pass |
 
 ## 6. ComfyUI reliability gate
 
@@ -97,13 +107,15 @@ This gate makes workflow execution dependable; it does not claim that generative
 Unless a safety defect changes priority, implementation proceeds in this order:
 
 1. Finish DATA-001 and SEC-001 reliability foundations.
-2. Implement WRITE-001 and SKILL-001 so story/character/script development becomes useful inside the app.
+2. Implement WRITE-001 and SKILL-001 so story/character/script development becomes useful inside the app, then add the local YT-PROFILE-001/IDEA-001 records without granting them production authority.
 3. Implement UP-001/UP-002 and CONT-001 so creative facts and dependencies are durable before media multiplication.
 4. Build BENCH-001 and VIEW-001 before enabling paid generation.
 5. Build WORKER-001, the COMFY-001–COMFY-005 stack, and the remaining CLOUD-001 lifecycle behind locked spending gates.
 6. Prove IMAGE-001, LAYER-001, VOICE-001, ANIMATIC-001, and needed CONTROL-001 paths before bulk LTX video; run ADAPT-001 only if the reference-only benchmark fails.
 7. Complete VIDEO-001/LTXADV-001/LIPSYNC-001/CREATIVE-QC-001 and produce PILOT-001.
-8. Add EDIT-001/FOLEY-001/SOUND-001/captions/export, then concurrency, recovery, the full-length episode, and production release.
+8. Add EDIT-001/FOLEY-001/SOUND-001/captions/export, then THUMB-001, YT-META-001, YT-POLICY-001, READY-001, and YT-PACKAGE-001.
+9. Add validated manual analytics import, then the optional read-only connector and human-approved prospective learning after the security/product decision passes.
+10. Complete concurrency, recovery, the full-length episode, and production release. Keep YT-PUBLISH-001 blocked until its separate post-version-1 decision and safety gates pass.
 
 ## 8. Intake template for future additions
 

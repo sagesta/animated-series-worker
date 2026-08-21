@@ -4,6 +4,20 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-21 (YouTube release workflow audit and expansion)
+
+- Audited `darkzOGx/youtube-automation-agent` at exact commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` and compared its implemented channel operations with the studio's accepted animation architecture.
+- Added the governed YouTube release workflow: versioned channel release profiles, a source-labelled Idea Library, public Thumbnail Room, factual Release Details, timeline-derived chapters, explicit human audience/disclosure/truth/originality/rights/full-watch attestations, unified Release Readiness, and immutable manual-upload packages.
+- Added optional post-release evidence import/read-only analytics and human-approved prospective learning, with strict separation between real/imported/rehearsal values and no authority to rewrite history or start paid work.
+- Added FR-059–FR-066, NFR-020–NFR-021, AT-050–AT-058, D-038–D-041, IPC/domain/security/media/UX/production/phase/backlog mappings, and official YouTube source links.
+- Explicitly rejected copying plaintext credential/token storage, a hardcoded not-made-for-kids answer, a universal SEO score, local candidate review presented as a real A/B test, and automatic public publishing in version 1. Optional private upload/scheduling remains blocked behind O-010 and separate OAuth/idempotency/privacy gates.
+
+Implementation status: documentation, requirements, contracts, tests-to-build, and backlog only. Thumbnail generation, release-detail drafting, YouTube OAuth/API access, upload, analytics collection, and learning are not implemented and no external account, media job, provider charge, or channel content was created.
+
+Migration impact: none. No application schema, project, credential, provider resource, model, workflow, media, or YouTube account changed.
+
+Rollback: revert this documentation commit. Existing application behavior and all local/provider/channel state remain unchanged.
+
 ### Changed — 2026-08-21 (guided project schema migration and rollback)
 
 - Made project-manifest schema 2 the current format for new projects, adding reversible `lifecycle.archivedAt` and `lifecycle.statusBeforeArchive` fields without changing creative content.

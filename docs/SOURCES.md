@@ -77,13 +77,23 @@ Design consequence: ComfyUI is a headless, loopback-only worker engine behind th
 
 Design consequence: version 0.3.0 can validate/store/refresh/remove an API key and read current planning prices, but cannot mutate any RunPod resource. Version 1 will create/terminate temporary Pods from a pinned template and keep only a model cache on a network volume after the worker/watchdog gates pass. Prices are refreshed before every future quote and approval.
 
-## YouTube delivery
+## YouTube delivery, packaging, policy, and analytics
 
 | Topic | Current verified fact used by the design | Source |
 | --- | --- | --- |
 | Upload settings | Current YouTube guidance lists MP4, H.264, progressive scan, 4:2:0, same recorded frame rate, AAC-LC/other accepted audio at 48kHz, BT.709 for SDR, and an 8 Mbps reference bitrate for 1080p standard frame rates. | [YouTube recommended upload encoding settings](https://support.google.com/youtube/answer/1722171?hl=en) |
+| Public thumbnail | Current YouTube Help recommends a large 16:9 JPG/GIF/PNG image, currently 3840×2160 with a minimum width of 640 pixels. It lists different upload-size limits by device, so the studio uses a versioned export profile rather than copying one permanent hard-coded limit. | [Add custom thumbnails](https://support.google.com/youtube/answer/72431?hl=en) |
+| Thumbnail experiment meaning | YouTube Studio Test & Compare can expose variants simultaneously and currently evaluates the result by watch-time share; a local side-by-side review is therefore not evidence of an A/B winner. | [Test & compare thumbnails](https://support.google.com/youtube/answer/13861714?hl=en-on) |
+| Metadata emphasis | YouTube states that title, thumbnail, and description matter more for discovery than tags, and that tags otherwise play a minimal role except for matters such as misspellings. | [Add tags to videos](https://support.google.com/youtube/answer/146402?hl=en), [How YouTube search works](https://support.google.com/youtube/answer/16090438?hl=en) |
+| Manual chapters | Creator-supplied chapters begin at `00:00`, contain at least three ascending timestamps, and each chapter is at least ten seconds under current guidance. | [Video Chapters](https://support.google.com/youtube/answer/9884579?hl=en) |
+| Child-directed audience | YouTube requires creators to designate audience accurately and warns not to rely on automated systems. Animated/cartoon characters are one relevant factor, but animation is not automatically child-directed or general-audience content. | [Determining if content is made for kids](https://support.google.com/youtube/answer/9528076?hl=en), [Set a channel or video's audience](https://support.google.com/youtube/answer/9527654?hl=en) |
+| Altered/synthetic disclosure | The Data API includes `status.containsSyntheticMedia` for realistic altered/synthetic content, while current YouTube guidance distinguishes realistic generated/altered scenes from non-realistic animation and production assistance. The app records a human decision against the current guidance instead of inferring it from model use. | [YouTube video resource](https://developers.google.com/youtube/v3/docs/videos), [2026 disclosure update](https://support.google.com/youtube/thread/424874071/updates-to-ai-content-disclosure-and-labels?hl=en) |
+| Authenticity and monetization | Current YouTube monetization policy requires original/authentic work and can reject generic, repetitive, or mass-produced template content, while explicitly recognizing series with distinct storylines and original AI-assisted creative work as potentially acceptable. | [YouTube channel monetization policies](https://support.google.com/youtube/answer/1311392?hl=en), [Monetizable-content guidance](https://support.google.com/youtube/answer/2490020?hl=en) |
+| Metadata policy | YouTube's spam policy applies to content, metadata, and thumbnails and prohibits misleading or manipulative behavior. | [Spam, deceptive practices, and scams policy](https://support.google.com/youtube/answer/2801973/spam-deceptive-practices-and-scams-policies?hl=en-GB) |
+| Analytics | The YouTube Analytics API defines metrics such as views, estimated minutes watched, average view duration/percentage, engagement, and audience information. Metrics have different stability/deprecation status and must be stored with source/window/version context. | [YouTube Analytics metrics](https://developers.google.com/youtube/analytics/metrics) |
+| Future connector | The Data API supports video insert, thumbnail set, and caption insert operations. Uploads from some unverified API projects are restricted to private and upload behavior has OAuth/quota/audit requirements, so these endpoints are not assumed safe merely because a reference repository calls them. | [YouTube Data API](https://developers.google.com/youtube/v3/docs), [Videos: insert](https://developers.google.com/youtube/v3/docs/videos/insert), [Captions implementation](https://developers.google.com/youtube/v3/guides/implementation/captions?hl=en) |
 
-Design consequence: default delivery is a versioned 1080p/24fps SDR H.264/AAC profile with technical QC. The platform settings are rechecked before release changes.
+Design consequence: default video delivery remains a versioned 1080p/24fps SDR H.264/AAC profile with technical QC. Public-facing thumbnails, release metadata, chapters, audience/disclosure attestations, and analytics definitions also use versioned rules rechecked before release changes. Version 1 exports a verified manual-upload package and does not automatically publish.
 
 ## FFmpeg encoding
 
@@ -99,6 +109,18 @@ Design consequence: default delivery is a versioned 1080p/24fps SDR H.264/AAC pr
 
 Local inspection at the pin established the H3-specific storyboard, 2–5 second cut gate, up-to-15-second segments, Chinese-first fields, and self-test behavior. Those repository facts are preserved through the submodule lock and compatibility suite rather than web assumptions.
 
+## External YouTube-automation reference
+
+The studio reviewed [darkzOGx/youtube-automation-agent](https://github.com/darkzOGx/youtube-automation-agent) at commit [`0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4`](https://github.com/darkzOGx/youtube-automation-agent/tree/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4). The repository is MIT-licensed at that pin. Static source inspection—not only its README—established:
+
+- The [thumbnail agent](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/agents/thumbnail-designer-agent.js) creates a concept, local gradient/text image, optimized file, and several local variants; another media path can request an AI-generated image.
+- The [SEO agent](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/agents/seo-optimizer-agent.js) stores titles, descriptions, tags, hashtags, chapters, end-screen notes, and a heuristic score. The studio adopts the governed release fields but rejects the universal score and generic clickbait templates.
+- The [strategy agent](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/agents/content-strategy-agent.js) queries most-popular videos/configured competitors and combines those signals with channel history; the studio retains provenance and creator control instead of autonomous trend-to-production execution.
+- The [recovery](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/utils/generation-recovery-service.js), [readiness](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/utils/production-readiness-service.js), and [learning](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/utils/channel-learning-engine.js) services provided useful patterns for visible checkpoints, safe probes, source-labelled performance snapshots, and approved recommendations.
+- Its [publishing agent](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/agents/publishing-scheduling-agent.js) performs external mutation and its [credential manager](https://github.com/darkzOGx/youtube-automation-agent/blob/0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4/utils/credential-manager.js) writes ordinary JSON credential/token files. These implementations are not adopted; the studio keeps protected-vault storage, human attestations, and no automatic version-1 publishing.
+
+The complete adoption/rejection matrix and target workflow are in [YOUTUBE_RELEASE_WORKFLOW.md](YOUTUBE_RELEASE_WORKFLOW.md).
+
 ## Items requiring a future exact review
 
 - Selected GPU inventory and live hourly pricing.
@@ -109,6 +131,7 @@ Local inspection at the pin established the H3-specific storyboard, 2–5 second
 - Music, sound, font, reference image, likeness, and voice permissions.
 - RunPod data region, privacy, billing, retention, and account limits.
 - Current YouTube delivery/policy requirements before publishing.
+- Current thumbnail, chapter, audience, altered/synthetic-media, authenticity/monetization, metadata, analytics, OAuth, quota, and API-audit requirements before enabling or changing release behavior.
 - Current OpenAI/Anthropic model availability, context behavior, pricing, data handling, and skill/tool features before provider implementation or default changes.
 - External Agent Skill/MCP package compatibility and security requirements before non-declarative skill classes are enabled.
 - Exact speech-verification/ASR engine, creative-QC models/thresholds, layer-separation implementation, LTX advanced adapter compatibility, Foley engine, and project-adaptation training recipe before those features are enabled.

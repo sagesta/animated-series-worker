@@ -9,6 +9,7 @@ This folder is the authoritative build specification for Animated Series Studio.
 | [PRD](PRD.md) | What is being built, for whom, and what counts as success? |
 | [UX specification](UX_SPEC.md) | What does a non-technical creator see and do? |
 | [Production workflow](PRODUCTION_WORKFLOW.md) | How does an idea become an approved YouTube episode or one-off film? |
+| [YouTube release workflow](YOUTUBE_RELEASE_WORKFLOW.md) | Which thumbnail, release-details, research, policy, packaging, and learning features were adopted after the reference-repository review? |
 | [Status](STATUS.md) | What exists now, what is being built, and what is not yet safe to claim? |
 | [Glossary](GLOSSARY.md) | What do the specialist terms mean in plain language? |
 

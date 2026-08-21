@@ -39,6 +39,9 @@ Verified full backup and non-overwriting restore are implemented for canonical p
 | Skill silently ignored or falsely reported | Orchestrator-required execution plan, validated result, immutable receipt, and blocked completion when a required receipt is absent |
 | Excess project context sent to a writing provider/tool | User-visible context selection, task-scoped data pack, provider/skill permission preview, and recorded disclosure lineage |
 | Media viewer path escape or original replacement | Project-scoped `studio://media` authorization, normalized paths, immutable original hashes, rebuildable derivatives |
+| YouTube OAuth token leakage or excessive channel authority | OS vault, exact read-only scope allowlist, opaque status, revocation, and adapter with no mutation methods in version 1 |
+| Wrong audience/disclosure or deceptive packaging silently accepted | Explicit unresolved-capable human attestations, factual-source view, ruleset version, and blocked package lock |
+| Imported/simulated analytics poisons future decisions | Strict source/window/schema validation, immutable snapshots, real/simulated separation, project/profile scope, and human promotion |
 
 ## 3. Credential handling
 
@@ -49,6 +52,7 @@ Verified full backup and non-overwriting restore are implemented for canonical p
 - Project export and backup exclude credential stores.
 - Credential test, rotation, and removal are explicit settings actions.
 - RunPod, OpenAI, Anthropic, and any future service each use a separate protected credential record and opaque connection status; disabling one provider does not expose or remove another.
+- Any future YouTube/Analytics OAuth token is a separate protected credential with exact approved read-only scopes, opaque renderer status, explicit disconnect/revocation, and no inclusion in a project/export/backup/release package. Version 1 does not request it.
 - External skills receive neither raw credentials nor a generic “call any provider” capability. Provider calls remain controlled by the writing adapter and permissioned tool broker.
 - A worker receives a short-lived session token, never the main provider key unless a narrowly scoped termination design absolutely requires it and passes threat review.
 - On Windows, Electron `safeStorage` uses DPAPI: it protects the encrypted value from other Windows users, but it is not a defence against malicious software already running as the same signed-in user. Endpoint security and a protected Windows account remain necessary.
@@ -108,6 +112,8 @@ Voice reference and recognizable likeness use requires explicit authorization. T
 
 Pose/reference clips, adaptation datasets, generated/imported foley, and sound libraries also require project-scoped source/rights records. An adaptation dataset is never shared across projects or uploaded to a training job without an explicit preview and authorization.
 
+Before a YouTube package is locked, a human records made-for-kids status, applicable altered/synthetic-media disclosure, packaging truth, originality, complete rights/credits, and full-watch confirmation. The studio may explain current rules and flag missing evidence, but it never chooses a policy/legal answer, treats animation alone as the answer, or lets analytics waive an unresolved concern.
+
 ## 7. Backup policy
 
 Recommended baseline:
@@ -122,7 +128,7 @@ Backup types:
 | --- | --- | --- |
 | Metadata checkpoint | JSON, manifests, SQLite snapshot, small docs | Before/after significant approval or migration |
 | Incremental media backup | New/changed approved assets and takes | Daily during active production or user policy |
-| Release archive | Final package, manifests, bibles, timeline, rights, compatibility matrix | Every published episode/film |
+| Release archive | Master, selected public thumbnail, release details/chapters/captions, attestations, QC/checklist, manifests, bibles, timeline, rights, compatibility matrix, and attached platform identity/evidence | Every published episode/film |
 
 Temporary caches, models, rejected previews, and reproducible reports may use different retention policies. The backup preview shows what is excluded.
 
@@ -244,3 +250,6 @@ Before creation, show included categories. Run automated secret scans. The bundl
 - Backup and clean-machine restore drill passes.
 - Worker image/model/workflow verification rejects tampering.
 - Rights-required assets block release when evidence is absent.
+- Release-package lock fails when an audience/disclosure/truth/originality/full-watch decision is unresolved or any selected input changed after preview.
+- YouTube report imports reject malformed, oversized, duplicate, simulated-as-real, wrong-window, and wrong-project/profile evidence.
+- If the optional analytics connector is implemented, its requested/granted scopes and adapter surface prove it cannot insert, update, delete, schedule, or publish channel content.

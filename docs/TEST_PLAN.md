@@ -129,6 +129,18 @@ The suite contains 37 automated tests. Automated AT-001 now passes for a series 
 - **AT-048:** After the reference-only identity fixture fails its declared threshold, explicitly authorize a project-scoped adaptation, train/evaluate a candidate, reject a regressing fixture, promote a passing fixture prospectively, and roll back without changing historical manifests or another project.
 - **AT-049:** Submit production jobs that request ComfyUI Manager, Git, pip/package installation, model download, unknown nodes, or unpinned workflow changes; the worker rejects/quarantines them and the last production image remains unchanged and rollback-capable.
 
+### YouTube packaging and learning
+
+- **AT-050:** Create two release-profile versions, bind them to two series plus a project-local film brief, and prove channel voice, links, blocked claims, thumbnails, metadata, ideas, and later analytics cannot cross scope without an explicit bind/copy operation. Add manual/imported trend and competitor signals with dates/sources; prove they cannot create an episode, rewrite continuity, or queue paid work without a separate human production decision.
+- **AT-051:** Create/import representative thumbnail candidates from approved frames and references; verify exact local typography, source/rights/cost lineage, platform format/dimension/size rules, desktop/phone previews, and rejection of corrupt, misleading, wrong-project, stale-character, clipped, or unreadable fixtures.
+- **AT-052:** Review several local thumbnail/title candidates and prove the UI calls them candidates, retains their hypotheses/hashes, selects only one for the package, and never claims a live A/B winner. Import a real/signed fixture result and link it only to the exact tested candidate hashes.
+- **AT-053:** Build release details from the locked master/timeline; detect excessive/missing fields, keyword stuffing, unrelated claims, unsupported links, `00:00`/ordering/minimum-duration chapter errors, caption-language mismatch, and chapter times beyond the final duration. A corrected package remains deterministic.
+- **AT-054:** Attempt release with each audience, synthetic-media, truthfulness, originality, rights/credits, and human-watch attestation unresolved. Every case blocks with guidance; no default value or model output can complete the attestation.
+- **AT-055:** Lock a release package, verify every file/hash and copy-ready field on a clean machine, then change a title, thumbnail, caption, chapter, master, and attestation separately. Each change creates a new package version and leaves the prior version byte-identifiable and unchanged.
+- **AT-056:** Attach a manual YouTube ID and import 24-hour/7-day/28-day real, partial, malformed, low-sample, and rehearsal fixtures. Preserve source/window/metric/version evidence, exclude simulated/rehearsal data from baselines, and deny wrong-profile/project data.
+- **AT-057:** Generate learning proposals from comparable profile releases, display observation/inference/confidence/evidence separately, approve one for one named future scope, reject another, and prove neither can rewrite locked creative records, switch live metadata, or start a paid job.
+- **AT-058:** Run Prepared Studio/Release Readiness with healthy, stale, skipped-paid-probe, and blocking-failure fixtures. The view gives plain remediation, blocks only the affected action, leaves unrelated local work available, and never spends on an unapproved probe.
+
 ## 5. Human benchmark rubrics
 
 ### Image identity
@@ -175,6 +187,7 @@ Regression thresholds are set after Phase 0. A material regression blocks defaul
 
 - Credential-vault and renderer-boundary inspection.
 - Secret-pattern scan of logs, project export, manifests, crash dumps, support bundles.
+- OAuth scope/token non-leakage, revocation, wrong-channel/profile binding, imported-report validation, and read-only connector mutation-denial tests.
 - Gateway authentication, expiry, wrong-project token, replay, and permission tests.
 - Path traversal, symlink/junction escape, oversized upload, wrong MIME/hash.
 - Port scan proving no public ComfyUI/model service.
@@ -198,5 +211,6 @@ Each release stores:
 - Backup/restore evidence.
 - Usability result.
 - Pilot/full-episode evidence appropriate to release stage.
+- Verified release-package inventory, thumbnail/release-details/chapter validation, policy-attestation evidence, and clean-machine copy/upload-checklist review.
 - Known limitations and rollback version.
 - Updated status, sources, decisions, traceability, and changelog.

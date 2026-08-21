@@ -14,8 +14,8 @@ flowchart LR
     P3 --> P4[4 Voices and lines]
     P4 --> P5[5 Cloud worker automation]
     P5 --> P6[6 LTX video and review]
-    P6 --> P7[7 Timeline, sound, captions, export]
-    P7 --> P8[8 Multiple series, concurrency, recovery]
+    P6 --> P7[7 Timeline, sound, captions, YouTube package]
+    P7 --> P8[8 Multiple series, concurrency, recovery, learning]
     P8 --> P9[9 Installer and production release]
 ```
 
@@ -45,6 +45,7 @@ flowchart LR
 10. LTX-2.5 pose/depth/edge/mask, motion-track, reference-video, DFR, temporal-upsample, in/outpaint/relight, and multishot compatibility/cost spike.
 11. Creative-assist identity/flicker/motion/lip/script-audio checker spike with human-reviewed positive/negative fixtures.
 12. Rights-safe audio-effects/Foley spike and an optional project-adaptation spike only if reference-only consistency fails.
+13. Public-thumbnail rules, timeline-derived chapter validation, release-package portability, YouTube policy-attestation wording, and read-only analytics/OAuth threat spike.
 
 ### Exit gate
 
@@ -95,6 +96,7 @@ flowchart LR
 - Parse/normalize outline, characters, art, script, storyboard, and shot recipe data.
 - Add project-scoped ID mapping and source-alias registry.
 - Add long-form episode acts/sequences and engine-neutral shot-plan conversion.
+- Add versioned channel release profiles, explicit project/profile bindings, project-local film briefs, and a source-labelled Idea Library whose suggestions cannot start production.
 - Preserve H3 prompts as source provenance, not executable LTX data.
 - Implement plain-language validation and import preview/apply.
 - Add upstream compatibility suite and update/rollback report.
@@ -188,7 +190,7 @@ flowchart LR
 - Every approved take has complete lineage and actual cost.
 - Queue recovers from forced desktop and worker interruption.
 
-## 10. Phase 7 — timeline, sound, captions, QC, and export
+## 10. Phase 7 — timeline, sound, captions, QC, and YouTube packaging
 
 ### Build
 
@@ -198,7 +200,11 @@ flowchart LR
 - Implement the rights-aware audio-effects adapter and separate synchronized foley/ambience cue review; keep incompatible LTX adapters disabled.
 - Generate/adjust SRT/VTT from approved line timings.
 - Implement FFmpeg render profiles and automated technical QC.
-- Implement final human checklist, rights readiness, release lock, export package, and optional editor handoff selected in Phase 0/O-005.
+- Implement final human checklist, rights readiness, master delivery lock, export package, and optional editor handoff selected in Phase 0/O-005.
+- Implement Thumbnail Room with approved-source selection, authorized image generation/editing, deterministic typography/layout, responsive previews, candidate lineage, technical checks, and human selection.
+- Implement Release Details with factual title/description variants, timeline-derived chapter validation, captions/languages, category/playlist/tags/hashtags/credits/links/end-screen notes, and no universal SEO score.
+- Implement human audience, altered/synthetic-media, truthful-packaging, originality, rights/credits, and full-watch attestations without automatic defaults.
+- Implement unified Release Readiness and an immutable hash-inventoried manual-upload package with a plain-language YouTube Studio checklist. Automatic publishing remains outside version 1.
 
 ### Exit gate
 
@@ -206,6 +212,7 @@ flowchart LR
 - Timeline rebuild from manifests is deterministic.
 - Replacing an approved take invalidates/rebuilds only affected timeline/export versions.
 - A full human watch signs release readiness.
+- Thumbnail/details/policy changes create a new package version; a clean-machine verification proves the selected master, thumbnail, captions, details, attestations, QC, and manifests are complete and unchanged.
 
 ## 11. Phase 8 — scale, multiple series, concurrency, and disaster recovery
 
@@ -217,6 +224,9 @@ flowchart LR
 - Add cross-project attack/isolation tests and explicit asset-copy workflow.
 - Add incremental backups, release archives, verified restore UI, and clean-machine restore drill.
 - Add benchmark dashboard and cost-per-approved-second reporting.
+- Add manual video-ID/URL registration, schema-validated official report import, and immutable performance snapshots.
+- After O-009 and OAuth/security approval, add an optional least-privilege read-only YouTube Analytics adapter that has no upload/update/delete capability.
+- Add evidence-backed, confidence-labelled learning recommendations that require human approval, remain scope-limited, and affect only future work.
 - Produce a representative multi-scene pilot and then a full 20–35 minute validation episode.
 
 ### Exit gate
@@ -225,6 +235,7 @@ flowchart LR
 - One-, two-, and three-worker runs produce compatible outputs and accurate total GPU-hour accounting.
 - Clean-machine restore passes without network volume.
 - Full-length episode meets creative, continuity, technical, recovery, and budget gates.
+- Imported/collected performance evidence cannot cross profiles/projects, overwrite a snapshot, fabricate an experiment winner, mutate locked history, or start paid work.
 
 ## 12. Phase 9 — installer and production release
 
@@ -256,8 +267,10 @@ model/provider benchmark
   -> safe automatic worker
   -> LTX pilot
   -> deterministic edit/export
+  -> verified YouTube release package
   -> recovery/concurrency
   -> full episode
+  -> optional evidence-backed learning
 ```
 
 Do not:
@@ -268,6 +281,8 @@ Do not:
 - adopt a model/update from a moving branch.
 - claim “automatic shutdown” without a remote independent test.
 - treat a successful render as a successful production workflow without local verification and review.
+- treat thumbnail candidates as a real audience experiment without accepted platform evidence.
+- auto-publish, infer a made-for-kids/disclosure answer, or let an SEO/analytics score bypass human release authority.
 
 ## 14. Definition of done for every work item
 
@@ -314,3 +329,9 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 | 25 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
 | 26 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
 | 27 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |
+| 28 | `YT-PROFILE-001` release profiles and ideas | Not started | Versioned multi-series packaging guidance and source-labelled idea backlog |
+| 29 | `THUMB-001` public Thumbnail Room | Not started | Truthful, responsive, versioned candidates linked to approved media |
+| 30 | `YT-META-001` Release Details | Not started | Human-selected metadata, timeline-derived chapters, and deterministic validation |
+| 31 | `YT-POLICY-001` human release attestations | Not started | Explicit audience/disclosure/truth/originality/rights/full-watch decisions |
+| 32 | `YT-PACKAGE-001` manual-upload package | Not started | Immutable verified master, thumbnail, details, captions, checks, and manifests |
+| 33 | `YT-ANALYTICS-001` and `YT-LEARN-001` | Not started | Optional real performance evidence and human-approved prospective lessons |

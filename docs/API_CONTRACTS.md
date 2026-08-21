@@ -61,6 +61,15 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | `creativeQc.run/disposition/list` | Assistive evidence warnings without approval authority |
 | `audioEffects.generate/import/review/approve` | Rights-aware ambience/effects/foley versions |
 | `adaptation.estimate/authorize/train/evaluate/promote` | Explicit project-scoped LoRA candidate lifecycle |
+| `releaseProfile.createVersion/bind/list` | Versioned channel/series packaging guidance and explicit project binding |
+| `idea.create/importSignals/review/bind` | Source-labelled release idea backlog without automatic production authority |
+| `thumbnail.createCandidate/import/preview/validate/select` | Public-facing candidate lineage, deterministic layout, responsive preview, and selection |
+| `releaseDetails.draft/validate/select` | Title/description/chapter/caption/category/tag/playlist fields and factual support |
+| `releaseReadiness.run/attest/status` | Prerequisite, rights, policy, originality, and human-review gate with explicit paid-probe consent |
+| `releasePackage.preview/lock/verify/openFolder` | Immutable hash-inventoried manual-upload package and checklist |
+| `performance.attachVideo/import/status` | Manual platform identity and evidence-file import |
+| `youtubeReadOnly.connect/status/collect/disconnect` | Optional least-privilege analytics only; no version-1 mutation surface |
+| `learning.list/review/applyProspectively` | Evidence-backed proposed constraints with explicit scope and human approval |
 
 The renderer never receives a raw provider key. IPC validates caller, project scope, and payload schema.
 
@@ -318,6 +327,28 @@ Each artifact response and manifest provides:
 - Local download state and verified local path are recorded by the desktop, not trusted from the worker.
 
 Media artifacts additionally distinguish an immutable `original` from rebuildable `derivatives` such as thumbnails, poster frames, waveforms, and review proxies. Each derivative records its source hash, recipe/version, MIME type, dimensions/duration, and its own hash. The renderer receives only project-authorized `studio://media/...` handles, never arbitrary local paths.
+
+## 7.1 Release-package and learning contracts
+
+Release requests include `projectId`, release-profile or project-local-brief ID/version, expected input versions, ruleset version, and an idempotency key for package locking. A package request fails when the master/captions/thumbnail/details/attestation/QC inputs are stale, unapproved, missing, wrong-project, or changed since preview.
+
+```ts
+interface ReleasePackageService {
+  preview(input: ReleasePackagePreviewInput): Promise<ReleasePackagePreview>;
+  lock(input: ReleasePackageLockInput): Promise<ReleasePackageVersion>;
+  verify(releasePackageId: string): Promise<InventoryVerification>;
+}
+
+interface PerformanceEvidenceProvider {
+  validateReadOnlyAccount(): Promise<ReadOnlyChannelCapability>;
+  collect(input: PerformanceWindowRequest): Promise<PerformanceSnapshot>;
+  disconnect(): Promise<void>;
+}
+```
+
+The version-1 YouTube evidence adapter, if O-009 enables it, is structurally incapable of inserting/updating/deleting videos, thumbnails, captions, playlists, schedules, or comments. OAuth scopes are allowlisted, stored through the credential vault, and never returned to the renderer. File imports pass schema, size, metric, date/window, channel/profile, duplicate, and content-safety validation before becoming evidence.
+
+`ThumbnailCandidateVersion`, `ReleaseDetailsVersion`, `ReleaseAttestationVersion`, `ReleasePackageVersion`, `PerformanceSnapshot`, and `LearningRecommendation` use strict versioned schemas. A candidate-review record cannot contain an experiment winner unless it cites an accepted platform-result artifact for the exact candidate hashes. A learning approval creates only a prospective, scope-limited constraint; no contract permits it to mutate a locked creative or release record or authorize a paid job.
 
 ## 8. Upstream adapter contract
 

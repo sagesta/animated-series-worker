@@ -60,6 +60,12 @@ Compile:
 
 Storyboard images are planning assets. A production first frame becomes a separate reviewed version rather than silently reusing an unapproved rough frame.
 
+### Public release-thumbnail workflow
+
+A public YouTube thumbnail is a release artifact, not the small rebuildable proxy used by the in-app media gallery. It starts from approved episode frames/character references or a separately authorized illustration request, keeps exact source and rights lineage, and may use the same versioned image adapter for controlled generation/editing. Final spelling, logo, border, and typography are rendered locally from approved text rather than trusted to generated raster text.
+
+Candidates are previewed at full, desktop-card, and phone-card sizes and checked for current delivery dimensions/aspect ratio/format/file size, readability, safe margins, corruption, duplicates, and truthful representation. Each candidate preserves its hypothesis, recipe, hashes, cost, and review decision. Local comparison never creates an audience experiment result; only imported official platform evidence for the exact candidate hashes may do that.
+
 ### Layered 2D/parallax workflow
 
 1. Start from an approved source image or approved generated candidate.
@@ -245,6 +251,8 @@ Default baseline:
 - Separate SRT and VTT captions.
 
 The source and verification links are maintained in `SOURCES.md`. Delivery settings are versioned profiles, not constants scattered through code.
+
+The locked master is then referenced—not silently copied or altered—by the separate versioned YouTube release package defined in `YOUTUBE_RELEASE_WORKFLOW.md`. That package adds the selected public thumbnail, release details, timeline-derived chapters, captions, attestations, rights/credits, checklist, QC, and hash inventory; it does not publish automatically in version 1.
 
 ## 9. Technical QC
 

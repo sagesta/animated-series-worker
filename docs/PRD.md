@@ -55,6 +55,8 @@ The product may later support collaborators, but version 1 is optimized for one 
 - One to three concurrent workers, limited by budget and compatibility.
 - Shot review, comparison, approval, rejection, notes, and targeted retake.
 - Automatic rough-cut assembly, dialogue placement, captions, sound layers, technical QC, and YouTube-ready export.
+- Versioned channel/series release profiles, a source-labelled idea library, public-facing thumbnail candidates, release metadata/chapters, policy attestations, and a complete manual-upload package.
+- Optional post-release performance import or read-only analytics connection whose recommendations require human approval before affecting future planning.
 - A versioned timed animatic, engine-neutral pose/depth/edge/mask/motion controls, layered 2D parallax assets, advanced benchmark-approved LTX control/fidelity profiles, creative-assist QC, and rights-aware effects/foley.
 - Optional project-scoped character or style adaptation only when the reference-only consistency benchmark proves it is needed.
 - Backup, restore, crash recovery, audit history, and upstream update controls.
@@ -130,7 +132,7 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **FR-032:** A take can be approved, rejected, held for review, or sent for a targeted retake without losing its history.
 - **FR-033:** The studio assembles approved media into a deterministic rough cut with dialogue, ambience, effects, music placeholders, transitions, and captions.
 - **FR-034:** The studio runs technical QC for missing media, duration mismatch, invalid format, resolution/frame-rate mismatch, clipping, silence, black/frozen frames, and audio/video synchronization.
-- **FR-035:** Final export produces a YouTube-ready MP4 and caption file plus a production manifest and QC report.
+- **FR-035:** Final export produces a YouTube-ready MP4 and caption file plus a production manifest, QC report, and the inputs required by the versioned release-package workflow.
 - **FR-036:** The studio can export an editable interchange package for a supported external editor without making that editor mandatory for basic delivery.
 
 ### Cost, history, and maintenance
@@ -167,6 +169,17 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **FR-057:** The studio can import or generate versioned ambience, synchronized effects, and foley through a rights-aware audio-effects contract. Dialogue masters remain separate and immutable, generated sound never silently replaces speech or music, and every source/model/prompt/reference has lineage and compatibility evidence.
 - **FR-058:** For a long-running project that fails the locked reference-only consistency benchmark, the creator can explicitly authorize a project-scoped character or style adaptation such as a LoRA. Training data, rights, captions/tags, base model, settings, cost, output hash, evaluation, scope, and rollback are recorded; the adaptation is promoted only if it beats the prior workflow without unacceptable regression.
 
+### YouTube release packaging and learning
+
+- **FR-059:** The user can create and version channel release profiles containing audience, language, region/timezone, channel promise, packaging voice/visual direction, CTA/credit blocks, blocked claims/topics, category, playlist conventions, and permitted projects. A source-labelled Idea Library records project/profile scope, rationale, duplicate similarity, continuity conflicts, and editorial status; trend or competitor signals remain suggestions and cannot create an episode or paid job silently.
+- **FR-060:** The Thumbnail Room can create, import, edit, preview, compare, version, and select public-facing thumbnail candidates from approved frames/references or an explicitly authorized illustration. Final typography/layout is deterministic, candidate lineage/rights/cost are retained, platform dimensions/format/size and small-card readability are validated, and misleading imagery or character/style drift blocks release lock until reviewed.
+- **FR-061:** The Release Details workspace creates editable title candidates, description, timeline-derived chapters, caption/language fields, credits/links, category, tags/hashtags, playlist/episode placement, and end-screen/card notes. Deterministic validation and claim evidence replace a misleading universal `SEO score`; no AI draft becomes selected metadata without human review.
+- **FR-062:** Release lock requires explicit human attestations for child-directed audience status, applicable altered/synthetic-media disclosure, metadata/thumbnail truthfulness, originality/non-template review, complete rights/credits, and full master/package review. The studio may explain current platform guidance but cannot default or decide these declarations for the creator.
+- **FR-063:** The studio creates an immutable, hash-inventoried release-package version containing the master, captions, selected thumbnail, candidate history, copy-ready release details, chapters, credits/rights, audience/disclosure record, QC/upload checklist, and production/package manifests. Any changed master or release field creates a new version; version 1 never publishes it automatically.
+- **FR-064:** After manual upload, the creator can attach a YouTube video ID/URL and import time-windowed performance evidence from a supported report file or an optional least-privilege read-only connector. Every snapshot states its source, time window, collection time, metric definitions/version, missing-data warnings, and real/imported/rehearsal status; simulated data is excluded from baselines.
+- **FR-065:** The studio can propose evidence-backed packaging or editorial learnings using comparable releases within the same channel/profile. A recommendation lists its evidence, inference, confidence, and proposed scope and remains inactive until a human approves it; it cannot rewrite locked creative facts, switch live metadata, regenerate media, or trigger spend automatically.
+- **FR-066:** A single Prepared Studio and Release Readiness view aggregates prerequisite, provider, worker, media, recovery, package, rights, and policy checks with safe remediation. Paid probes are separately identified and opt-in; a stale or failed blocking result prevents the affected action without disabling unrelated local work.
+
 ## 7. Non-functional requirements
 
 - **NFR-001 Usability:** After initial installation, the primary workflow must require no terminal, Docker command, SSH session, ComfyUI graph editing, or manual cloud console operation.
@@ -188,6 +201,8 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **NFR-017 Media review:** Completed media remains locally reviewable without an active GPU or ComfyUI session, and preview/proxy failure cannot corrupt or replace an original.
 - **NFR-018 Immutable production runtime:** A production worker cannot install or update ComfyUI, custom nodes, Python/CUDA dependencies, models, LoRAs, or workflows while executing an authorized session. Changes occur only through a separately built, scanned, benchmarked, pinned, and rollback-capable worker release.
 - **NFR-019 Human creative authority:** Automated creative, identity, speech, motion, and synchronization checks assist review but cannot create an approval, lock, release waiver, or destructive correction. The creator sees the evidence and makes the final decision.
+- **NFR-020 Platform-policy safety:** Platform rules, limits, fields, metric definitions, and disclosure guidance are versioned external assumptions and revalidated before release changes. The application never hardcodes a legal/policy declaration, stuffs irrelevant keywords, presents a local candidate comparison as a live audience test, or promises ranking/monetization.
+- **NFR-021 Analytics integrity:** Performance evidence is project/profile scoped, time-windowed, source-labelled, immutable after capture, comparable only under stated rules, and separated from recommendations. Missing, simulated, or low-sample data cannot be presented as a reliable result or silently influence generation.
 
 ## 8. Release success criteria
 
@@ -202,7 +217,9 @@ Version 1 is production-ready only when all of the following are demonstrated:
 7. Every paid generation has a cost entry and every approved take has a complete manifest.
 8. The cost forecast for the representative pilot falls within ±25% of measured compute cost after benchmark calibration.
 9. The final file passes the documented technical export checks.
-10. All acceptance tests in `TEST_PLAN.md`, documentation checks, and release gates pass.
+10. The selected thumbnail, release details, timeline-derived chapters, rights/credits, audience/disclosure decisions, and upload checklist form one verified release-package version.
+11. A second series or a one-off film cannot inherit the wrong release profile, thumbnail, metadata, analytics, or learning without an explicit binding/copy.
+12. All acceptance tests in `TEST_PLAN.md`, documentation checks, and release gates pass.
 
 Producing a full 20–35 minute episode is the final production-validation gate, not the first test of the system.
 
@@ -217,6 +234,9 @@ Producing a full 20–35 minute episode is the final production-validation gate,
 - Lip-sync retake rate for speaking close-ups.
 - Percentage of idle sessions terminated within the configured timeout.
 - Percentage of outputs with complete manifests.
+- Percentage of locked release packages passing metadata, chapter, thumbnail, rights, and policy validation without rework.
+- Post-release watch-time/retention and packaging evidence by comparable profile and format, shown as observations rather than universal targets.
+- Percentage of analytics recommendations explicitly approved, rejected, or left unresolved by the creator.
 - Percentage of code changes passing documentation traceability checks.
 
 Metrics inform workflow changes; they are not permission to weaken creative approval gates silently.

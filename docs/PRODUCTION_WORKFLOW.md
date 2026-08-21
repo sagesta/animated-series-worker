@@ -16,7 +16,10 @@ Idea/source
   -> selected final generations
   -> review and targeted repair
   -> rough cut, sound, captions, QC
-  -> final export package
+  -> locked master delivery
+  -> thumbnail, release details, policy review
+  -> versioned manual-upload package
+  -> optional evidence-backed learning for future work
 ```
 
 The difference is organization:
@@ -37,7 +40,8 @@ The difference is organization:
 | G5 Pilot lock | Representative image, voice, dialogue shot, motion shot, measured cost | Proves quality and economics before scale |
 | G6 Batch authorization | Ready jobs, estimate, hard cap, worker count | Makes spending explicit |
 | G7 Picture/voice lock | Approved takes and final line audio | Edit and captions must have stable sources |
-| G8 Release lock | Timeline, sound, captions, rights, technical QC, human review | Final delivery decision |
+| G8 Master delivery lock | Timeline, sound, captions, rights, technical QC, full human watch | Freezes the exact master and delivery evidence used for packaging |
+| G9 Release package lock | Thumbnail, release details, chapters, captions, audience/disclosure/originality/rights attestations, package inventory | Prevents stale or unresolved public packaging from being treated as ready |
 
 Changing an earlier gate creates a new version and an impact report. Later gates do not vanish, but affected items become stale until resolved.
 
@@ -245,7 +249,7 @@ A 20–35 minute stylized episode is not required to contain 20–35 minutes of 
 - Music/effects balance and caption readability.
 - Full end-to-end watch without relying on thumbnails.
 
-Output package:
+Master delivery outputs:
 
 ```text
 <title>-master.mp4
@@ -256,21 +260,34 @@ Output package:
 <title>-credits-and-rights.csv
 ```
 
-## 12. Managing multiple series
+## 12. Stage 9 — YouTube packaging and prospective learning
+
+1. Bind the project to an approved release-profile version, or use a project-local release brief for a one-off film.
+2. Create truthful public-thumbnail candidates from approved frames/references or a separately authorized illustration. Apply final typography and layout deterministically, preview at realistic sizes, and select one candidate by human review.
+3. Draft and select title/description details, derive chapters from the locked timeline, attach captions/languages, and review category, playlist, tags/hashtags, credits, links, and end-screen notes. Validation checks facts and platform rules; it does not award a universal SEO score.
+4. Record explicit human decisions for made-for-kids status, altered/synthetic-media disclosure, packaging truth, originality, rights/credits, and the complete watch. No field silently defaults to the safest-looking answer.
+5. Preview and lock a new immutable release-package version containing the master, selected thumbnail, captions, release details, chapters, rights/credits, attestations, QC, upload checklist, production manifest, and a hash inventory.
+6. Upload manually through YouTube Studio in version 1. Attach the eventual video ID/URL to the exact package without rewriting it.
+7. Optionally import official performance reports or later collect eligible metrics through a separately approved read-only connector. Human-approved recommendations apply prospectively to a named release, project, series, or profile version; they never alter locked history or authorize paid work.
+
+Thumbnail candidates are not an audience A/B test. Only a real accepted platform-result artifact tied to the exact candidate hashes may declare an experiment winner.
+
+## 13. Managing multiple series
 
 - Open one project at a time for editing; background jobs remain visibly labeled by project.
 - Each project has separate bibles, workflows, model pins, budgets, and output folders.
 - Shared model files are safe to cache globally; creative references are not.
+- Channel release profiles are shared only through explicit project bindings; ideas, selected packaging, performance baselines, and recommendations remain scoped to their named profile/project.
 - Copying a character/style into another project creates a new owned version and preserves lineage.
 - A worker session can process more than one project only if the scheduler creates separated roots/tokens; version 1 should prefer one project per worker session for simpler isolation.
 
-## 13. Handling a one-off film
+## 14. Handling a one-off film
 
-A one-off film uses the same approvals and infrastructure but skips season mechanics. Its style and cast can be lighter or unique, while manifests, budgets, continuity, recovery, and final QC remain identical.
+A one-off film uses the same approvals and infrastructure but skips season mechanics. Its style and cast can be lighter or unique, while manifests, budgets, continuity, recovery, final QC, truthful packaging, and release evidence remain identical. It may use a channel release profile or a film-local release brief without inventing series/season metadata.
 
 If a one-off later becomes a series, clone it into a new series project and explicitly promote selected bibles; do not mutate the released film's historical project structure.
 
-## 14. Change scenarios
+## 15. Change scenarios
 
 | Change | Result |
 | --- | --- |
@@ -281,5 +298,7 @@ If a one-off later becomes a series, clone it into a new series project and expl
 | Change model/workflow default | Existing takes remain valid; new takes use a new manifest version |
 | Update upstream skills | Existing imports remain pinned; re-import is an explicit new source version |
 | Change delivery frame rate | Timeline durations and all export/QC assumptions require migration review |
+| Change title, thumbnail, chapters, captions, or audience/disclosure answer | Locked package remains unchanged; preview and lock a new release-package version |
+| Approve an analytics recommendation | Only future work inside the chosen scope receives the new constraint; released history stays unchanged |
 
 No change deletes historical evidence automatically.
