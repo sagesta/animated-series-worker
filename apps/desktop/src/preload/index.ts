@@ -6,7 +6,9 @@ import {
   CloudGuardrailsSchema,
   CreateProjectInputSchema,
   IPC_CHANNELS,
+  ProjectBackupSummarySchema,
   ProjectDetailsSchema,
+  ProjectRestoreResultSchema,
   ProjectSummarySchema,
   SystemStatusSchema,
   UlidSchema,
@@ -33,6 +35,23 @@ const studioApi: StudioApi = {
       const safeProjectId = UlidSchema.parse(projectId)
       return ProjectDetailsSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.projectsOpen, safeProjectId)
+      )
+    },
+    async listBackups() {
+      return ProjectBackupSummarySchema.array().parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.projectsListBackups)
+      )
+    },
+    async backup(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return ProjectBackupSummarySchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.projectsBackup, safeProjectId)
+      )
+    },
+    async restore(backupId) {
+      const safeBackupId = UlidSchema.parse(backupId)
+      return ProjectRestoreResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.projectsRestore, safeBackupId)
       )
     }
   },

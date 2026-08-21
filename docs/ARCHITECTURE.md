@@ -122,7 +122,7 @@ Versions are chosen and pinned during implementation spikes. “Latest” is nev
 
 ### Implemented boundary
 
-Version 0.3.0 implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, and the read-only portion of `packages/provider-runpod`. The packaged window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
+The current source implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, and the read-only portion of `packages/provider-runpod`. The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
 
 The local project store currently provides:
 
@@ -130,10 +130,13 @@ The local project store currently provides:
 - A schema-1 `project.json` plus `project.sqlite` inside every identity-scoped project folder.
 - Temporary-file write, flush, SHA-256, atomic rename, then catalog transaction.
 - Startup reconciliation that indexes valid manifests and preserves invalid/unrecognized folders for later recovery.
+- One live writer per workspace, with token-matched release and preserved stale-lock evidence.
+- SQLite checkpoint/integrity check plus flushed, SHA-256-inventoried full backups outside project folders.
+- Non-overwriting restore through a verified temporary copy and atomic project-folder activation.
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Backup/restore, migration preview/rollback, structured redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
+Migration preview/rollback, incremental/release archives, structured redacted support logging, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
 
 ## 6. Local component responsibilities
 

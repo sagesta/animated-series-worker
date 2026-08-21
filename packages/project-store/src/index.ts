@@ -15,14 +15,19 @@ import { DatabaseSync } from 'node:sqlite'
 import {
   ProjectDetailsSchema,
   ProjectManifestSchema,
+  ProjectRestoreResultSchema,
   ProjectSummarySchema,
   UlidSchema,
   type CreateProjectInput,
+  type ProjectBackupSummary,
   type ProjectDetails,
   type ProjectManifest,
+  type ProjectRestoreResult,
   type ProjectSummary
 } from '@studio/contracts'
 import { buildProjectManifest } from '@studio/domain'
+import { ProjectBackupService } from './backup'
+import { WorkspaceWriterLock } from './writer-lock'
 
 const PROJECT_DIRECTORIES = [
   'source/shuohao',
@@ -37,6 +42,11 @@ const PROJECT_DIRECTORIES = [
   'assets/audio',
   'assets/video',
   'assets/documents',
+  'controls',
+  'animatics',
+  'adaptations',
+  'provenance/writing',
+  'provenance/skills',
   'manifests',
   'jobs',
   'timelines',
@@ -51,6 +61,8 @@ interface ProjectRow {
 export interface ProjectStoreOptions {
   workspaceRoot: string
   catalogPath?: string
+  backupRoot?: string
+  studioVersion?: string
 }
 
 function atomicWriteJson(filePath: string, value: unknown): { json: string; sha256: string } {
@@ -97,19 +109,36 @@ function toSummary(manifest: ProjectManifest, workspacePath: string): ProjectSum
 export class ProjectStore {
   readonly workspaceRoot: string
   readonly catalogPath: string
-  private readonly catalog: DatabaseSync
+  readonly backupRoot: string
+  private catalog!: DatabaseSync
+  private readonly backupService: ProjectBackupService
+  private readonly writerLock: WorkspaceWriterLock
+  private operationInProgress = false
+  private closed = false
 
   constructor(options: ProjectStoreOptions) {
     this.workspaceRoot = resolve(options.workspaceRoot)
     this.catalogPath = resolve(
       options.catalogPath ?? join(this.workspaceRoot, '.studio', 'catalog.sqlite')
     )
+    this.backupRoot = resolve(options.backupRoot ?? join(this.workspaceRoot, '.studio', 'backups'))
 
     mkdirSync(this.workspaceRoot, { recursive: true })
     mkdirSync(dirname(this.catalogPath), { recursive: true })
+    mkdirSync(this.backupRoot, { recursive: true })
+    this.writerLock = WorkspaceWriterLock.acquire(
+      join(this.workspaceRoot, '.studio', 'writer.lock'),
+      this.workspaceRoot
+    )
+    this.backupService = new ProjectBackupService({
+      workspaceRoot: this.workspaceRoot,
+      backupRoot: this.backupRoot,
+      studioVersion: options.studioVersion ?? 'development'
+    })
 
-    this.catalog = new DatabaseSync(this.catalogPath)
-    this.catalog.exec(`
+    try {
+      this.catalog = new DatabaseSync(this.catalogPath)
+      this.catalog.exec(`
       PRAGMA journal_mode = WAL;
       PRAGMA foreign_keys = ON;
       PRAGMA synchronous = FULL;
@@ -138,14 +167,33 @@ export class ProjectStore {
       ON projects(updated_at DESC);
     `)
 
-    this.reconcile()
+      this.reconcile()
+    } catch (error) {
+      try {
+        this.catalog?.close()
+      } catch {
+        // The original initialization error remains the useful failure.
+      }
+      this.writerLock.release()
+      throw error
+    }
   }
 
   close(): void {
-    this.catalog.close()
+    if (this.closed) {
+      return
+    }
+
+    this.closed = true
+    try {
+      this.catalog.close()
+    } finally {
+      this.writerLock.release()
+    }
   }
 
   createProject(input: CreateProjectInput): ProjectDetails {
+    this.assertAvailableForWrite()
     const manifest = buildProjectManifest(input)
     const workspacePath = this.resolveProjectFolder(manifest.folderName)
 
@@ -163,6 +211,54 @@ export class ProjectStore {
     this.indexManifest(manifest, workspacePath, sha256)
 
     return ProjectDetailsSchema.parse({ manifest, workspacePath })
+  }
+
+  async createBackup(projectId: string): Promise<ProjectBackupSummary> {
+    return this.runExclusiveOperation(async () => {
+      const project = this.openProject(projectId)
+      this.assertProjectDatabaseHealthy(project.workspacePath, true)
+      return this.backupService.create(project.workspacePath, project.manifest)
+    })
+  }
+
+  async listBackups(): Promise<ProjectBackupSummary[]> {
+    this.assertOpen()
+    return this.backupService.list()
+  }
+
+  async restoreBackup(backupId: string): Promise<ProjectRestoreResult> {
+    return this.runExclusiveOperation(async () => {
+      const restored = await this.backupService.restore(backupId, {
+        beforeCopy: (backupManifest) => {
+          const existing = this.catalog
+            .prepare('SELECT id, workspace_path FROM projects WHERE id = ?')
+            .get(backupManifest.projectId) as unknown as ProjectRow | undefined
+
+          if (existing && existsSync(resolve(existing.workspace_path))) {
+            throw new Error(
+              'That project is already present. The studio will not overwrite it during restore.'
+            )
+          }
+        },
+        validateSnapshot: (snapshotPath) => {
+          this.assertProjectDatabaseHealthy(snapshotPath, false)
+        }
+      })
+
+      for (const directory of PROJECT_DIRECTORIES) {
+        mkdirSync(join(restored.workspacePath, ...directory.split('/')), { recursive: true })
+      }
+      this.indexManifest(restored.manifest, restored.workspacePath, restored.manifestSha256)
+
+      return ProjectRestoreResultSchema.parse({
+        backupId: restored.backupId,
+        restoredAt: new Date().toISOString(),
+        project: {
+          manifest: restored.manifest,
+          workspacePath: restored.workspacePath
+        }
+      })
+    })
   }
 
   listProjects(): ProjectSummary[] {
@@ -209,6 +305,7 @@ export class ProjectStore {
   }
 
   reconcile(): void {
+    this.assertOpen()
     const entries = readdirSync(this.workspaceRoot, { withFileTypes: true })
 
     for (const entry of entries) {
@@ -244,6 +341,48 @@ export class ProjectStore {
     }
 
     return candidatePath
+  }
+
+  private assertOpen(): void {
+    if (this.closed) {
+      throw new Error('The local project library is closed.')
+    }
+  }
+
+  private assertAvailableForWrite(): void {
+    this.assertOpen()
+    if (this.operationInProgress) {
+      throw new Error(
+        'A project safety operation is already running. Please wait for it to finish.'
+      )
+    }
+  }
+
+  private async runExclusiveOperation<T>(operation: () => Promise<T>): Promise<T> {
+    this.assertAvailableForWrite()
+    this.operationInProgress = true
+    try {
+      return await operation()
+    } finally {
+      this.operationInProgress = false
+    }
+  }
+
+  private assertProjectDatabaseHealthy(workspacePath: string, checkpoint: boolean): void {
+    const database = new DatabaseSync(join(workspacePath, 'project.sqlite'))
+    try {
+      if (checkpoint) {
+        database.exec('PRAGMA wal_checkpoint(TRUNCATE);')
+      }
+
+      const row = database.prepare('PRAGMA integrity_check').get() as
+        Record<string, unknown> | undefined
+      if (!row || Object.values(row)[0] !== 'ok') {
+        throw new Error('The project database did not pass its safety check.')
+      }
+    } finally {
+      database.close()
+    }
   }
 
   private readManifest(workspacePath: string): ProjectManifest {

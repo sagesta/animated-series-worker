@@ -2,7 +2,7 @@
 
 Animated Series Studio is a local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
 
-This repository now contains a working local desktop foundation and the first safe RunPod account-connection slice, plus the authoritative product and architecture specification. The Windows application can create, list, and reopen isolated series and one-off film projects; encrypt a RunPod API key with Windows protection; perform an explicit no-cost account check; read current GPU planning prices; and save conservative local spending defaults. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, or finished episodes.
+This repository now contains a working local desktop foundation, verified project backup/restore, single-writer protection, and the first safe RunPod account-connection slice, plus the authoritative product and architecture specification. The Windows application can create, list, reopen, back up, verify, and non-destructively restore isolated series and one-off film projects; encrypt a RunPod API key with Windows protection; perform an explicit no-cost account check; read current GPU planning prices; and save conservative local spending defaults. It cannot create a cloud machine yet and does **not** yet generate storyboards, images, voices, video, lip sync, or finished episodes.
 
 ## Locked baseline
 
@@ -76,7 +76,7 @@ node scripts/check-docs.mjs
 | Architecture and contracts | Baseline documented |
 | Upstream dependency | Pinned and verified |
 | Desktop application | Local projects plus guided secure RunPod account connection; unsigned test installer; production setup incomplete |
-| Series/film project storage | Create/list/open implemented and tested; backup/restore incomplete |
+| Series/film project storage | Create/list/open plus verified full backup/non-overwriting restore and single-writer protection implemented and locally tested; migrations, incremental archives, and clean-machine recovery remain |
 | RunPod provider | API v2 account validation and price reads implemented; Pod/storage/template creation and termination not implemented |
 | Writing providers and external skills | OpenAI/Anthropic and enforced skill-runtime architecture documented; not implemented |
 | Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |

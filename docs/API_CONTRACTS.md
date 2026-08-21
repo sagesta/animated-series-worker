@@ -1,6 +1,6 @@
 # API and adapter contracts
 
-This document defines behavior and shapes. Version 0.3.0 provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle and no-cost cloud-account setup. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
+This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle, verified backup/restore, and no-cost cloud-account setup. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
 
 ## 1. Contract rules
 
@@ -16,7 +16,7 @@ This document defines behavior and shapes. Version 0.3.0 provides runtime Zod sc
 
 The React renderer can call only methods exposed by the Electron preload layer.
 
-### Implemented in version 0.3.0
+### Implemented in the current source
 
 | Preload method | Internal channel | Purpose |
 | --- | --- | --- |
@@ -24,6 +24,9 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `projects.list()` | `studio:projects:list` | List valid locally indexed projects |
 | `projects.create(input)` | `studio:projects:create` | Validate and create an isolated series/film project |
 | `projects.open(projectId)` | `studio:projects:open` | Validate identity and reopen canonical local metadata |
+| `projects.listBackups()` | `studio:projects:list-backups` | Return completed backup generations that currently pass manifest, inventory, identity, size, and SHA-256 verification |
+| `projects.backup(projectId)` | `studio:projects:backup` | Checkpoint/integrity-check SQLite, copy and flush canonical files, verify the copy, then atomically expose a completed backup |
+| `projects.restore(backupId)` | `studio:projects:restore` | Re-verify and restore into an absent canonical project folder without overwriting existing work |
 | `cloud.getStatus()` | `studio:cloud:get-status` | Read opaque RunPod connection, last account check, price catalogue, setup checklist, and saved local limits |
 | `cloud.connect({ apiKey })` | `studio:cloud:connect` | Validate the key with `GET /v2/pods`, optionally read the GPU catalogue, then encrypt the key only after validation succeeds |
 | `cloud.refresh()` | `studio:cloud:refresh` | Recheck the saved key and current price catalogue without creating a resource |
@@ -37,7 +40,6 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | Channel family | Purpose |
 | --- | --- |
 | `project.close` | Remaining project lifecycle behavior |
-| `project.backup/restore/verify` | Safe recovery |
 | `import.preview/apply` | Upstream import with validation and impact preview |
 | `asset.createVersion/submitReview/approve/lock/archive` | Versioned creative assets |
 | `impact.preview/resolve` | Stale-dependency decisions |

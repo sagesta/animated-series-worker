@@ -1,4 +1,13 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -86,5 +95,113 @@ describe('ProjectStore', () => {
     expect(() => store.openProject('../../another-project')).toThrow()
     expect(store.listProjects()).toEqual([])
     store.close()
+  })
+
+  it('AT-001 creates a verified backup and restores every canonical file without overwrite', async () => {
+    const root = createRoot()
+    const workspaceRoot = join(root, 'projects')
+    const backupRoot = join(root, 'backups')
+    const store = new ProjectStore({ workspaceRoot, backupRoot, studioVersion: 'test' })
+    const projects = [
+      store.createProject(input('Lantern Keepers', 'series')),
+      store.createProject(input('The Last Kite', 'film'))
+    ]
+    const backups = []
+
+    for (const project of projects) {
+      const fixtureValue = `locked-${project.manifest.type}-board-v1`
+      writeFileSync(
+        join(project.workspacePath, 'assets', 'images', 'character-board.txt'),
+        fixtureValue,
+        'utf8'
+      )
+      const backup = await store.createBackup(project.manifest.id)
+      expect(backup.projectId).toBe(project.manifest.id)
+      expect(backup.verificationState).toBe('verified')
+      await expect(store.restoreBackup(backup.backupId)).rejects.toThrow(/will not overwrite/i)
+      backups.push({ backup, fixtureValue, project })
+    }
+
+    expect(await store.listBackups()).toHaveLength(2)
+    for (const { project } of backups) {
+      renameSync(project.workspacePath, join(root, `preserved-${project.manifest.type}`))
+    }
+
+    for (const { backup, fixtureValue, project } of backups) {
+      const restored = await store.restoreBackup(backup.backupId)
+      expect(restored.project.manifest.id).toBe(project.manifest.id)
+      expect(
+        readFileSync(
+          join(restored.project.workspacePath, 'assets', 'images', 'character-board.txt'),
+          'utf8'
+        )
+      ).toBe(fixtureValue)
+      expect(store.openProject(project.manifest.id).workspacePath).toBe(
+        restored.project.workspacePath
+      )
+    }
+    store.close()
+
+    const reopenedStore = new ProjectStore({ workspaceRoot, backupRoot, studioVersion: 'test' })
+    expect(reopenedStore.listProjects()).toHaveLength(2)
+    reopenedStore.close()
+  })
+
+  it('rejects a damaged backup and leaves the healthy project untouched', async () => {
+    const root = createRoot()
+    const workspaceRoot = join(root, 'projects')
+    const store = new ProjectStore({
+      workspaceRoot,
+      backupRoot: join(root, 'backups'),
+      studioVersion: 'test'
+    })
+    const project = store.createProject(input('Signal Garden', 'film'))
+    const backup = await store.createBackup(project.manifest.id)
+    writeFileSync(join(backup.backupPath, 'snapshot', 'project.json'), '{}\n', 'utf8')
+
+    await expect(store.restoreBackup(backup.backupId)).rejects.toThrow(/did not pass verification/i)
+    expect(store.openProject(project.manifest.id).manifest.title).toBe('Signal Garden')
+    expect(await store.listBackups()).toEqual([])
+    store.close()
+  })
+
+  it('allows only one writer and recovers a preserved stale lock', () => {
+    const root = createRoot()
+    const workspaceRoot = join(root, 'projects')
+    const firstStore = new ProjectStore({ workspaceRoot })
+
+    expect(() => new ProjectStore({ workspaceRoot })).toThrow(/already open/i)
+    firstStore.close()
+
+    const studioDirectory = join(workspaceRoot, '.studio')
+    mkdirSync(studioDirectory, { recursive: true })
+    writeFileSync(
+      join(studioDirectory, 'writer.lock'),
+      `${JSON.stringify({
+        schemaVersion: 1,
+        pid: 2_147_483_647,
+        token: '00000000-0000-4000-8000-000000000000',
+        workspaceRoot,
+        createdAt: '2026-08-21T12:00:00.000Z'
+      })}\n`,
+      'utf8'
+    )
+
+    const recoveredStore = new ProjectStore({ workspaceRoot })
+    expect(readdirSync(studioDirectory).some((name) => name.startsWith('writer.lock.stale-'))).toBe(
+      true
+    )
+    recoveredStore.close()
+  })
+
+  it('does not mistake a newly created incomplete writer record for a stale lock', () => {
+    const root = createRoot()
+    const workspaceRoot = join(root, 'projects')
+    const studioDirectory = join(workspaceRoot, '.studio')
+    mkdirSync(studioDirectory, { recursive: true })
+    writeFileSync(join(studioDirectory, 'writer.lock'), '{', 'utf8')
+
+    expect(() => new ProjectStore({ workspaceRoot })).toThrow(/already being opened/i)
+    expect(readdirSync(studioDirectory)).toContain('writer.lock')
   })
 })

@@ -4,6 +4,23 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-21 (verified project backup, restore, and writer safety)
+
+- Added plain-language “Create verified backup” controls on each production overview and a Backup and recovery section in Settings.
+- Added schema-validated backup manifests with application/project identity, exact file/byte counts, and a per-file SHA-256/size inventory; copies are flushed, verified, and exposed only after their temporary generation completes.
+- Added SQLite checkpoint/integrity checks, unsafe path/link/special/transient-file refusal, damaged/incomplete/extra/missing-file detection, and restore-time re-verification.
+- Added non-destructive restore through a temporary verified project copy and atomic activation. Restore refuses an existing project folder and retains the source backup.
+- Added application single-instance handling plus a token-owned workspace writer lock that blocks a live second writer and preserves stale lock records during safe recovery.
+- Expanded the automated suite from 23 to 28 tests. Local automated AT-001 now covers backup and restore for both a series and film; the plain-language backup/recovery UI, tamper/no-overwrite, and live/stale/incomplete lock paths also pass.
+
+User impact: a non-technical creator can make a checked recovery copy from the project overview and restore a missing project from Settings without using a terminal or risking replacement of an existing project. No GPU, provider mutation, generation job, or charge is involved.
+
+Migration impact: existing schema-1 project manifests and databases are unchanged. New standard project folders include controls, animatics, adaptations, and writing/skill provenance directories. Completed backups are stored outside project folders under application user data as `backup.json` plus `snapshot/`; an active workspace adds `.studio/writer.lock`, which is removed only by its owning process.
+
+Documentation impact: README, architecture, domain layout, contracts, UX, security/recovery, implementation plan/backlog, tests, traceability, status, and changelog now reflect the implemented boundary and the remaining incremental/archive, migration, interruption, and clean-machine gates.
+
+Rollback: revert this feature commit only after closing the app. Existing projects remain schema-compatible; completed backup folders can be retained for manual recovery, but older builds cannot list or restore them through the UI. A stale `.studio/writer.lock` is harmless to older builds.
+
 ### Changed — 2026-08-21 (full rich animation workflow adopted)
 
 - Added locked requirements for versioned timed animatics, engine-neutral pose/depth/edge/segmentation/mask/motion/reference control packs, layered 2D parallax assets, and explicit pre-generation timing/control approval.

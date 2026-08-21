@@ -332,7 +332,17 @@ projects/
 
 Media filenames are friendly, but identity comes from manifest IDs and hashes. No code relies on user-visible names being unique.
 
-Version 0.2.0 creates this directory skeleton, `project.json`, and `project.sqlite`. Creative entity/version records and media lineage remain planned; their folders are intentionally empty until those phases implement the corresponding contracts.
+The current source creates this directory skeleton, `project.json`, and `project.sqlite`. Creative entity/version records and media lineage remain planned; their folders are intentionally empty until those phases implement the corresponding contracts.
+
+Verified full backups live outside individual project folders under the application backup root:
+
+```text
+backups/<backup-id>/
+├── backup.json                      identity, version, byte/file counts, SHA-256 inventory
+└── snapshot/                        canonical project folder contents at the checkpoint
+```
+
+Incomplete backup and restore staging folders are never indexed as healthy projects or offered for recovery. A completed restore recreates any empty standard directories after its file inventory passes verification.
 
 ## 7. Multiple-series isolation
 

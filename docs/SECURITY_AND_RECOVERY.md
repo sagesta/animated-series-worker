@@ -11,11 +11,11 @@
 
 ### Current controls
 
-Version 0.3.0 implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest writes, startup catalog reconciliation, and protected RunPod credential storage.
+The current source implements renderer sandboxing, context isolation, disabled renderer Node integration, restrictive content security policy, custom production protocol, blocked navigation/new windows, narrow schema-validated preload methods, top-frame/origin IPC validation, project-root containment, ULID-scoped folders, atomic canonical manifest writes, startup catalog reconciliation, protected RunPod credential storage, an application single-instance guard, and a project-library writer lease that preserves and replaces only provably stale lock records.
 
 The RunPod connection flow validates through read-only API v2 calls before saving, uses Electron asynchronous `safeStorage` backed by Windows DPAPI, writes only encrypted bytes outside project roots, returns no key value to the renderer, and has tests proving the vault file and local settings contain no plaintext key. The current provider adapter exposes no create/start/stop/terminate operation, so this application version cannot start billable compute.
 
-Structured redaction/support bundles, backups, restore, migration rollback, single-writer locks, worker authentication, remote cleanup, watchdogs, and the full security suite are not implemented. Those missing controls still block worker creation and generation.
+Verified full backup and non-overwriting restore are implemented for canonical project files: SQLite is checkpointed and integrity-checked, every copied file is flushed and SHA-256 verified, incomplete generations remain non-restorable, restore re-verifies before an atomic folder activation, and damaged copies are rejected. Incremental/release archives, migration rollback, clean-machine restore evidence, structured redaction/support bundles, worker authentication, remote cleanup, watchdogs, and the full security suite are not implemented. Those missing controls still block worker creation and generation.
 
 ## 2. Main threats
 
@@ -128,6 +128,8 @@ Temporary caches, models, rejected previews, and reproducible reports may use di
 
 ## 8. Backup operation
 
+Current implementation boundary: the desktop UI can create a complete local backup in the application backup root and shows success only after verification. Each completed generation contains `backup.json` plus `snapshot/`; the manifest records project identity, application version, file count, byte count, and a SHA-256/size inventory. Symbolic links, special files, SQLite WAL/SHM files after checkpoint, transient `.tmp` files, unsafe paths, incomplete generations, extra files, missing files, and checksum mismatches fail closed. Incremental copying, user-selected/off-device destinations, retention policy, and release archives remain planned.
+
 1. Acquire project read-consistency barrier; active generation may continue but new completed artifacts wait for the next snapshot.
 2. Create SQLite online snapshot.
 3. Inventory canonical files and hashes.
@@ -139,6 +141,8 @@ Temporary caches, models, rejected previews, and reproducible reports may use di
 The UI must never say “Backed up” before verification.
 
 ## 9. Restore drill
+
+Current implementation boundary: Settings lists only backup generations that pass current verification. Restore always targets the canonical project folder only when it is absent, copies through an isolated temporary folder, re-verifies every file and the SQLite database, atomically activates the completed copy, rebuilds the catalog entry, and leaves the backup intact. It never overwrites a project already in the library. Representative-media playback, explicit post-restore activation confirmation, schema migration, and clean-machine AT-030 evidence remain planned.
 
 Restore is tested, not assumed:
 

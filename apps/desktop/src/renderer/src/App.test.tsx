@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
   CloudConnectionStatus,
+  ProjectBackupSummary,
   ProjectDetails,
   StudioApi,
   SystemStatus
@@ -95,11 +96,33 @@ const createdFilm: ProjectDetails = {
   workspacePath: 'C:\\Studio\\projects\\the-last-kite-01j00000000000000000000000'
 }
 
+const verifiedFilmBackup: ProjectBackupSummary = {
+  backupId: '01J00000000000000000000001',
+  projectId: createdFilm.manifest.id,
+  projectCode: createdFilm.manifest.code,
+  projectTitle: createdFilm.manifest.title,
+  createdAt: '2026-08-21T13:00:00.000Z',
+  fileCount: 2,
+  totalBytes: 4096,
+  backupPath: 'C:\\Studio\\backups\\01j00000000000000000000001',
+  verificationState: 'verified'
+}
+
 let createProject: ReturnType<typeof vi.fn<StudioApi['projects']['create']>>
+let listBackups: ReturnType<typeof vi.fn<StudioApi['projects']['listBackups']>>
+let backupProject: ReturnType<typeof vi.fn<StudioApi['projects']['backup']>>
+let restoreProject: ReturnType<typeof vi.fn<StudioApi['projects']['restore']>>
 let connectCloud: ReturnType<typeof vi.fn<StudioApi['cloud']['connect']>>
 
 beforeEach(() => {
   createProject = vi.fn<StudioApi['projects']['create']>().mockResolvedValue(createdFilm)
+  listBackups = vi.fn<StudioApi['projects']['listBackups']>().mockResolvedValue([])
+  backupProject = vi.fn<StudioApi['projects']['backup']>().mockResolvedValue(verifiedFilmBackup)
+  restoreProject = vi.fn<StudioApi['projects']['restore']>().mockResolvedValue({
+    backupId: verifiedFilmBackup.backupId,
+    restoredAt: '2026-08-21T14:00:00.000Z',
+    project: createdFilm
+  })
   connectCloud = vi.fn<StudioApi['cloud']['connect']>().mockResolvedValue({
     ok: true,
     status: connectedCloudStatus
@@ -111,7 +134,10 @@ beforeEach(() => {
     projects: {
       list: vi.fn().mockResolvedValue([]),
       create: createProject,
-      open: vi.fn()
+      open: vi.fn(),
+      listBackups,
+      backup: backupProject,
+      restore: restoreProject
     },
     cloud: {
       getStatus: vi.fn().mockResolvedValue(disconnectedCloudStatus),
@@ -174,6 +200,10 @@ describe('desktop project foundation', () => {
     expect(await screen.findByRole('heading', { name: 'The Last Kite' })).toBeTruthy()
     expect(screen.getByText('Cloud GPU')).toBeTruthy()
     expect(screen.getByText('$0 active cloud spend')).toBeTruthy()
+
+    await user.click(screen.getByRole('button', { name: 'Create verified backup' }))
+    await waitFor(() => expect(backupProject).toHaveBeenCalledWith(createdFilm.manifest.id))
+    expect(await screen.findByText(/verified backup complete/i)).toBeTruthy()
   })
 
   it('SEC-001 connects RunPod with a free check while generation remains locked', async () => {
@@ -191,5 +221,17 @@ describe('desktop project foundation', () => {
     expect(await screen.findByText('RunPod account connected')).toBeTruthy()
     expect(screen.getByText(/free check did not rent a GPU/i)).toBeTruthy()
     expect(screen.getByText('Generation locked')).toBeTruthy()
+  })
+
+  it('restores a missing project from a verified backup in Settings', async () => {
+    const user = userEvent.setup()
+    listBackups.mockResolvedValue([verifiedFilmBackup])
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: /settings/i }))
+    await user.click(await screen.findByRole('button', { name: 'Restore project' }))
+
+    await waitFor(() => expect(restoreProject).toHaveBeenCalledWith(verifiedFilmBackup.backupId))
+    expect(await screen.findByRole('heading', { name: 'The Last Kite' })).toBeTruthy()
   })
 })

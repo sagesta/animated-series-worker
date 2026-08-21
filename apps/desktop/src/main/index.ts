@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url'
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Menu,
   net,
@@ -18,7 +19,9 @@ import {
   CloudGuardrailsSchema,
   CreateProjectInputSchema,
   IPC_CHANNELS,
+  ProjectBackupSummarySchema,
   ProjectDetailsSchema,
+  ProjectRestoreResultSchema,
   ProjectSummarySchema,
   SystemStatusSchema,
   UlidSchema
@@ -40,11 +43,25 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 app.enableSandbox()
+const hasSingleInstanceLock = app.requestSingleInstanceLock()
+if (!hasSingleInstanceLock) {
+  app.quit()
+}
 
 let mainWindow: BrowserWindow | null = null
 let projectStore: ProjectStore | null = null
 let cloudSetupService: CloudSetupService | null = null
 let storeClosed = false
+
+app.on('second-instance', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+})
 
 function registerStudioProtocol(): void {
   const rendererRoot = resolve(__dirname, '../renderer')
@@ -185,6 +202,39 @@ function registerIpcHandlers(): void {
     }
   })
 
+  ipcMain.handle(IPC_CHANNELS.projectsListBackups, async (event) => {
+    assertTrustedSender(event)
+    try {
+      return ProjectBackupSummarySchema.array().parse(await requireStore().listBackups())
+    } catch {
+      throw new Error('The studio could not verify the available project backups.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.projectsBackup, async (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const projectId = UlidSchema.parse(unknownProjectId)
+      return ProjectBackupSummarySchema.parse(await requireStore().createBackup(projectId))
+    } catch {
+      throw new Error(
+        'The backup could not be completed and verified. The project itself was not changed.'
+      )
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.projectsRestore, async (event, unknownBackupId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const backupId = UlidSchema.parse(unknownBackupId)
+      return ProjectRestoreResultSchema.parse(await requireStore().restoreBackup(backupId))
+    } catch {
+      throw new Error(
+        'The project could not be restored safely. Existing project files were not overwritten.'
+      )
+    }
+  })
+
   ipcMain.handle(IPC_CHANNELS.cloudGetStatus, async (event) => {
     assertTrustedSender(event)
     try {
@@ -278,35 +328,53 @@ function createWindow(): void {
   }
 }
 
-void app.whenReady().then(() => {
-  Menu.setApplicationMenu(null)
-  const userDataRoot = app.getPath('userData')
-  const workspaceRoot = join(userDataRoot, 'projects')
-  projectStore = new ProjectStore({ workspaceRoot })
-  const credentialVault = new EncryptedCredentialVault({
-    filePath: join(userDataRoot, 'secure', 'runpod-api-key.bin'),
-    protector: {
-      isEncryptionAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
-      encryptString: (value) => safeStorage.encryptStringAsync(value),
-      decryptString: (value) => safeStorage.decryptStringAsync(value)
+void app
+  .whenReady()
+  .then(() => {
+    if (!hasSingleInstanceLock) {
+      return
     }
-  })
-  cloudSetupService = new CloudSetupService({
-    vault: credentialVault,
-    provider: new RunPodClient(),
-    settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json'))
-  })
 
-  registerStudioProtocol()
-  registerIpcHandlers()
-  createWindow()
+    Menu.setApplicationMenu(null)
+    const userDataRoot = app.getPath('userData')
+    const workspaceRoot = join(userDataRoot, 'projects')
+    projectStore = new ProjectStore({
+      workspaceRoot,
+      backupRoot: join(userDataRoot, 'backups'),
+      studioVersion: app.getVersion()
+    })
+    const credentialVault = new EncryptedCredentialVault({
+      filePath: join(userDataRoot, 'secure', 'runpod-api-key.bin'),
+      protector: {
+        isEncryptionAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
+        encryptString: (value) => safeStorage.encryptStringAsync(value),
+        decryptString: (value) => safeStorage.decryptStringAsync(value)
+      }
+    })
+    cloudSetupService = new CloudSetupService({
+      vault: credentialVault,
+      provider: new RunPodClient(),
+      settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json'))
+    })
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
+    registerStudioProtocol()
+    registerIpcHandlers()
+    createWindow()
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow()
+      }
+    })
   })
-})
+  .catch((error: unknown) => {
+    const message =
+      error instanceof Error && error.message.includes('already open')
+        ? error.message
+        : 'The local project library could not be opened safely. No project or cloud resource was changed.'
+    dialog.showErrorBox('Animated Series Studio could not open', message)
+    app.quit()
+  })
 
 app.on('before-quit', () => {
   if (!storeClosed) {

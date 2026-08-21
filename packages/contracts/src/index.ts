@@ -106,6 +106,66 @@ export const ProjectDetailsSchema = z
   .strict()
 export type ProjectDetails = z.infer<typeof ProjectDetailsSchema>
 
+const Sha256Schema = z.string().regex(/^[a-f0-9]{64}$/, 'The file checksum is not valid.')
+
+export const ProjectBackupFileSchema = z
+  .object({
+    relativePath: z
+      .string()
+      .min(1)
+      .max(512)
+      .regex(
+        /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*\\).+$/,
+        'The backup contains an unsafe file path.'
+      ),
+    byteSize: z.number().int().nonnegative(),
+    sha256: Sha256Schema
+  })
+  .strict()
+export type ProjectBackupFile = z.infer<typeof ProjectBackupFileSchema>
+
+export const ProjectBackupManifestSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    backupId: UlidSchema,
+    projectId: UlidSchema,
+    projectCode: ProjectCodeSchema,
+    projectTitle: z.string().min(2).max(120),
+    projectFolderName: z.string().min(1).max(100),
+    projectManifestSha256: Sha256Schema,
+    studioVersion: z.string().min(1).max(80),
+    createdAt: z.string().datetime({ offset: true }),
+    fileCount: z.number().int().positive(),
+    totalBytes: z.number().int().nonnegative(),
+    files: ProjectBackupFileSchema.array().min(1).max(250_000)
+  })
+  .strict()
+export type ProjectBackupManifest = z.infer<typeof ProjectBackupManifestSchema>
+
+export const ProjectBackupSummarySchema = z
+  .object({
+    backupId: UlidSchema,
+    projectId: UlidSchema,
+    projectCode: ProjectCodeSchema,
+    projectTitle: z.string().min(2).max(120),
+    createdAt: z.string().datetime({ offset: true }),
+    fileCount: z.number().int().positive(),
+    totalBytes: z.number().int().nonnegative(),
+    backupPath: z.string().min(1),
+    verificationState: z.literal('verified')
+  })
+  .strict()
+export type ProjectBackupSummary = z.infer<typeof ProjectBackupSummarySchema>
+
+export const ProjectRestoreResultSchema = z
+  .object({
+    backupId: UlidSchema,
+    restoredAt: z.string().datetime({ offset: true }),
+    project: ProjectDetailsSchema
+  })
+  .strict()
+export type ProjectRestoreResult = z.infer<typeof ProjectRestoreResultSchema>
+
 export const SystemStatusSchema = z
   .object({
     appVersion: z.string(),
@@ -260,6 +320,9 @@ export const IPC_CHANNELS = {
   projectsList: 'studio:projects:list',
   projectsCreate: 'studio:projects:create',
   projectsOpen: 'studio:projects:open',
+  projectsListBackups: 'studio:projects:list-backups',
+  projectsBackup: 'studio:projects:backup',
+  projectsRestore: 'studio:projects:restore',
   cloudGetStatus: 'studio:cloud:get-status',
   cloudConnect: 'studio:cloud:connect',
   cloudRefresh: 'studio:cloud:refresh',
@@ -275,6 +338,9 @@ export interface StudioApi {
     list(): Promise<ProjectSummary[]>
     create(input: CreateProjectInput): Promise<ProjectDetails>
     open(projectId: string): Promise<ProjectDetails>
+    listBackups(): Promise<ProjectBackupSummary[]>
+    backup(projectId: string): Promise<ProjectBackupSummary>
+    restore(backupId: string): Promise<ProjectRestoreResult>
   }
   cloud: {
     getStatus(): Promise<CloudConnectionStatus>

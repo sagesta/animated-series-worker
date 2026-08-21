@@ -58,10 +58,10 @@ flowchart LR
 ### Current checkpoint — version 0.3.0
 
 - `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
-- `DATA-001` is in progress: series/film create, list, open, schema-1 manifest, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, and startup reconciliation are implemented and tested.
+- `DATA-001` is in progress: series/film create, list, open, schema-1 manifest, identity-scoped folders, atomic manifest write/hash, per-project SQLite, rebuildable catalog, startup reconciliation, verified full backup/restore, tamper refusal, and live/stale single-writer handling are implemented and tested.
 - `SEC-001` is in progress: the RunPod key is validated before save, encrypted through Electron asynchronous `safeStorage`/Windows DPAPI outside projects, never returned after submission, removable explicitly, and covered by plaintext non-leakage tests. Structured redacted logging/support bundles remain.
 - `CLOUD-001` has an intentionally early read-only foundation: API v2 account validation, aggregate existing-Pod/rate warning, GPU catalogue pricing, local guardrail defaults, and setup progress are implemented. No provider mutation or paid operation exists.
-- Phase 1 is **not complete**. Structured redacted logging/support bundle, interruption tests, real migration preview/rollback, backup/restore, single-writer protection, signed installer, and clean-machine usability evidence remain.
+- Phase 1 is **not complete**. Structured redacted logging/support bundle, broader interruption tests, real migration preview/rollback, incremental/release archives, clean-machine restore/usability evidence, and a signed installer remain.
 
 ### Build
 
@@ -288,7 +288,7 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 | Order | Work package | Current state | Output |
 | --- | --- | --- | --- |
 | 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
-| 2 | `DATA-001` project store | In progress | Series/film create/open, files, SQLite, migrations |
+| 2 | `DATA-001` project store | In progress — verified full backup/restore and single-writer protection pass; migrations and recovery breadth remain | Series/film create/open, files, SQLite, migrations, recovery |
 | 3 | `SEC-001` credential/logging | In progress — protected RunPod vault and non-leakage tests pass; redacted diagnostics remain | Vault adapter and redacted diagnostics |
 | 4 | `WRITE-001` provider-neutral creative writing | Not started | Protected OpenAI/Anthropic accounts and structured story/character/script drafts |
 | 5 | `SKILL-001` external-skill runtime | Not started | Safe install, routing, required execution, validation, and receipts |

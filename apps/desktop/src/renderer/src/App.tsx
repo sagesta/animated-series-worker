@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type JSX } from 'react'
 import {
   type CloudConnectionStatus,
+  type ProjectBackupSummary,
   type ProjectDetails,
   type ProjectSummary,
   type SystemStatus,
@@ -92,6 +93,16 @@ function formatCurrencyForSidebar(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
+}
+
+function formatFileSize(byteSize: number): string {
+  if (byteSize < 1024) return `${byteSize} bytes`
+  if (byteSize < 1024 * 1024) return `${Math.ceil(byteSize / 1024)} KB`
+  if (byteSize < 1024 * 1024 * 1024) {
+    return `${(byteSize / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  return `${(byteSize / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 function projectTypeLabel(project: Pick<ProjectSummary, 'type'>): string {
@@ -267,6 +278,81 @@ function ProjectLibrary({
   )
 }
 
+function ProjectBackupPanel({ project }: { project: ProjectDetails }): JSX.Element {
+  const [latestBackup, setLatestBackup] = useState<ProjectBackupSummary>()
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string>()
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.projects
+      .listBackups()
+      .then((backups) => {
+        if (!cancelled) {
+          setLatestBackup(backups.find((backup) => backup.projectId === project.manifest.id))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFailed(true)
+          setMessage('Existing backups could not be checked. Your project remains unchanged.')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [project.manifest.id])
+
+  const createBackup = async (): Promise<void> => {
+    setBusy(true)
+    setFailed(false)
+    setMessage('Copying and checking every project file…')
+    try {
+      const backup = await window.studio.projects.backup(project.manifest.id)
+      setLatestBackup(backup)
+      setMessage('Verified backup complete. It is safe to use for recovery.')
+    } catch {
+      setFailed(true)
+      setMessage('The backup did not pass its safety checks. Your project was not changed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="project-safety-card" aria-labelledby="project-safety-title">
+      <div>
+        <p className="eyebrow">Project safety</p>
+        <h2 id="project-safety-title">Keep a verified recovery copy</h2>
+        <p>
+          The studio copies every project file, checks the copy, and never replaces an existing
+          project during recovery.
+        </p>
+        {latestBackup && (
+          <small>
+            Latest verified backup: {formatDate(latestBackup.createdAt)} ·{' '}
+            {formatFileSize(latestBackup.totalBytes)} · {latestBackup.fileCount} files
+          </small>
+        )}
+        {message && (
+          <div className={`safety-feedback ${failed ? 'error' : ''}`} role="status">
+            {message}
+          </div>
+        )}
+      </div>
+      <button
+        className="button button-secondary"
+        disabled={busy}
+        onClick={() => void createBackup()}
+      >
+        {busy ? 'Creating verified backup…' : 'Create verified backup'}
+      </button>
+    </section>
+  )
+}
+
 interface ProjectOverviewProps {
   project: ProjectDetails
   cloudStatus?: CloudConnectionStatus
@@ -338,6 +424,8 @@ function ProjectOverview({
           </div>
         </article>
       </section>
+
+      <ProjectBackupPanel project={project} />
 
       <section className="production-roadmap">
         <div className="section-heading">
@@ -430,14 +518,118 @@ function WorkspacePlaceholder({
   )
 }
 
+function BackupRecovery({
+  projectIds,
+  onRestored
+}: {
+  projectIds: ReadonlySet<string>
+  onRestored(project: ProjectDetails): void
+}): JSX.Element {
+  const [backups, setBackups] = useState<ProjectBackupSummary[]>([])
+  const [loading, setLoading] = useState(true)
+  const [restoringId, setRestoringId] = useState<string>()
+  const [message, setMessage] = useState<string>()
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.projects
+      .listBackups()
+      .then((availableBackups) => {
+        if (!cancelled) setBackups(availableBackups)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFailed(true)
+          setMessage('Backups could not be checked. No project was changed.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const restore = async (backupId: string): Promise<void> => {
+    setRestoringId(backupId)
+    setFailed(false)
+    setMessage('Restoring to a new project folder and checking every file…')
+    try {
+      const result = await window.studio.projects.restore(backupId)
+      onRestored(result.project)
+    } catch {
+      setFailed(true)
+      setMessage(
+        'This backup could not be restored safely. Existing project files were not overwritten.'
+      )
+    } finally {
+      setRestoringId(undefined)
+    }
+  }
+
+  if (loading) {
+    return <div className="settings-card backup-empty">Checking verified backups…</div>
+  }
+
+  if (backups.length === 0) {
+    return (
+      <div className="settings-card backup-empty">
+        {message ?? 'No verified backup is available yet. Create one from a production overview.'}
+      </div>
+    )
+  }
+
+  return (
+    <div className="backup-list">
+      {message && (
+        <div className={`safety-feedback ${failed ? 'error' : ''}`} role="status">
+          {message}
+        </div>
+      )}
+      {backups.map((backup) => {
+        const alreadyPresent = projectIds.has(backup.projectId)
+        return (
+          <article className="backup-item" key={backup.backupId}>
+            <div>
+              <strong>{backup.projectTitle}</strong>
+              <span>
+                Verified {formatDate(backup.createdAt)} · {formatFileSize(backup.totalBytes)} ·{' '}
+                {backup.fileCount} files
+              </span>
+            </div>
+            <button
+              className="button button-secondary"
+              disabled={alreadyPresent || restoringId !== undefined}
+              onClick={() => void restore(backup.backupId)}
+            >
+              {alreadyPresent
+                ? 'Already in library'
+                : restoringId === backup.backupId
+                  ? 'Restoring…'
+                  : 'Restore project'}
+            </button>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
 function Settings({
   status,
   cloudStatus,
-  onCloudStatus
+  projectIds,
+  onCloudStatus,
+  onProjectRestored
 }: {
   status?: SystemStatus
   cloudStatus?: CloudConnectionStatus
+  projectIds: ReadonlySet<string>
   onCloudStatus(status: CloudConnectionStatus): void
+  onProjectRestored(project: ProjectDetails): void
 }): JSX.Element {
   return (
     <div className="settings-view">
@@ -468,6 +660,17 @@ function Settings({
             <strong>{status?.indexedProjects ?? '—'}</strong>
           </div>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <div>
+          <h2>Backup and recovery</h2>
+          <p>
+            Restore a verified copy only when its original project is no longer in the library.
+            Existing folders are never replaced.
+          </p>
+        </div>
+        <BackupRecovery projectIds={projectIds} onRestored={onProjectRestored} />
       </section>
 
       <section className="settings-section">
@@ -543,6 +746,7 @@ export function App(): JSX.Element {
     () => (activeProject ? toSummary(activeProject) : undefined),
     [activeProject]
   )
+  const projectIds = useMemo(() => new Set(projects.map((project) => project.id)), [projects])
 
   const openProject = async (projectId: string): Promise<void> => {
     setError(undefined)
@@ -571,6 +775,22 @@ export function App(): JSX.Element {
     setWizardOpen(false)
   }
 
+  const projectRestored = (project: ProjectDetails): void => {
+    const alreadyIndexed = projects.some((item) => item.id === project.manifest.id)
+    setActiveProject(project)
+    setProjects((current) => [
+      toSummary(project),
+      ...current.filter((item) => item.id !== project.manifest.id)
+    ])
+    if (!alreadyIndexed) {
+      setStatus((current) =>
+        current ? { ...current, indexedProjects: current.indexedProjects + 1 } : current
+      )
+    }
+    setError(undefined)
+    setPage('home')
+  }
+
   const goToLibrary = (): void => {
     setActiveProject(undefined)
     setPage('home')
@@ -578,7 +798,15 @@ export function App(): JSX.Element {
 
   const mainContent = (): JSX.Element => {
     if (page === 'settings') {
-      return <Settings status={status} cloudStatus={cloudStatus} onCloudStatus={setCloudStatus} />
+      return (
+        <Settings
+          status={status}
+          cloudStatus={cloudStatus}
+          projectIds={projectIds}
+          onCloudStatus={setCloudStatus}
+          onProjectRestored={projectRestored}
+        />
+      )
     }
 
     if (!activeProject) {
