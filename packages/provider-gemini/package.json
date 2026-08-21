@@ -1,5 +1,5 @@
 {
-  "name": "@studio/contracts",
+  "name": "@studio/provider-gemini",
   "version": "0.5.0",
   "private": true,
   "type": "module",

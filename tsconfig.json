@@ -24,6 +24,7 @@
       "@studio/domain": ["packages/domain/src/index.ts"],
       "@studio/project-store": ["packages/project-store/src/index.ts"],
       "@studio/provider-anthropic": ["packages/provider-anthropic/src/index.ts"],
+      "@studio/provider-gemini": ["packages/provider-gemini/src/index.ts"],
       "@studio/provider-openai": ["packages/provider-openai/src/index.ts"],
       "@studio/provider-runpod": ["packages/provider-runpod/src/index.ts"],
       "@studio/support-diagnostics": ["packages/support-diagnostics/src/index.ts"]

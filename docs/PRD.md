@@ -147,7 +147,7 @@ The product may later support collaborators, but version 1 is optimized for one 
 
 ### Writing providers and external skills
 
-- **FR-044:** The user can add, test, replace, disable, and remove OpenAI and Anthropic API credentials through protected settings, then choose a default writing provider/model profile without exposing keys to the renderer, projects, skills, logs, or exports.
+- **FR-044:** The user can add, test, replace, disable, and remove OpenAI, Anthropic, and Google Gemini API credentials through protected settings, then choose from the release-controlled stable model catalogue and save a writing provider/model profile without exposing keys to the renderer, projects, skills, logs, or exports.
 - **FR-045:** Story development, character development, world building, outlines, scripts, rewrites, and continuity checks use a provider-neutral writing contract. Canonical creative facts are validated and stored locally; every generated draft records provider, model, settings, source versions, token usage, estimated/actual API cost, and lineage.
 - **FR-046:** The user can inspect, install, enable, disable, update, and remove external creative skills whose manifest declares identity, version, source, checksum/signature status, task kinds, instructions entrypoint, input/output schemas, permissions, compatibility, and whether the skill is optional or required.
 - **FR-047:** Before a writing or planning job runs, the studio creates a visible skill plan from the task and enabled compatible skills. A required applicable skill cannot be silently skipped; successful output records immutable skill execution receipts and displays `Skills used` with exact versions.

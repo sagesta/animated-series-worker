@@ -11,6 +11,7 @@ const aliases = {
   '@studio/domain': resolve(rootDirectory, 'packages/domain/src/index.ts'),
   '@studio/project-store': resolve(rootDirectory, 'packages/project-store/src/index.ts'),
   '@studio/provider-anthropic': resolve(rootDirectory, 'packages/provider-anthropic/src/index.ts'),
+  '@studio/provider-gemini': resolve(rootDirectory, 'packages/provider-gemini/src/index.ts'),
   '@studio/provider-openai': resolve(rootDirectory, 'packages/provider-openai/src/index.ts'),
   '@studio/provider-runpod': resolve(rootDirectory, 'packages/provider-runpod/src/index.ts'),
   '@studio/support-diagnostics': resolve(rootDirectory, 'packages/support-diagnostics/src/index.ts')

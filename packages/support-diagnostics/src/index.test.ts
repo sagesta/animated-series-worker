@@ -33,7 +33,7 @@ describe('SafeDiagnostics', () => {
       area: 'cloud',
       eventName: 'cloud.connection.failed',
       message:
-        'Keys rpa_1234567890abcdefghijklmnopqrstuvwxyz and sk-ant-api03-abcdefghijklmnopqrstuvwxyz failed with Bearer abcdefghijklmnop at ' +
+        'Keys rpa_1234567890abcdefghijklmnopqrstuvwxyz, sk-ant-api03-abcdefghijklmnopqrstuvwxyz, and AIzaSyExampleGeminiKey1234567890 failed with Bearer abcdefghijklmnop at ' +
         privatePath,
       context: {
         apiKey: 'totally-unknown-secret-format',
@@ -60,6 +60,7 @@ describe('SafeDiagnostics', () => {
     expect(summary.eventCount).toBe(1)
     expect(bundleText).not.toContain('rpa_1234567890')
     expect(bundleText).not.toContain('sk-ant-api03')
+    expect(bundleText).not.toContain('AIzaSyExampleGeminiKey')
     expect(bundleText).not.toContain('abcdefghijklmnop')
     expect(bundleText).not.toContain('totally-unknown-secret-format')
     expect(bundleText).not.toContain(root)

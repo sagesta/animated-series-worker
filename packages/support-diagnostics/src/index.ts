@@ -19,6 +19,7 @@ const SECRET_VALUE_PATTERNS = [
   /\brpa_[a-z0-9_-]{12,}\b/gi,
   /\bsk-ant-[a-z0-9_-]{12,}\b/gi,
   /\bsk-(?:proj-)?[a-z0-9_-]{16,}\b/gi,
+  /\bAIza[a-z0-9_-]{20,}\b/gi,
   /\bbearer\s+[a-z0-9._~+/=-]{8,}\b/gi,
   /\b(?:api[-_]?key|password|secret|access[-_]?token|refresh[-_]?token)\s*[:=]\s*["']?[^\s"',}]{6,}/gi
 ]

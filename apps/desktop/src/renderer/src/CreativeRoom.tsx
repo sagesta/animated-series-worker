@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type JSX } from 'react'
 import {
+  WRITING_MODEL_CATALOG,
   type ProjectDetails,
   type WritingContextPreview,
   type WritingDraftRecord,
@@ -17,7 +18,19 @@ const taskOptions: Array<{ value: WritingTaskKind; label: string }> = [
   { value: 'check_continuity', label: 'Check continuity' }
 ]
 
-const providerNames = { openai: 'OpenAI (GPT)', anthropic: 'Anthropic (Claude)' } as const
+const providerNames = {
+  openai: 'OpenAI (GPT)',
+  anthropic: 'Anthropic (Claude)',
+  gemini: 'Google Gemini'
+} as const
+
+const writingProviders = ['openai', 'anthropic', 'gemini'] as const
+
+function modelLabel(provider: WritingProvider, modelId: string, displayName: string): string {
+  const catalogue: ReadonlyArray<{ id: string; purpose: string }> = WRITING_MODEL_CATALOG[provider]
+  const purpose = catalogue.find((item) => item.id === modelId)?.purpose
+  return purpose ? `${displayName} — ${purpose}` : displayName
+}
 
 function DraftView({ draft }: { draft: WritingDraftRecord }): JSX.Element {
   return (
@@ -75,7 +88,7 @@ export function CreativeRoom({
 }): JSX.Element {
   const connectedProviders = useMemo(
     () =>
-      (['openai', 'anthropic'] as const).filter(
+      writingProviders.filter(
         (provider) => writingStatus?.providers[provider].connectionState === 'connected'
       ),
     [writingStatus]
@@ -180,7 +193,7 @@ export function CreativeRoom({
         <section className="placeholder-card">
           <div className="placeholder-symbol">S</div>
           <p className="eyebrow">Creative room</p>
-          <h1>Connect GPT or Claude to start guided story development.</h1>
+          <h1>Connect GPT, Claude, or Gemini to start guided story development.</h1>
           <p>
             Your API key will be protected by Windows. Connecting is a free model-list check; no
             paid writing happens until you approve a request here.
@@ -248,7 +261,7 @@ export function CreativeRoom({
                 {provider &&
                   writingStatus?.providers[provider].models.map((item) => (
                     <option value={item.id} key={item.id}>
-                      {item.displayName}
+                      {modelLabel(provider, item.id, item.displayName)}
                     </option>
                   ))}
               </select>

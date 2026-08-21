@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -71,7 +71,8 @@ function createFixture() {
   roots.push(root)
   const vaults: Record<WritingProvider, MemoryVault> = {
     openai: new MemoryVault(),
-    anthropic: new MemoryVault()
+    anthropic: new MemoryVault(),
+    gemini: new MemoryVault()
   }
   const generateDraft = vi.fn<WritingTextProvider['generateDraft']>().mockResolvedValue({
     output: {
@@ -85,16 +86,27 @@ function createFixture() {
     requestId: 'provider-request-1'
   })
   const openai: WritingTextProvider = {
-    listModels: vi.fn().mockResolvedValue([{ id: 'gpt-test', displayName: 'GPT Test' }]),
+    listModels: vi.fn().mockResolvedValue([
+      { id: 'gpt-5.6-terra', displayName: 'GPT-5.6 Terra' },
+      { id: 'gpt-preview-unapproved', displayName: 'Unapproved preview' }
+    ]),
     generateDraft
   }
   const anthropic: WritingTextProvider = {
-    listModels: vi.fn().mockResolvedValue([{ id: 'claude-test', displayName: 'Claude Test' }]),
+    listModels: vi
+      .fn()
+      .mockResolvedValue([{ id: 'claude-sonnet-5', displayName: 'Claude Sonnet 5' }]),
+    generateDraft: vi.fn()
+  }
+  const gemini: WritingTextProvider = {
+    listModels: vi
+      .fn()
+      .mockResolvedValue([{ id: 'gemini-3.7-flash', displayName: 'Gemini 3.7 Flash' }]),
     generateDraft: vi.fn()
   }
   const setup = new WritingSetupService({
     vaults,
-    providers: { openai, anthropic },
+    providers: { openai, anthropic, gemini },
     settingsStore: new WritingSettingsStore(join(root, 'writing.json')),
     now: () => new Date('2026-08-21T13:00:00.000Z')
   })
@@ -136,9 +148,51 @@ describe('protected creative writing workflow', () => {
     expect(status.providers.openai).toMatchObject({
       connectionState: 'connected',
       validationCostUsd: 0,
-      models: [{ id: 'gpt-test' }]
+      models: [{ id: 'gpt-5.6-terra' }]
     })
     expect(status.providers.anthropic.connectionState).toBe('not-configured')
+  })
+
+  it('refuses a valid key when it exposes no release-approved model', async () => {
+    const { setup, openai, vaults } = createFixture()
+    vi.mocked(openai.listModels).mockResolvedValue([
+      { id: 'gpt-preview-unapproved', displayName: 'Unapproved preview' }
+    ])
+
+    await expect(
+      setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
+    ).rejects.toMatchObject({ code: 'unsupported-model' })
+    expect(vaults.openai.secret).toBeNull()
+  })
+
+  it('reads previous writing settings without losing existing provider state', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'creative-writing-migration-test-'))
+    roots.push(root)
+    const filePath = join(root, 'writing.json')
+    writeFileSync(
+      filePath,
+      JSON.stringify({
+        schemaVersion: 1,
+        providers: {
+          openai: {
+            enabled: true,
+            checkedAt: '2026-08-21T13:00:00.000Z',
+            models: [{ id: 'gpt-5.6-terra', displayName: 'GPT-5.6 Terra' }]
+          },
+          anthropic: { enabled: false, checkedAt: null, models: [] }
+        },
+        defaultProfile: { provider: 'openai', model: 'gpt-5.6-terra', profile: 'balanced' }
+      })
+    )
+
+    await expect(new WritingSettingsStore(filePath).load()).resolves.toMatchObject({
+      schemaVersion: 2,
+      providers: {
+        openai: { models: [{ id: 'gpt-5.6-terra' }] },
+        anthropic: { enabled: false },
+        gemini: { enabled: true, checkedAt: null, models: [] }
+      }
+    })
   })
 
   it('previews exact selected context and saves immutable proposal lineage', async () => {
@@ -156,7 +210,7 @@ describe('protected creative writing workflow', () => {
       instruction: 'Outline a pilot with a strong emotional turn and a final story question.',
       context,
       provider: 'openai',
-      model: 'gpt-test',
+      model: 'gpt-5.6-terra',
       profile: 'balanced',
       maxOutputTokens: 1600,
       paidConfirmed: true
@@ -165,7 +219,7 @@ describe('protected creative writing workflow', () => {
     expect(generateDraft).toHaveBeenCalledWith(
       'sk-test-protected-key-123456789',
       expect.objectContaining({
-        model: 'gpt-test',
+        model: 'gpt-5.6-terra',
         userPrompt: expect.stringContaining(preview.text)
       })
     )
@@ -192,7 +246,7 @@ describe('protected creative writing workflow', () => {
         instruction: 'Draft the opening scene with clear emotional actions and concise dialogue.',
         context: { includeProjectBrief: true, includeProductionSettings: true },
         provider: 'openai',
-        model: 'gpt-test',
+        model: 'gpt-5.6-terra',
         profile: 'balanced',
         maxOutputTokens: 800,
         paidConfirmed: false

@@ -34,7 +34,7 @@
 
 .writing-provider-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -62,6 +62,28 @@
 
 .writing-provider-card > .button-primary {
   align-self: flex-start;
+}
+
+.approved-model-list {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  background: var(--soft);
+  border-radius: 10px;
+}
+
+.approved-model-list strong {
+  color: var(--ink);
+}
+
+.approved-model-list ul {
+  padding-left: 18px;
+  margin: 6px 0 0;
+}
+
+.approved-model-list span {
+  text-transform: capitalize;
 }
 
 .provider-card-heading,

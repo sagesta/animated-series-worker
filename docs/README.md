@@ -2,7 +2,7 @@
 
 This folder is the authoritative build specification for Animated Series Studio. If code and documentation disagree, the change is incomplete until they are reconciled and tested.
 
-Current version 0.4.0 implements the local project/backup/migration foundation, protected RunPod account checks, and a first protected GPT/Claude Creative Room that saves provider-neutral proposals locally. Media generation, external skills, canon promotion/version comparison, release packaging, and analytics remain planned.
+Current version 0.5.0 implements the local project/backup/migration foundation, protected RunPod account checks, and a protected GPT/Claude/Gemini Creative Room with a controlled stable model catalogue that saves provider-neutral proposals locally. Media generation, external skills, canon promotion/version comparison, release packaging, and analytics remain planned.
 
 ## Product and experience
 

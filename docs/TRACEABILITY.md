@@ -22,7 +22,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | FR-041 | `UPSTREAM_INTEGRATION.md` | update script, upstream adapter | AT-005, AT-008 |
 | FR-042 | `MEDIA_PIPELINE.md` §10, `CHANGE_CONTROL.md` | compatibility/benchmark promotion | AT-009, AT-010, AT-020 |
 | FR-043 | `SECURITY_AND_RECOVERY.md` §6 | rights registry, release gate | AT-012, AT-026 |
-| FR-044, FR-045 | `ARCHITECTURE.md` writing-provider boundary, `API_CONTRACTS.md` writing contract, `UX_SPEC.md` provider settings | `provider-openai`, `provider-anthropic`, writing orchestrator, credential vault | AT-036, AT-039 |
+| FR-044, FR-045 | `ARCHITECTURE.md` writing-provider boundary, `API_CONTRACTS.md` writing contract, `UX_SPEC.md` provider settings | `provider-openai`, `provider-anthropic`, `provider-gemini`, writing orchestrator, credential vault | AT-036, AT-039 |
 | FR-046, FR-047, FR-048 | `ARCHITECTURE.md` skill runtime, `API_CONTRACTS.md` skill contracts, `SECURITY_AND_RECOVERY.md` extension controls | skill registry, router, permission broker, execution-receipt store | AT-037, security suite |
 | FR-049, FR-050 | `ARCHITECTURE.md` media-review flow, `UX_SPEC.md` review screen, `MEDIA_PIPELINE.md` | artifact service, local media protocol, gallery/player, proxy service | AT-038, AT-040 |
 | FR-051 | `DOMAIN_MODEL.md` character/style bindings, `UX_SPEC.md` scoped style-change flow, `MEDIA_PIPELINE.md` character workflow | continuity/impact engine, image engine, review UI | AT-003, AT-009, AT-041 |
@@ -67,7 +67,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-020 | `YOUTUBE_RELEASE_WORKFLOW.md`, `SOURCES.md`, `CHANGE_CONTROL.md` | versioned release rules, validation, attestation UI | AT-051–AT-055, security suite |
 | NFR-021 | `YOUTUBE_RELEASE_WORKFLOW.md`, `DOMAIN_MODEL.md`, `API_CONTRACTS.md` | performance snapshot and learning registry | AT-056, AT-057, isolation suite |
 
-## Current implementation evidence — version 0.4.0
+## Current implementation evidence — version 0.5.0
 
 | Requirement slice | State | Implemented components/evidence | Remaining acceptance boundary |
 | --- | --- | --- | --- |
@@ -79,7 +79,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-007 portability | Partial | Current schema-2/backward-compatible schema-1 `project.json`, guided backed-up v1→v2 migration with four-point rollback evidence, documented folder layout, rebuildable local catalog, full SHA-256 inventory backups, and non-overwriting verified restore | Future-migration registry breadth, incremental/release archives, export, representative media recovery, and clean-machine AT-030 |
 | NFR-011 accessibility | Partial | Semantic controls, labels, focus-visible states, keyboard wizard navigation, non-color status text, reduced-motion CSS | Automated accessibility audit and representative-user AT-035 |
 | NFR-012 documentation | Implemented for this slice | `pnpm docs:check` passes with synchronized status/decision/source/test/changelog updates | Continuous enforcement on every later change |
-| FR-044–FR-045 and NFR-015 provider-neutral writing | Partial | `provider-openai`, `provider-anthropic`, `creative-writing`, credential vaults, typed IPC, Settings cards, Creative Room, exact context preview, paid-call checkbox, structured local proposal records, and mocked tests | Live fixture accounts/provider switch, actual cost profiles, canon promotion/version comparison, benchmark defaults, broader secret evidence, and full AT-036/AT-039 |
+| FR-044–FR-045 and NFR-015 provider-neutral writing | Partial | `provider-openai`, `provider-anthropic`, `provider-gemini`, `creative-writing`, credential vaults, schema-1→2 settings read, controlled catalogue, typed IPC, Settings cards, Creative Room, exact context preview, paid-call checkbox, structured local proposal records, and mocked tests | Live fixture accounts/provider switch, actual cost profiles, canon promotion/version comparison, task-specific benchmark defaults, broader secret evidence, and full AT-036/AT-039 |
 | FR-046–FR-051 and NFR-016–NFR-017 skill/media-viewing/style-change design | Documented; not implemented | Enforced external-skill provenance, in-app media review, and scoped character redesign are locked requirements and architecture decisions | Skill runtime, media protocol/player, scoped presentation bindings, tests AT-037–AT-041, and non-technical acceptance |
 | FR-052–FR-058 and NFR-018–NFR-019 rich previsualization/control/QC/sound/adaptation design | Documented; not implemented | Timed animatic, neutral controls, layered parallax, advanced LTX, warning-only creative QC, separate foley, optional adaptation, and immutable runtime are locked | Packages/workflows, compatibility benchmarks, tests AT-042–AT-049, and non-technical acceptance |
 | FR-059–FR-066 and NFR-020–NFR-021 YouTube release/learning design | Documented; not implemented | Reference-repo audit plus official-source review now define profiles/ideas, truthful thumbnails, release details, human policy attestations, immutable upload packages, optional evidence import, approved learning, and unified readiness | Release components, optional read-only OAuth review, tests AT-050–AT-058, clean-machine package verification, and non-technical acceptance |

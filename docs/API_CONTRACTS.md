@@ -36,12 +36,12 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `cloud.refresh()` | `studio:cloud:refresh` | Recheck the saved key and current price catalogue without creating a resource |
 | `cloud.saveGuardrails(limits)` | `studio:cloud:save-guardrails` | Validate and save non-secret default cost/runtime/idle/concurrency limits locally |
 | `cloud.disconnect()` | `studio:cloud:disconnect` | Remove only the protected local key and connection snapshot; never mutate provider resources |
-| `writing.getStatus()` | `studio:writing:get-status` | Return opaque OpenAI/Anthropic status, checked models, enablement, and optional local default profile without keys |
+| `writing.getStatus()` | `studio:writing:get-status` | Return opaque OpenAI/Anthropic/Gemini status, the live-available approved model intersection, enablement, and optional local default profile without keys |
 | `writing.connect({ provider, apiKey })` | `studio:writing:connect` | Read the provider model list, then replace only that provider's protected key after successful validation |
 | `writing.refresh({ provider })` | `studio:writing:refresh` | Recheck the protected key and current model list without a writing request |
 | `writing.setEnabled({ provider, enabled })` | `studio:writing:set-enabled` | Disable/enable one provider locally without exposing or deleting its key |
-| `writing.disconnect({ provider })` | `studio:writing:disconnect` | Remove one protected key and its non-secret snapshot without touching the other provider |
-| `writing.saveDefaultProfile(profile)` | `studio:writing:save-default-profile` | Save an available provider/model/depth choice; no unbenchmarked model is silently chosen |
+| `writing.disconnect({ provider })` | `studio:writing:disconnect` | Remove one protected key and its non-secret snapshot without touching the other providers |
+| `writing.saveDefaultProfile(profile)` | `studio:writing:save-default-profile` | Save an available approved provider/model/depth choice; no task benchmark winner is silently chosen |
 | `writing.previewContext(input)` | `studio:writing:preview-context` | Return the exact selected local context text, SHA-256, and source-manifest version before disclosure |
 | `writing.generateDraft(request)` | `studio:writing:generate-draft` | Require explicit paid confirmation, call one enabled provider, validate structured output, and save a new local proposal with lineage |
 | `writing.listDrafts(projectId)` | `studio:writing:list-drafts` | List only valid proposal records inside the owning project without modifying damaged files |
@@ -97,7 +97,7 @@ interface GPUProvider {
 
 `createLease` must tag the provider resource with project, studio session, idempotency key, hard deadline, and worker-image version. A timeout is reconciled by tag before retry.
 
-Version 0.4.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
+Version 0.5.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
 
 ## 4. Media-engine interfaces
 
@@ -171,7 +171,7 @@ Control strengths are intent-level values in canonical data. The adapter resolve
 
 ## 4.1 Writing-provider and external-skill contracts
 
-Current version 0.4.0 implements the safe first subset: `develop_character`, `build_world`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, and `check_continuity`; balanced/deep/custom depth; exact manifest-context preview/hash; OpenAI Responses and Anthropic Messages structured output; and immutable proposal records with provider/model/profile, source versions, token usage, request ID, and dollar-cost state `not-calculated`. The implemented request requires `paidConfirmed: true`. The current proposal contract requires empty skill-plan/skill-use arrays because the external-skill runtime is still locked. Story/season/board compilation, estimate/actual dollar profiles, skill execution, selective canon promotion, and approved creative versions remain the target contract below, not implemented behavior.
+Current version 0.5.0 implements the safe first subset: `develop_character`, `build_world`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, and `check_continuity`; balanced/deep/custom depth; exact manifest-context preview/hash; structured output through OpenAI Responses, Anthropic Messages, and Gemini GenerateContent; and immutable proposal records with provider/model/profile, source versions, token usage, request ID, and dollar-cost state `not-calculated`. The release-controlled catalogue is intersected with each key's live model list before selection. The implemented request requires `paidConfirmed: true`. The current proposal contract requires empty skill-plan/skill-use arrays because the external-skill runtime is still locked. Story/season/board compilation, estimate/actual dollar profiles, skill execution, selective canon promotion, and approved creative versions remain the target contract below, not implemented behavior.
 
 ```ts
 type WritingTaskKind =

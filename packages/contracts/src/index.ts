@@ -427,8 +427,76 @@ export const CloudActionResultSchema = z.discriminatedUnion('ok', [
 ])
 export type CloudActionResult = z.infer<typeof CloudActionResultSchema>
 
-export const WritingProviderSchema = z.enum(['openai', 'anthropic'])
+export const WritingProviderSchema = z.enum(['openai', 'anthropic', 'gemini'])
 export type WritingProvider = z.infer<typeof WritingProviderSchema>
+
+export const WritingModelPurposeSchema = z.enum(['balanced', 'deep', 'economy'])
+export type WritingModelPurpose = z.infer<typeof WritingModelPurposeSchema>
+
+export const WRITING_MODEL_CATALOG = {
+  openai: [
+    {
+      id: 'gpt-5.6-terra',
+      displayName: 'GPT-5.6 Terra',
+      purpose: 'balanced',
+      description: 'Recommended starting point for strong drafts at a balanced cost.'
+    },
+    {
+      id: 'gpt-5.6-sol',
+      displayName: 'GPT-5.6 Sol',
+      purpose: 'deep',
+      description: 'Use for the hardest story, structure, and continuity work.'
+    },
+    {
+      id: 'gpt-5.6-luna',
+      displayName: 'GPT-5.6 Luna',
+      purpose: 'economy',
+      description: 'Use for quick exploration, variations, and lower-cost drafts.'
+    }
+  ],
+  anthropic: [
+    {
+      id: 'claude-sonnet-5',
+      displayName: 'Claude Sonnet 5',
+      purpose: 'balanced',
+      description: 'Recommended starting point for writing quality and speed.'
+    },
+    {
+      id: 'claude-opus-5',
+      displayName: 'Claude Opus 5',
+      purpose: 'deep',
+      description: 'Use for complex development passes where depth matters most.'
+    },
+    {
+      id: 'claude-haiku-4-5-20251001',
+      displayName: 'Claude Haiku 4.5',
+      purpose: 'economy',
+      description: 'Use for fast, lower-cost ideation and rewrites.'
+    }
+  ],
+  gemini: [
+    {
+      id: 'gemini-3.7-flash',
+      displayName: 'Gemini 3.7 Flash',
+      purpose: 'balanced',
+      description: 'Recommended Gemini starting point for capable, fast story work.'
+    },
+    {
+      id: 'gemini-3.5-flash-lite',
+      displayName: 'Gemini 3.5 Flash-Lite',
+      purpose: 'economy',
+      description: 'Use for inexpensive variations, summaries, and early exploration.'
+    }
+  ]
+} as const satisfies Record<
+  WritingProvider,
+  ReadonlyArray<{
+    id: string
+    displayName: string
+    purpose: WritingModelPurpose
+    description: string
+  }>
+>
 
 export const WritingApiKeySchema = z
   .string()
@@ -475,7 +543,8 @@ export const WritingSettingsStatusSchema = z
     providers: z
       .object({
         openai: WritingProviderConnectionStatusSchema,
-        anthropic: WritingProviderConnectionStatusSchema
+        anthropic: WritingProviderConnectionStatusSchema,
+        gemini: WritingProviderConnectionStatusSchema
       })
       .strict(),
     defaultProfile: WritingDefaultProfileSchema.nullable(),

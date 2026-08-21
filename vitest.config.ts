@@ -14,6 +14,7 @@ export default defineConfig({
         process.cwd(),
         'packages/provider-anthropic/src/index.ts'
       ),
+      '@studio/provider-gemini': resolve(process.cwd(), 'packages/provider-gemini/src/index.ts'),
       '@studio/provider-openai': resolve(process.cwd(), 'packages/provider-openai/src/index.ts'),
       '@studio/provider-runpod': resolve(process.cwd(), 'packages/provider-runpod/src/index.ts'),
       '@studio/support-diagnostics': resolve(

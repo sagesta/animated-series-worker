@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent, type JSX } from 'react'
 import {
+  WRITING_MODEL_CATALOG,
   type WritingProvider,
   type WritingSettingsActionResult,
   type WritingSettingsStatus
@@ -12,7 +13,16 @@ interface WritingSetupProps {
 
 const providerNames: Record<WritingProvider, string> = {
   openai: 'OpenAI (GPT)',
-  anthropic: 'Anthropic (Claude)'
+  anthropic: 'Anthropic (Claude)',
+  gemini: 'Google Gemini'
+}
+
+const writingProviders = ['openai', 'anthropic', 'gemini'] as const
+
+function modelLabel(provider: WritingProvider, modelId: string, displayName: string): string {
+  const catalogue: ReadonlyArray<{ id: string; purpose: string }> = WRITING_MODEL_CATALOG[provider]
+  const purpose = catalogue.find((item) => item.id === modelId)?.purpose
+  return purpose ? `${displayName} — ${purpose}` : displayName
 }
 
 function actionFeedback(
@@ -28,10 +38,15 @@ function actionFeedback(
 }
 
 export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Element {
-  const [keys, setKeys] = useState<Record<WritingProvider, string>>({ openai: '', anthropic: '' })
+  const [keys, setKeys] = useState<Record<WritingProvider, string>>({
+    openai: '',
+    anthropic: '',
+    gemini: ''
+  })
   const [show, setShow] = useState<Record<WritingProvider, boolean>>({
     openai: false,
-    anthropic: false
+    anthropic: false,
+    gemini: false
   })
   const [busy, setBusy] = useState<string>()
   const [feedback, setFeedback] = useState<{
@@ -40,7 +55,7 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
   }>()
   const connectedProviders = useMemo(
     () =>
-      (['openai', 'anthropic'] as const).filter(
+      writingProviders.filter(
         (provider) => status?.providers[provider].connectionState === 'connected'
       ),
     [status]
@@ -148,9 +163,9 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
   return (
     <div className="writing-setup-stack">
       <div className="connection-banner">
-        <span className="connection-symbol">2</span>
+        <span className="connection-symbol">3</span>
         <div>
-          <strong>Add GPT or Claude for story development</strong>
+          <strong>Add GPT, Claude, or Gemini for story development</strong>
           <p>
             Connecting only checks which models your key can use. A paid writing request happens
             later, in Story, only after you tick a confirmation box.
@@ -160,7 +175,7 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
       </div>
 
       <div className="writing-provider-grid">
-        {(['openai', 'anthropic'] as const).map((provider) => {
+        {writingProviders.map((provider) => {
           const providerStatus = status?.providers[provider]
           const connected =
             providerStatus?.connectionState === 'connected' ||
@@ -209,6 +224,16 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
               <p className="field-help">
                 Windows protects this key outside all project, export, log, and support files.
               </p>
+              <div className="approved-model-list">
+                <strong>Approved studio models</strong>
+                <ul>
+                  {WRITING_MODEL_CATALOG[provider].map((model) => (
+                    <li key={model.id}>
+                      {model.displayName} <span>· {model.purpose}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
               <button
                 className="button button-primary"
                 type="submit"
@@ -265,8 +290,8 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
             <div>
               <h3>Preferred writing profile</h3>
               <p>
-                There is no hidden “best model” yet. Choose one you can access; benchmark results
-                will guide smarter defaults later.
+                Choose from the stable studio catalogue below. “Balanced” is the recommended
+                starting tier; benchmarks will guide task-specific defaults later.
               </p>
             </div>
             <span>Local preference</span>
@@ -302,7 +327,7 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
               >
                 {status?.providers[selectedProfile.provider].models.map((model) => (
                   <option value={model.id} key={model.id}>
-                    {model.displayName}
+                    {modelLabel(selectedProfile.provider, model.id, model.displayName)}
                   </option>
                 ))}
               </select>

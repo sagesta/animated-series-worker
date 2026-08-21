@@ -35,23 +35,23 @@ Maintain small, rights-safe fixtures:
 
 Creative benchmark references are locked by hash. Changing them is a test-version change documented in the changelog.
 
-## 3.1 Current development evidence — version 0.4.0
+## 3.1 Current development evidence — version 0.5.0
 
 | Evidence | Current result | Boundary |
 | --- | --- | --- |
 | Domain unit tests | Four passing tests for ULID shape/order, code normalization, safe manifest defaults, and invalid inputs | Does not cover creative asset versions/state machines |
 | Project-store integration tests | Thirteen passing cases add project-isolated, no-overwrite writing-proposal persistence to the prior series/film, migration, backup/restore, tamper, path, and writer-lock matrix | Automated local storage evidence passes; clean-machine AT-030 and full asset/query/token/cache AT-031 isolation remain |
-| Renderer tests | Seven passing tests cover the prior local/backup/migration/support/RunPod flows plus exact-context display, disabled-until-confirmed text action, and locally rendered “proposal, not canon” result/skill notice | Does not replace representative non-technical usability, packaged secret scan, clean-machine recovery, or live-provider acceptance |
-| Creative-writing service tests | Three passing tests cover independent provider setup, exact selected-context preview, validated source/model/token/cost-state lineage, and refusal before explicit paid confirmation | Uses injected providers/vault/project store; live account switching, actual price/cost, canon promotion, and full AT-036/AT-039 remain |
-| OpenAI/Anthropic adapter tests | Six passing mocked-HTTP tests cover model-list validation, required authorization/version headers, OpenAI non-stored structured Responses payload, Anthropic structured Messages payload, usage/request IDs, safe key errors, and partial max-token refusal | No real account, model quality, current billing, retention-policy, or end-to-end network evidence |
-| Support-diagnostics tests | Two passing tests cover known RunPod/OpenAI/Anthropic/Bearer values, protected fields, private paths, flushed log/support output, and preservation of harmless operational context | Worker/skill/provider-payload patterns, retention, malformed historical logs, large-volume behavior, and packaged-profile scanning remain |
+| Renderer tests | Eight passing tests cover the prior local/backup/migration/support/RunPod flows plus separate Gemini setup, exact-context display, disabled-until-confirmed text action, and locally rendered “proposal, not canon” result/skill notice | Does not replace representative non-technical usability, packaged secret scan, clean-machine recovery, or live-provider acceptance |
+| Creative-writing service tests | Five passing tests cover independent provider setup, controlled-catalogue filtering/refusal, schema-1→2 settings reads, exact selected-context preview, validated source/model/token/cost-state lineage, and refusal before explicit paid confirmation | Uses injected providers/vault/project store; live account switching, actual price/cost, canon promotion, and full AT-036/AT-039 remain |
+| OpenAI/Anthropic/Gemini adapter tests | Nine passing mocked-HTTP tests cover model-list validation, required authorization/version/key headers, OpenAI non-stored structured Responses payload, Anthropic structured Messages payload, Gemini structured GenerateContent payload, usage/request IDs, safe key errors, and partial/incomplete-response refusal | No real account, model quality, current billing/quota, retention-policy, or end-to-end network evidence |
+| Support-diagnostics tests | Two passing tests cover known RunPod/OpenAI/Anthropic/Gemini/Bearer values, protected fields, private paths, flushed log/support output, and preservation of harmless operational context | Worker/skill/provider-payload patterns, retention, malformed historical logs, large-volume behavior, and packaged-profile scanning remain |
 | Credential-vault tests | Three passing tests prove encrypted storage contains no plaintext key, supports replacement/read/removal, and fails closed when OS protection is unavailable | Uses an injected protector in unit tests; packaged Windows DPAPI persistence still needs install/upgrade evidence |
 | RunPod provider contract tests | Seven passing API v2 tests cover read-only account aggregate, catalogue prices/4090 baseline flag, 401, 403, 429, 503, timeout, and secret-safe errors | Mocked HTTP only; no user's live key or provider resource is used in automated tests |
 | Cloud-setup tests | Three passing tests cover validate-before-store, no key in settings, local guardrails with generation lock, and disconnect retaining non-secret defaults | Storage/template/worker/watchdog/termination remain absent |
 | Static quality | Type check, lint, documentation check, and three-part Electron production build pass | Not a security audit or clean-machine test |
-| Windows package smoke | Version 0.4.0 now produces an unpacked executable reporting product version `0.4.0.0`; prior version-0.3.0 fresh-profile launch/catalog/home evidence, wizard visual evidence, RunPod renderer flow, NSIS build, and development-machine upgrade smoke remain retained | The 0.4.0 executable is unsigned and has not yet received a fresh-profile launch or Creative Room visual/usability smoke; no clean-machine, signing, installer, upgrade, or rollback evidence exists for this version |
+| Windows package smoke | The full version-0.5.0 quality gate passes; unpacked packaging produces an executable reporting product version `0.5.0.0` and SHA-256 `1307CB8D348CC5C2EFCE00B82A08CCDB33545D8B5017B5F93F93EA90C213880B` | Authenticode is `NotSigned`; no clean-machine, installer, upgrade, live-provider, or rollback evidence exists for version 0.5.0 |
 
-The suite contains 48 automated tests. The writing tests provide a mocked local slice of AT-036 and the lineage/context portion of AT-039, not full acceptance: no real key, external request, provider charge, model-quality comparison, actual-cost receipt, or benchmark default was used. AT-013 remains open because no provider resource, worker, job, purge, watchdog, termination, or GPU charge has been tested.
+The suite contains 54 automated tests. The writing tests provide a mocked local slice of AT-036 and the lineage/context portion of AT-039, not full acceptance: no real key, external request, provider charge, model-quality comparison, actual-cost receipt, or task-specific benchmark default was used. AT-013 remains open because no provider resource, worker, job, purge, watchdog, termination, or GPU charge has been tested.
 
 ## 4. Core acceptance tests
 
@@ -116,7 +116,7 @@ The suite contains 48 automated tests. The writing tests provide a mocked local 
 
 ### Writing providers, skills, and media viewing
 
-- **AT-036:** Connect test OpenAI and Anthropic accounts independently, switch the writing provider for equivalent fixtures, and prove canonical story/character/script records remain provider-neutral while keys never enter renderer state, projects, logs, exports, or skill input.
+- **AT-036:** Connect test OpenAI, Anthropic, and Gemini accounts independently, switch the writing provider for equivalent fixtures, and prove canonical story/character/script records remain provider-neutral while keys never enter renderer state, projects, logs, exports, or skill input.
 - **AT-037:** Attach required and optional fixture skills, run matching and non-matching tasks, and prove routing, declared permissions, output validation, timeout/failure behavior, exact-version receipts, and the user-visible `Skills used` list. A deliberately ignored required skill must fail the job.
 - **AT-038:** Generate fixture image/audio/video artifacts through a mocked headless ComfyUI worker, close the worker, and prove the studio still displays, plays, compares, approves, rejects, and retakes locally verified media without opening ComfyUI.
 - **AT-039:** Run locked story, character, and script benchmarks through each supported writing profile; record quality review, token usage, actual API cost, context selection, and continuity differences before choosing defaults.
@@ -196,7 +196,7 @@ Regression thresholds are set after Phase 0. A material regression blocks defaul
 - Tampered workflow/model/image capability rejection.
 - Provider API idempotency and least-privilege failure tests.
 - Malicious/corrupt upstream fixture isolation.
-- OpenAI/Anthropic key isolation, renderer/skill non-disclosure, task-context minimization, and provider-switch lineage tests.
+- OpenAI/Anthropic/Gemini key isolation, renderer/skill non-disclosure, task-context minimization, controlled-catalogue rejection, and provider-switch lineage tests.
 - External-skill quarantine, manifest/schema/signature state, permission scope, path/network denial, timeout/output limits, required-receipt enforcement, update/rollback, and project-isolation tests.
 - Production-runtime immutability tests for disabled Manager/install/update paths, pinned control/QC/audio/adaptation dependencies, and quarantine on missing nodes/models.
 - Control/reference/adaptation dataset rights and cross-project isolation tests plus denial of creative-QC approval mutations.

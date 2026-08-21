@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
@@ -15,7 +15,7 @@ import { App } from './App'
 import { CreativeRoom } from './CreativeRoom'
 
 const systemStatus: SystemStatus = {
-  appVersion: '0.4.0',
+  appVersion: '0.5.0',
   electronVersion: '43.4.1',
   nodeVersion: '24.18.1',
   storagePath: 'C:\\Studio\\projects',
@@ -90,6 +90,15 @@ const disconnectedWritingStatus: WritingSettingsStatus = {
       checkedAt: null,
       models: [],
       validationCostUsd: 0
+    },
+    gemini: {
+      provider: 'gemini',
+      connectionState: 'not-configured',
+      credentialStored: false,
+      enabled: true,
+      checkedAt: null,
+      models: [],
+      validationCostUsd: 0
     }
   },
   defaultProfile: null,
@@ -106,11 +115,11 @@ const connectedWritingStatus: WritingSettingsStatus = {
       credentialStored: true,
       enabled: true,
       checkedAt: '2026-08-21T18:00:00.000Z',
-      models: [{ id: 'gpt-test', displayName: 'GPT Test' }],
+      models: [{ id: 'gpt-5.6-terra', displayName: 'GPT-5.6 Terra' }],
       validationCostUsd: 0
     }
   },
-  defaultProfile: { provider: 'openai', model: 'gpt-test', profile: 'balanced' }
+  defaultProfile: { provider: 'openai', model: 'gpt-5.6-terra', profile: 'balanced' }
 }
 
 const createdFilm: ProjectDetails = {
@@ -329,6 +338,50 @@ describe('desktop project foundation', () => {
     expect(screen.getByText('Generation locked')).toBeTruthy()
   })
 
+  it('connects a Gemini key through its separate protected Settings card', async () => {
+    const user = userEvent.setup()
+    const geminiConnected: WritingSettingsStatus = {
+      ...disconnectedWritingStatus,
+      providers: {
+        ...disconnectedWritingStatus.providers,
+        gemini: {
+          provider: 'gemini',
+          connectionState: 'connected',
+          credentialStored: true,
+          enabled: true,
+          checkedAt: '2026-08-21T18:00:00.000Z',
+          models: [{ id: 'gemini-3.7-flash', displayName: 'Gemini 3.7 Flash' }],
+          validationCostUsd: 0
+        }
+      }
+    }
+    const connectWriting = vi
+      .fn<StudioApi['writing']['connect']>()
+      .mockResolvedValue({ ok: true, status: geminiConnected })
+    window.studio.writing.connect = connectWriting
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: /settings/i }))
+    const geminiCard = screen.getByRole('heading', { name: 'Google Gemini' }).closest('form')
+    expect(geminiCard).not.toBeNull()
+    await user.type(
+      within(geminiCard as HTMLFormElement).getByLabelText('API key'),
+      'AIza-test-protected-key-123456789'
+    )
+    await user.click(
+      within(geminiCard as HTMLFormElement).getByRole('button', { name: 'Test and store key' })
+    )
+
+    await waitFor(() =>
+      expect(connectWriting).toHaveBeenCalledWith({
+        provider: 'gemini',
+        apiKey: 'AIza-test-protected-key-123456789'
+      })
+    )
+    expect(await screen.findByText(/Google Gemini is connected/)).toBeTruthy()
+    expect(screen.getByText(/Connection check: \$0/)).toBeTruthy()
+  })
+
   it('restores a missing project from a verified backup in Settings', async () => {
     const user = userEvent.setup()
     listBackups.mockResolvedValue([verifiedFilmBackup])
@@ -403,7 +456,7 @@ describe('creative room', () => {
       taskKind: 'outline_episode' as const,
       status: 'proposal' as const,
       provider: 'openai' as const,
-      model: 'gpt-test',
+      model: 'gpt-5.6-terra',
       profile: 'balanced' as const,
       createdAt: '2026-08-21T19:00:00.000Z',
       instruction: 'Outline the film with a strong emotional turn and a memorable final image.',
@@ -470,7 +523,11 @@ describe('creative room', () => {
 
     await screen.findByRole('heading', { name: 'The Kite Above the Storm' })
     expect(generateDraft).toHaveBeenCalledWith(
-      expect.objectContaining({ paidConfirmed: true, provider: 'openai', model: 'gpt-test' })
+      expect.objectContaining({
+        paidConfirmed: true,
+        provider: 'openai',
+        model: 'gpt-5.6-terra'
+      })
     )
     expect(screen.getByText('Proposal · not canon')).toBeTruthy()
     expect(screen.getByText(/External skills used: none/)).toBeTruthy()

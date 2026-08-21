@@ -54,6 +54,7 @@ import {
 import { EncryptedCredentialVault } from '@studio/credential-vault'
 import { ProjectStore } from '@studio/project-store'
 import { AnthropicClient } from '@studio/provider-anthropic'
+import { GeminiClient } from '@studio/provider-gemini'
 import { OpenAiClient } from '@studio/provider-openai'
 import { RunPodClient } from '@studio/provider-runpod'
 import { SafeDiagnostics, type DiagnosticEventInput } from '@studio/support-diagnostics'
@@ -787,9 +788,17 @@ void app
         anthropic: new EncryptedCredentialVault({
           filePath: join(userDataRoot, 'secure', 'anthropic-api-key.bin'),
           protector: secretProtector
+        }),
+        gemini: new EncryptedCredentialVault({
+          filePath: join(userDataRoot, 'secure', 'gemini-api-key.bin'),
+          protector: secretProtector
         })
       },
-      providers: { openai: new OpenAiClient(), anthropic: new AnthropicClient() },
+      providers: {
+        openai: new OpenAiClient(),
+        anthropic: new AnthropicClient(),
+        gemini: new GeminiClient()
+      },
       settingsStore: new WritingSettingsStore(
         join(userDataRoot, 'settings', 'creative-writing.json')
       )

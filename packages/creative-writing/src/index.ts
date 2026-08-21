@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { z, ZodError } from 'zod'
 import {
+  WRITING_MODEL_CATALOG,
   WritingConnectInputSchema,
   WritingContextPreviewInputSchema,
   WritingContextPreviewSchema,
@@ -26,6 +27,7 @@ import {
 import { CredentialVaultError } from '@studio/credential-vault'
 import { createUlid } from '@studio/domain'
 import { AnthropicProviderError } from '@studio/provider-anthropic'
+import { GeminiProviderError } from '@studio/provider-gemini'
 import { OpenAiProviderError } from '@studio/provider-openai'
 
 const StoredProviderSchema = z
@@ -36,13 +38,27 @@ const StoredProviderSchema = z
   })
   .strict()
 
-const WritingSettingsRecordSchema = z
+const WritingSettingsRecordV1Schema = z
   .object({
     schemaVersion: z.literal(1),
     providers: z
       .object({
         openai: StoredProviderSchema,
         anthropic: StoredProviderSchema
+      })
+      .strict(),
+    defaultProfile: WritingDefaultProfileSchema.nullable()
+  })
+  .strict()
+
+const WritingSettingsRecordSchema = z
+  .object({
+    schemaVersion: z.literal(2),
+    providers: z
+      .object({
+        openai: StoredProviderSchema,
+        anthropic: StoredProviderSchema,
+        gemini: StoredProviderSchema
       })
       .strict(),
     defaultProfile: WritingDefaultProfileSchema.nullable()
@@ -85,10 +101,18 @@ function defaultProvider() {
   return { enabled: true, checkedAt: null, models: [] }
 }
 
+function providerName(provider: WritingProvider): string {
+  return provider === 'openai' ? 'OpenAI' : provider === 'anthropic' ? 'Anthropic' : 'Google Gemini'
+}
+
 function defaultRecord(): WritingSettingsRecord {
   return {
-    schemaVersion: 1,
-    providers: { openai: defaultProvider(), anthropic: defaultProvider() },
+    schemaVersion: 2,
+    providers: {
+      openai: defaultProvider(),
+      anthropic: defaultProvider(),
+      gemini: defaultProvider()
+    },
     defaultProfile: null
   }
 }
@@ -121,7 +145,18 @@ export class WritingSettingsStore {
 
   async load(): Promise<WritingSettingsRecord> {
     try {
-      return WritingSettingsRecordSchema.parse(JSON.parse(await readFile(this.filePath, 'utf8')))
+      const untrustedRecord: unknown = JSON.parse(await readFile(this.filePath, 'utf8'))
+      const current = WritingSettingsRecordSchema.safeParse(untrustedRecord)
+      if (current.success) return current.data
+      const previous = WritingSettingsRecordV1Schema.safeParse(untrustedRecord)
+      if (previous.success) {
+        return WritingSettingsRecordSchema.parse({
+          ...previous.data,
+          schemaVersion: 2,
+          providers: { ...previous.data.providers, gemini: defaultProvider() }
+        })
+      }
+      return WritingSettingsRecordSchema.parse(untrustedRecord)
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return defaultRecord()
       throw new WritingServiceError(
@@ -182,15 +217,17 @@ export class WritingSetupService {
   }
 
   async getStatus(): Promise<WritingSettingsStatus> {
-    const [record, openaiStored, anthropicStored] = await Promise.all([
+    const [record, openaiStored, anthropicStored, geminiStored] = await Promise.all([
       this.settingsStore.load(),
       this.vaults.openai.hasSecret(),
-      this.vaults.anthropic.hasSecret()
+      this.vaults.anthropic.hasSecret(),
+      this.vaults.gemini.hasSecret()
     ])
     return WritingSettingsStatusSchema.parse({
       providers: {
         openai: statusForProvider('openai', record, openaiStored),
-        anthropic: statusForProvider('anthropic', record, anthropicStored)
+        anthropic: statusForProvider('anthropic', record, anthropicStored),
+        gemini: statusForProvider('gemini', record, geminiStored)
       },
       defaultProfile: record.defaultProfile,
       paidDraftsRequireConfirmation: true
@@ -199,9 +236,19 @@ export class WritingSetupService {
 
   async connect(unknownInput: unknown): Promise<WritingSettingsStatus> {
     const { provider, apiKey } = WritingConnectInputSchema.parse(unknownInput)
-    const models = WritingModelOptionSchema.array()
+    const availableModels = WritingModelOptionSchema.array()
       .max(100)
       .parse(await this.providers[provider].listModels(apiKey))
+    const availableIds = new Set(availableModels.map((model) => model.id))
+    const models = WRITING_MODEL_CATALOG[provider]
+      .filter((model) => availableIds.has(model.id))
+      .map(({ id, displayName }) => ({ id, displayName }))
+    if (models.length === 0) {
+      throw new WritingServiceError(
+        'unsupported-model',
+        'The key works, but none of this studio version\u2019s approved writing models are available to it. Check the provider account or update the studio model catalogue.'
+      )
+    }
     const record = await this.settingsStore.load()
     const vault = this.vaults[provider]
     const hadPreviousSecret = await vault.hasSecret()
@@ -239,7 +286,7 @@ export class WritingSetupService {
     if (!(await this.vaults[provider].hasSecret())) {
       throw new WritingServiceError(
         'not-connected',
-        `Connect ${provider === 'openai' ? 'OpenAI' : 'Anthropic'} before refreshing it.`
+        `Connect ${providerName(provider)} before refreshing it.`
       )
     }
     return this.connect({ provider, apiKey: await this.vaults[provider].readSecret() })
@@ -265,7 +312,7 @@ export class WritingSetupService {
     if (!(await this.vaults[provider].hasSecret())) {
       throw new WritingServiceError(
         'not-connected',
-        `Connect ${provider === 'openai' ? 'OpenAI' : 'Anthropic'} before changing its availability.`
+        `Connect ${providerName(provider)} before changing its availability.`
       )
     }
     const record = await this.settingsStore.load()
@@ -308,7 +355,7 @@ export class WritingSetupService {
     if (!providerStatus.credentialStored) {
       throw new WritingServiceError(
         'not-connected',
-        `Connect ${provider === 'openai' ? 'OpenAI' : 'Anthropic'} in Settings first.`
+        `Connect ${providerName(provider)} in Settings first.`
       )
     }
     if (!providerStatus.enabled || providerStatus.connectionState === 'disabled') {
@@ -471,7 +518,11 @@ export class CreativeWritingService {
 export function toWritingActionError(
   error: unknown
 ): Extract<WritingDraftActionResult, { ok: false }> {
-  if (error instanceof OpenAiProviderError || error instanceof AnthropicProviderError) {
+  if (
+    error instanceof OpenAiProviderError ||
+    error instanceof AnthropicProviderError ||
+    error instanceof GeminiProviderError
+  ) {
     return { ok: false, error: { code: error.code, message: error.message } }
   }
   if (error instanceof CredentialVaultError) {

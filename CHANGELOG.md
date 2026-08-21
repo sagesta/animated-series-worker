@@ -4,6 +4,23 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-21 (protected Gemini and controlled writing models)
+
+- Added a separate Windows-protected Google Gemini credential, no-cost model-list validation, independent refresh/disable/enable/remove controls, and a provider-neutral Gemini `generateContent` adapter with structured JSON, bounded timeout, safe errors, completion checks, usage, and request lineage.
+- Added a visible release-controlled model catalogue. OpenAI offers GPT-5.6 Terra (balanced), Sol (deep), and Luna (economy); Anthropic offers Claude Sonnet 5 (balanced), Opus 5 (deep), and Haiku 4.5 (economy); Gemini offers Gemini 3.7 Flash (balanced) and Gemini 3.5 Flash-Lite (economy).
+- Connection now intersects the provider's live model list with that catalogue. Unknown, preview, retired, and unavailable models are not offered, while no model is claimed as the benchmark winner for a particular writing task.
+- Added backward-compatible migration of the local writing-settings record from schema 1 to schema 2, retaining existing OpenAI/Anthropic state and adding Gemini as unconfigured.
+- Added Gemini adapter/UI coverage, controlled-catalogue refusal, backward settings-read coverage, and expanded provider-neutral setup fixtures. The full suite now contains 54 automated tests.
+- The full quality gate passes and the unpacked Windows test build reports version 0.5.0.0. It remains unsigned and is not a production installer.
+
+User impact: a creator can bring a Gemini key as well as an OpenAI or Anthropic key, see the exact studio-approved models and their plain-language purpose, and use an available model in the same Creative Room. Connection checks make no writing request; a confirmed draft can still incur the selected provider's token charges.
+
+Migration impact: no project schema changes. Reading the existing non-secret writing settings adds an unconfigured Gemini entry in memory; the next settings write saves schema 2. A successful Gemini connection creates `secure/gemini-api-key.bin` under application user data. Existing keys and proposal files are retained.
+
+Documentation impact: requirements, architecture, contracts, UX, security, workflow, implementation/backlog, tests, traceability, decisions, sources, status, README, and changelog now include Gemini and the controlled initial model catalogue.
+
+Rollback: remove the Gemini key in Settings, close the application, and revert this feature commit. Before running version 0.4.0 again, remove or retain a backup of the non-secret schema-2 `creative-writing.json`; version 0.4.0 cannot read that settings schema and will safely ask for repair. Projects and proposal files require no rollback.
+
 ### Added — 2026-08-21 (protected GPT/Claude creative room)
 
 - Added separate Windows-protected OpenAI and Anthropic credential records with validate-before-store model-list checks, independent refresh/disable/enable/remove actions, and no provider/model choice hidden as a benchmarked default.
