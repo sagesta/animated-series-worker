@@ -15,8 +15,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { failed: true }
   }
 
-  componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
-    // A redacted support logger will replace this boundary hook before external integrations ship.
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    void window.studio.support
+      .recordRendererError({
+        message: error.message || 'The renderer stopped unexpectedly.',
+        componentStack: errorInfo.componentStack ?? undefined
+      })
+      .catch(() => {
+        // The recovery screen must remain available even if diagnostics cannot be written.
+      })
   }
 
   render(): ReactNode {

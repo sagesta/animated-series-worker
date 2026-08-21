@@ -112,6 +112,7 @@ let createProject: ReturnType<typeof vi.fn<StudioApi['projects']['create']>>
 let listBackups: ReturnType<typeof vi.fn<StudioApi['projects']['listBackups']>>
 let backupProject: ReturnType<typeof vi.fn<StudioApi['projects']['backup']>>
 let restoreProject: ReturnType<typeof vi.fn<StudioApi['projects']['restore']>>
+let createSupportBundle: ReturnType<typeof vi.fn<StudioApi['support']['createBundle']>>
 let connectCloud: ReturnType<typeof vi.fn<StudioApi['cloud']['connect']>>
 
 beforeEach(() => {
@@ -122,6 +123,13 @@ beforeEach(() => {
     backupId: verifiedFilmBackup.backupId,
     restoredAt: '2026-08-21T14:00:00.000Z',
     project: createdFilm
+  })
+  createSupportBundle = vi.fn<StudioApi['support']['createBundle']>().mockResolvedValue({
+    bundleId: '00000000-0000-4000-8000-000000000001',
+    createdAt: '2026-08-21T15:00:00.000Z',
+    eventCount: 4,
+    bundlePath: 'C:\\Studio\\support\\support-safe.json',
+    redactionState: 'passed'
   })
   connectCloud = vi.fn<StudioApi['cloud']['connect']>().mockResolvedValue({
     ok: true,
@@ -138,6 +146,10 @@ beforeEach(() => {
       listBackups,
       backup: backupProject,
       restore: restoreProject
+    },
+    support: {
+      recordRendererError: vi.fn().mockResolvedValue(undefined),
+      createBundle: createSupportBundle
     },
     cloud: {
       getStatus: vi.fn().mockResolvedValue(disconnectedCloudStatus),
@@ -233,5 +245,17 @@ describe('desktop project foundation', () => {
 
     await waitFor(() => expect(restoreProject).toHaveBeenCalledWith(verifiedFilmBackup.backupId))
     expect(await screen.findByRole('heading', { name: 'The Last Kite' })).toBeTruthy()
+  })
+
+  it('creates a local redacted support file without uploading it', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: /settings/i }))
+    await user.click(await screen.findByRole('button', { name: 'Create redacted support file' }))
+
+    await waitFor(() => expect(createSupportBundle).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText(/redaction check passed/i)).toBeTruthy()
+    expect(screen.getByText('C:\\Studio\\support\\support-safe.json')).toBeTruthy()
   })
 })

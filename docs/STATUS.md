@@ -4,7 +4,7 @@ Last updated: 2026-08-21
 
 ## Honest capability statement
 
-Animated Series Studio now has a working local Windows desktop foundation, verified project backup/restore, single-writer protection, and a safe RunPod account-connection slice. It creates, lists, reopens, backs up, verifies, and non-destructively restores isolated series and one-off film workspaces; validates and encrypts a RunPod API key; reads aggregate existing-Pod status and current GPU planning prices; and saves local safety defaults. It does **not** yet create a cloud machine, persistent model storage, a worker image, or any story/image/speech/video/lip-sync/export job.
+Animated Series Studio now has a working local Windows desktop foundation, verified project backup/restore, single-writer protection, structured redacted diagnostics, and a safe RunPod account-connection slice. It creates, lists, reopens, backs up, verifies, and non-destructively restores isolated series and one-off film workspaces; validates and encrypts a RunPod API key; reads aggregate existing-Pod status and current GPU planning prices; saves local safety defaults; and creates a local-only support file after secret/path redaction. It does **not** yet create a cloud machine, persistent model storage, a worker image, or any story/image/speech/video/lip-sync/export job.
 
 | Capability | Status | Evidence needed to advance |
 | --- | --- | --- |
@@ -14,6 +14,7 @@ Animated Series Studio now has a working local Windows desktop foundation, verif
 | Architecture | Complete baseline | Architecture review and implementation spikes |
 | Documentation governance | Complete baseline | Documentation checker passes |
 | Desktop shell | In progress — secure shell, guided project wizard, RunPod account setup, navigation, unpacked app smoke, and unsigned NSIS installer build pass on the development machine | Authenticode signing and clean-machine/non-technical install/launch evidence |
+| Redacted diagnostics | In progress — structured flushed JSONL events, provider-key/Bearer/protected-field/private-path redaction, renderer-boundary capture, local-only support JSON, and UI/tests pass | Broader mutation/failure instrumentation, external-skill/worker patterns, retention, packaged secret scan, and support usability evidence |
 | Project and continuity store | In progress — create/list/open, atomic manifest, schema v1, per-project SQLite, catalog reconciliation, verified full backup/restore, tamper refusal, and single-writer tests pass | Failure-injection, migration preview/rollback, incremental/archive policy, clean-machine restore, and full continuity tests |
 | Upstream adapter | Not started | Contract tests pass against pinned upstream commit |
 | OpenAI/Anthropic writing | Not started — provider-neutral contract, protected-key UX, local canonical-data rule, and separate text-cost requirement are documented | Story/character/script benchmark, adapter tests, secret non-leakage, token/cost evidence, and AT-036/AT-039 pass |
@@ -36,7 +37,7 @@ No row may be changed to “Complete” solely because code was written. The nam
 ## Development evidence captured
 
 - `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, and `pnpm docs:check` pass on 2026-08-21.
-- Twenty-eight automated tests cover series/film backup/restore with byte-for-byte fixtures, plain-language backup/recovery UI, no-overwrite recovery, backup-tamper refusal, live/stale/incomplete writer locks, the prior project foundation, encrypted credential non-leakage, fail-closed storage, RunPod API v2 success/401/403/429/503/timeout behavior, current GPU planning-price parsing, local guardrail persistence, disconnect behavior, and the guided no-cost connection flow.
+- Thirty-one automated tests cover series/film backup/restore with byte-for-byte fixtures, plain-language backup/recovery UI, no-overwrite recovery, backup-tamper refusal, live/stale/incomplete writer locks, structured diagnostic redaction/support-file behavior, the prior project foundation, encrypted credential non-leakage, fail-closed storage, RunPod API v2 success/401/403/429/503/timeout behavior, current GPU planning-price parsing, local guardrail persistence, disconnect behavior, and the guided no-cost connection flow.
 - `electron-builder --dir` produced `release/win-unpacked/Animated Series Studio.exe`.
 - The packaged executable remained healthy under a fresh temporary user-data profile and initialized `projects/.studio/catalog.sqlite`.
 - `electron-builder --win nsis` produced the 100.0 MiB unsigned version-0.3.0 test installer `release/Animated-Series-Studio-0.3.0-x64.exe` (SHA-256 `FA1081EA0BC0D21B3C2807976442E545FEDF0492259FC7C60219D1FC7AAF64F2`). Authenticode verification reports `NotSigned`, so this is not a production-distribution artifact.

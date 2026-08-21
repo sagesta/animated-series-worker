@@ -122,7 +122,7 @@ Versions are chosen and pinned during implementation spikes. “Latest” is nev
 
 ### Implemented boundary
 
-The current source implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, and the read-only portion of `packages/provider-runpod`. The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
+The current source implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, `packages/support-diagnostics`, and the read-only portion of `packages/provider-runpod`. The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
 
 The local project store currently provides:
 
@@ -136,7 +136,7 @@ The local project store currently provides:
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Migration preview/rollback, incremental/release archives, structured redacted support logging, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
+Migration preview/rollback, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
 
 ## 6. Local component responsibilities
 
@@ -152,6 +152,7 @@ Migration preview/rollback, incremental/release archives, structured redacted su
 - Owns file access, credential-vault calls, local child processes, updater, and secure IPC.
 - Starts the local orchestration service and enforces a single writer per project.
 - Blocks shutdown or performs a safe handoff while unsynchronized paid work exists.
+- Owns the structured diagnostic sink and local-only support-file creation; the renderer can submit only one bounded crash record and never receives a generic logging or filesystem method.
 
 ### Project store
 

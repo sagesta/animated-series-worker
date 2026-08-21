@@ -27,6 +27,8 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `projects.listBackups()` | `studio:projects:list-backups` | Return completed backup generations that currently pass manifest, inventory, identity, size, and SHA-256 verification |
 | `projects.backup(projectId)` | `studio:projects:backup` | Checkpoint/integrity-check SQLite, copy and flush canonical files, verify the copy, then atomically expose a completed backup |
 | `projects.restore(backupId)` | `studio:projects:restore` | Re-verify and restore into an absent canonical project folder without overwriting existing work |
+| `support.recordRendererError(input)` | `studio:support:record-renderer-error` | Record a bounded renderer-boundary failure only after structured secret/path redaction |
+| `support.createBundle()` | `studio:support:create-bundle` | Flush recent safe events, re-redact/re-validate them, run the known-secret scan, and save a local-only support JSON without project content or provider payloads |
 | `cloud.getStatus()` | `studio:cloud:get-status` | Read opaque RunPod connection, last account check, price catalogue, setup checklist, and saved local limits |
 | `cloud.connect({ apiKey })` | `studio:cloud:connect` | Validate the key with `GET /v2/pods`, optionally read the GPU catalogue, then encrypt the key only after validation succeeds |
 | `cloud.refresh()` | `studio:cloud:refresh` | Recheck the saved key and current price catalogue without creating a resource |
@@ -57,7 +59,6 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | `creativeQc.run/disposition/list` | Assistive evidence warnings without approval authority |
 | `audioEffects.generate/import/review/approve` | Rights-aware ambience/effects/foley versions |
 | `adaptation.estimate/authorize/train/evaluate/promote` | Explicit project-scoped LoRA candidate lifecycle |
-| `support.bundle.create` | Redacted diagnostics |
 
 The renderer never receives a raw provider key. IPC validates caller, project scope, and payload schema.
 

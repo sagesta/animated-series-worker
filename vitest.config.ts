@@ -9,7 +9,11 @@ export default defineConfig({
       '@studio/credential-vault': resolve(process.cwd(), 'packages/credential-vault/src/index.ts'),
       '@studio/domain': resolve(process.cwd(), 'packages/domain/src/index.ts'),
       '@studio/project-store': resolve(process.cwd(), 'packages/project-store/src/index.ts'),
-      '@studio/provider-runpod': resolve(process.cwd(), 'packages/provider-runpod/src/index.ts')
+      '@studio/provider-runpod': resolve(process.cwd(), 'packages/provider-runpod/src/index.ts'),
+      '@studio/support-diagnostics': resolve(
+        process.cwd(),
+        'packages/support-diagnostics/src/index.ts'
+      )
     }
   },
   test: {

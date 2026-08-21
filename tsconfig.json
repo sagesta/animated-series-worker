@@ -22,7 +22,8 @@
       "@studio/credential-vault": ["packages/credential-vault/src/index.ts"],
       "@studio/domain": ["packages/domain/src/index.ts"],
       "@studio/project-store": ["packages/project-store/src/index.ts"],
-      "@studio/provider-runpod": ["packages/provider-runpod/src/index.ts"]
+      "@studio/provider-runpod": ["packages/provider-runpod/src/index.ts"],
+      "@studio/support-diagnostics": ["packages/support-diagnostics/src/index.ts"]
     },
     "types": ["node"]
   },

@@ -1347,6 +1347,47 @@ p {
   padding: 18px;
 }
 
+.support-card {
+  padding: 18px;
+}
+
+.support-card > p {
+  margin: 0;
+  color: #6f7b8a;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.support-card .button {
+  margin-top: 15px;
+}
+
+.support-result {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f1f8f5;
+  border: 1px solid #d2e6dd;
+  border-radius: 8px;
+}
+
+.support-result span,
+.support-result small {
+  color: #668176;
+  font-size: 9px;
+}
+
+.support-result strong {
+  overflow: hidden;
+  color: #315f4e;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .cloud-settings .button {
   margin: 13px 18px 18px;
 }

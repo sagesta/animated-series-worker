@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+import { homedir } from 'node:os'
 import { join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
@@ -23,6 +25,8 @@ import {
   ProjectDetailsSchema,
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
+  RendererErrorInputSchema,
+  SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema
 } from '@studio/contracts'
@@ -30,6 +34,7 @@ import { CloudSettingsStore, CloudSetupService, toCloudActionError } from '@stud
 import { EncryptedCredentialVault } from '@studio/credential-vault'
 import { ProjectStore } from '@studio/project-store'
 import { RunPodClient } from '@studio/provider-runpod'
+import { SafeDiagnostics, type DiagnosticEventInput } from '@studio/support-diagnostics'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -51,6 +56,7 @@ if (!hasSingleInstanceLock) {
 let mainWindow: BrowserWindow | null = null
 let projectStore: ProjectStore | null = null
 let cloudSetupService: CloudSetupService | null = null
+let diagnostics: SafeDiagnostics | null = null
 let storeClosed = false
 
 app.on('second-instance', () => {
@@ -134,6 +140,20 @@ function requireCloudSetup(): CloudSetupService {
   return cloudSetupService
 }
 
+function requireDiagnostics(): SafeDiagnostics {
+  if (!diagnostics) {
+    throw new Error('The local support recorder is not ready.')
+  }
+
+  return diagnostics
+}
+
+function recordDiagnostic(input: DiagnosticEventInput): void {
+  void diagnostics?.record(input).catch(() => {
+    // Diagnostics must never crash or unlock a production action.
+  })
+}
+
 function safeInputMessage(error: unknown): string {
   if (error instanceof ZodError) {
     return error.issues[0]?.message ?? 'Check the project details and try again.'
@@ -186,8 +206,22 @@ function registerIpcHandlers(): void {
     assertTrustedSender(event)
     try {
       const input = CreateProjectInputSchema.parse(unknownInput)
-      return ProjectDetailsSchema.parse(requireStore().createProject(input))
+      const project = ProjectDetailsSchema.parse(requireStore().createProject(input))
+      recordDiagnostic({
+        level: 'info',
+        area: 'project',
+        eventName: 'project.created',
+        message: 'A local project was created safely.',
+        context: { projectId: project.manifest.id, projectType: project.manifest.type }
+      })
+      return project
     } catch (error) {
+      recordDiagnostic({
+        level: 'warning',
+        area: 'project',
+        eventName: 'project.create.failed',
+        message: 'A local project could not be created safely.'
+      })
       throw new Error(safeInputMessage(error))
     }
   })
@@ -213,10 +247,32 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.projectsBackup, async (event, unknownProjectId: unknown) => {
     assertTrustedSender(event)
+    const correlationId = randomUUID()
     try {
       const projectId = UlidSchema.parse(unknownProjectId)
-      return ProjectBackupSummarySchema.parse(await requireStore().createBackup(projectId))
+      const backup = ProjectBackupSummarySchema.parse(await requireStore().createBackup(projectId))
+      await requireDiagnostics().record({
+        correlationId,
+        level: 'info',
+        area: 'backup',
+        eventName: 'backup.completed',
+        message: 'A verified local project backup completed.',
+        context: {
+          projectId: backup.projectId,
+          backupId: backup.backupId,
+          fileCount: backup.fileCount,
+          totalBytes: backup.totalBytes
+        }
+      })
+      return backup
     } catch {
+      recordDiagnostic({
+        correlationId,
+        level: 'error',
+        area: 'backup',
+        eventName: 'backup.failed',
+        message: 'A local project backup failed before verified completion.'
+      })
       throw new Error(
         'The backup could not be completed and verified. The project itself was not changed.'
       )
@@ -225,12 +281,82 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.projectsRestore, async (event, unknownBackupId: unknown) => {
     assertTrustedSender(event)
+    const correlationId = randomUUID()
     try {
       const backupId = UlidSchema.parse(unknownBackupId)
-      return ProjectRestoreResultSchema.parse(await requireStore().restoreBackup(backupId))
+      const restored = ProjectRestoreResultSchema.parse(
+        await requireStore().restoreBackup(backupId)
+      )
+      await requireDiagnostics().record({
+        correlationId,
+        level: 'info',
+        area: 'backup',
+        eventName: 'restore.completed',
+        message: 'A verified local project restore completed.',
+        context: {
+          projectId: restored.project.manifest.id,
+          backupId: restored.backupId
+        }
+      })
+      return restored
     } catch {
+      recordDiagnostic({
+        correlationId,
+        level: 'error',
+        area: 'backup',
+        eventName: 'restore.failed',
+        message: 'A local project restore failed before safe activation.'
+      })
       throw new Error(
         'The project could not be restored safely. Existing project files were not overwritten.'
+      )
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.supportRecordRendererError, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = RendererErrorInputSchema.parse(unknownInput)
+    await requireDiagnostics().record({
+      level: 'error',
+      area: 'renderer',
+      eventName: 'renderer.boundary.failed',
+      message: input.message,
+      context: { componentStack: input.componentStack ?? null }
+    })
+  })
+
+  ipcMain.handle(IPC_CHANNELS.supportCreateBundle, async (event) => {
+    assertTrustedSender(event)
+    try {
+      let cloudConnectionState = 'attention'
+      try {
+        cloudConnectionState = (await requireCloudSetup().getStatus()).connectionState
+      } catch {
+        // The support snapshot records attention without copying a provider error or payload.
+      }
+
+      await requireDiagnostics().record({
+        level: 'info',
+        area: 'application',
+        eventName: 'support.bundle.requested',
+        message: 'A redacted local support bundle was requested.'
+      })
+      return SupportBundleSummarySchema.parse(
+        await requireDiagnostics().createBundle({
+          appVersion: app.getVersion(),
+          electronVersion: process.versions.electron,
+          nodeVersion: process.versions.node,
+          platform: process.platform,
+          architecture: process.arch,
+          projectCount: requireStore().listProjects().length,
+          catalogState: 'ready',
+          cloudConnectionState,
+          generationState: 'locked'
+        })
+      )
+    } catch {
+      throw new Error(
+        'The support file could not be created safely. No project or cloud resource was changed.'
       )
     }
   })
@@ -248,36 +374,87 @@ function registerIpcHandlers(): void {
     assertTrustedSender(event)
     try {
       const input = CloudConnectInputSchema.parse(unknownInput)
-      return CloudActionResultSchema.parse({
+      const status = await requireCloudSetup().connect(input)
+      const result = CloudActionResultSchema.parse({
         ok: true,
-        status: await requireCloudSetup().connect(input)
+        status
       })
+      recordDiagnostic({
+        level: 'info',
+        area: 'cloud',
+        eventName: 'cloud.connection.completed',
+        message: 'The no-cost cloud account check completed.',
+        context: {
+          activePods: status.account?.activePods ?? 0,
+          validationCostUsd: status.validationCostUsd,
+          generationState: status.generationState
+        }
+      })
+      return result
     } catch (error) {
-      return CloudActionResultSchema.parse(toCloudActionError(error))
+      const result = CloudActionResultSchema.parse(toCloudActionError(error))
+      recordDiagnostic({
+        level: 'warning',
+        area: 'cloud',
+        eventName: 'cloud.connection.failed',
+        message: 'The no-cost cloud account check failed safely.',
+        context: { errorCode: result.ok ? 'unknown' : result.error.code }
+      })
+      return result
     }
   })
 
   ipcMain.handle(IPC_CHANNELS.cloudRefresh, async (event) => {
     assertTrustedSender(event)
     try {
-      return CloudActionResultSchema.parse({
+      const result = CloudActionResultSchema.parse({
         ok: true,
         status: await requireCloudSetup().refresh()
       })
+      recordDiagnostic({
+        level: 'info',
+        area: 'cloud',
+        eventName: 'cloud.connection.refreshed',
+        message: 'The saved cloud connection was checked again without paid work.'
+      })
+      return result
     } catch (error) {
-      return CloudActionResultSchema.parse(toCloudActionError(error))
+      const result = CloudActionResultSchema.parse(toCloudActionError(error))
+      recordDiagnostic({
+        level: 'warning',
+        area: 'cloud',
+        eventName: 'cloud.refresh.failed',
+        message: 'The saved cloud connection refresh failed safely.',
+        context: { errorCode: result.ok ? 'unknown' : result.error.code }
+      })
+      return result
     }
   })
 
   ipcMain.handle(IPC_CHANNELS.cloudDisconnect, async (event) => {
     assertTrustedSender(event)
     try {
-      return CloudActionResultSchema.parse({
+      const result = CloudActionResultSchema.parse({
         ok: true,
         status: await requireCloudSetup().disconnect()
       })
+      recordDiagnostic({
+        level: 'info',
+        area: 'security',
+        eventName: 'credential.runpod.removed',
+        message: 'The protected local RunPod credential was removed.'
+      })
+      return result
     } catch (error) {
-      return CloudActionResultSchema.parse(toCloudActionError(error))
+      const result = CloudActionResultSchema.parse(toCloudActionError(error))
+      recordDiagnostic({
+        level: 'error',
+        area: 'security',
+        eventName: 'credential.runpod.remove-failed',
+        message: 'The protected local RunPod credential could not be removed safely.',
+        context: { errorCode: result.ok ? 'unknown' : result.error.code }
+      })
+      return result
     }
   })
 
@@ -338,6 +515,16 @@ void app
     Menu.setApplicationMenu(null)
     const userDataRoot = app.getPath('userData')
     const workspaceRoot = join(userDataRoot, 'projects')
+    diagnostics = new SafeDiagnostics({
+      logRoot: join(userDataRoot, 'logs'),
+      bundleRoot: join(userDataRoot, 'support'),
+      redactedPaths: [
+        { path: workspaceRoot, label: '<PROJECTS>' },
+        { path: userDataRoot, label: '<APP_DATA>' },
+        { path: homedir(), label: '<USER_HOME>' },
+        { path: process.cwd(), label: '<APPLICATION>' }
+      ]
+    })
     projectStore = new ProjectStore({
       workspaceRoot,
       backupRoot: join(userDataRoot, 'backups'),
@@ -356,6 +543,13 @@ void app
       provider: new RunPodClient(),
       settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json'))
     })
+    recordDiagnostic({
+      level: 'info',
+      area: 'application',
+      eventName: 'application.started',
+      message: 'The local studio foundation started safely.',
+      context: { appVersion: app.getVersion(), generationState: 'locked' }
+    })
 
     registerStudioProtocol()
     registerIpcHandlers()
@@ -372,6 +566,12 @@ void app
       error instanceof Error && error.message.includes('already open')
         ? error.message
         : 'The local project library could not be opened safely. No project or cloud resource was changed.'
+    recordDiagnostic({
+      level: 'error',
+      area: 'application',
+      eventName: 'application.start.failed',
+      message
+    })
     dialog.showErrorBox('Animated Series Studio could not open', message)
     app.quit()
   })

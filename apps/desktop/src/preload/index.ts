@@ -10,6 +10,8 @@ import {
   ProjectDetailsSchema,
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
+  RendererErrorInputSchema,
+  SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema,
   type StudioApi
@@ -52,6 +54,17 @@ const studioApi: StudioApi = {
       const safeBackupId = UlidSchema.parse(backupId)
       return ProjectRestoreResultSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.projectsRestore, safeBackupId)
+      )
+    }
+  },
+  support: {
+    async recordRendererError(input) {
+      const safeInput = RendererErrorInputSchema.parse(input)
+      await ipcRenderer.invoke(IPC_CHANNELS.supportRecordRendererError, safeInput)
+    },
+    async createBundle() {
+      return SupportBundleSummarySchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.supportCreateBundle)
       )
     }
   },

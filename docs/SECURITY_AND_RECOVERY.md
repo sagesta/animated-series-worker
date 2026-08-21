@@ -15,7 +15,7 @@ The current source implements renderer sandboxing, context isolation, disabled r
 
 The RunPod connection flow validates through read-only API v2 calls before saving, uses Electron asynchronous `safeStorage` backed by Windows DPAPI, writes only encrypted bytes outside project roots, returns no key value to the renderer, and has tests proving the vault file and local settings contain no plaintext key. The current provider adapter exposes no create/start/stop/terminate operation, so this application version cannot start billable compute.
 
-Verified full backup and non-overwriting restore are implemented for canonical project files: SQLite is checkpointed and integrity-checked, every copied file is flushed and SHA-256 verified, incomplete generations remain non-restorable, restore re-verifies before an atomic folder activation, and damaged copies are rejected. Incremental/release archives, migration rollback, clean-machine restore evidence, structured redaction/support bundles, worker authentication, remote cleanup, watchdogs, and the full security suite are not implemented. Those missing controls still block worker creation and generation.
+Verified full backup and non-overwriting restore are implemented for canonical project files: SQLite is checkpointed and integrity-checked, every copied file is flushed and SHA-256 verified, incomplete generations remain non-restorable, restore re-verifies before an atomic folder activation, and damaged copies are rejected. Structured diagnostic events are redacted before a flushed JSONL write; known RunPod/OpenAI/Anthropic/Bearer patterns, protected context fields, and configured private paths are removed again before the local-only support JSON passes its known-secret scan. Incremental/release archives, migration rollback, clean-machine restore evidence, broader worker/skill redaction and packaged scans, worker authentication, remote cleanup, watchdogs, and the full security suite are not implemented. Those missing controls still block worker creation and generation.
 
 ## 2. Main threats
 
@@ -218,6 +218,8 @@ No new paid worker is created until reconciliation proves an old one does not al
 - Provider termination deletes compute, not the persistent model cache.
 
 ## 13. Support bundle
+
+Current implementation boundary: Settings explains the included/excluded categories and creates a local JSON file only after queued events are flushed, parsed against the event contract, redacted again, and scanned for known secret formats. It contains application/runtime state and up to 2,000 recent sanitized events from at most eight local session logs. It excludes credential values, provider payloads, project titles/paths/content, scripts, prompts, and all image/audio/video media; it is never transmitted automatically. The renderer has no generic logger—it can submit only a bounded schema-validated error-boundary message/component trace through trusted IPC. Retention UI, optional user-selected metadata/content, broader external-skill/worker patterns, and a packaged-profile scan remain planned.
 
 A support bundle may contain:
 

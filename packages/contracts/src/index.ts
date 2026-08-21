@@ -166,6 +166,50 @@ export const ProjectRestoreResultSchema = z
   .strict()
 export type ProjectRestoreResult = z.infer<typeof ProjectRestoreResultSchema>
 
+export const SupportContextValueSchema = z.union([
+  z.string().max(500),
+  z.number().finite(),
+  z.boolean(),
+  z.null()
+])
+
+export const SupportEventSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    eventId: z.string().uuid(),
+    correlationId: z.string().uuid(),
+    timestamp: z.string().datetime({ offset: true }),
+    level: z.enum(['info', 'warning', 'error']),
+    area: z.enum(['application', 'project', 'backup', 'cloud', 'security', 'renderer']),
+    eventName: z
+      .string()
+      .regex(/^[a-z][a-z0-9]*(?:\.[a-z0-9]+)*$/)
+      .max(100),
+    message: z.string().min(1).max(500),
+    context: z.record(z.string().min(1).max(80), SupportContextValueSchema).default({})
+  })
+  .strict()
+export type SupportEvent = z.infer<typeof SupportEventSchema>
+
+export const RendererErrorInputSchema = z
+  .object({
+    message: z.string().min(1).max(500),
+    componentStack: z.string().max(4_000).optional()
+  })
+  .strict()
+export type RendererErrorInput = z.infer<typeof RendererErrorInputSchema>
+
+export const SupportBundleSummarySchema = z
+  .object({
+    bundleId: z.string().uuid(),
+    createdAt: z.string().datetime({ offset: true }),
+    eventCount: z.number().int().nonnegative(),
+    bundlePath: z.string().min(1),
+    redactionState: z.literal('passed')
+  })
+  .strict()
+export type SupportBundleSummary = z.infer<typeof SupportBundleSummarySchema>
+
 export const SystemStatusSchema = z
   .object({
     appVersion: z.string(),
@@ -323,6 +367,8 @@ export const IPC_CHANNELS = {
   projectsListBackups: 'studio:projects:list-backups',
   projectsBackup: 'studio:projects:backup',
   projectsRestore: 'studio:projects:restore',
+  supportRecordRendererError: 'studio:support:record-renderer-error',
+  supportCreateBundle: 'studio:support:create-bundle',
   cloudGetStatus: 'studio:cloud:get-status',
   cloudConnect: 'studio:cloud:connect',
   cloudRefresh: 'studio:cloud:refresh',
@@ -341,6 +387,10 @@ export interface StudioApi {
     listBackups(): Promise<ProjectBackupSummary[]>
     backup(projectId: string): Promise<ProjectBackupSummary>
     restore(backupId: string): Promise<ProjectRestoreResult>
+  }
+  support: {
+    recordRendererError(input: RendererErrorInput): Promise<void>
+    createBundle(): Promise<SupportBundleSummary>
   }
   cloud: {
     getStatus(): Promise<CloudConnectionStatus>

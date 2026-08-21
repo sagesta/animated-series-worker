@@ -9,7 +9,8 @@ const aliases = {
   '@studio/credential-vault': resolve(rootDirectory, 'packages/credential-vault/src/index.ts'),
   '@studio/domain': resolve(rootDirectory, 'packages/domain/src/index.ts'),
   '@studio/project-store': resolve(rootDirectory, 'packages/project-store/src/index.ts'),
-  '@studio/provider-runpod': resolve(rootDirectory, 'packages/provider-runpod/src/index.ts')
+  '@studio/provider-runpod': resolve(rootDirectory, 'packages/provider-runpod/src/index.ts'),
+  '@studio/support-diagnostics': resolve(rootDirectory, 'packages/support-diagnostics/src/index.ts')
 }
 
 export default defineConfig({

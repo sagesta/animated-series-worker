@@ -4,6 +4,7 @@ import {
   type ProjectBackupSummary,
   type ProjectDetails,
   type ProjectSummary,
+  type SupportBundleSummary,
   type SystemStatus,
   type VisualDirection
 } from '@studio/contracts'
@@ -618,6 +619,58 @@ function BackupRecovery({
   )
 }
 
+function SupportDiagnosticsPanel(): JSX.Element {
+  const [creating, setCreating] = useState(false)
+  const [bundle, setBundle] = useState<SupportBundleSummary>()
+  const [message, setMessage] = useState<string>()
+  const [failed, setFailed] = useState(false)
+
+  const createBundle = async (): Promise<void> => {
+    setCreating(true)
+    setFailed(false)
+    setMessage('Collecting recent app events and checking redaction…')
+    try {
+      const result = await window.studio.support.createBundle()
+      setBundle(result)
+      setMessage('Redaction check passed. The support file is ready.')
+    } catch {
+      setFailed(true)
+      setMessage('The support file could not be created safely. Nothing was uploaded.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <div className="settings-card support-card">
+      <p>
+        This creates one local JSON support file with app state and recent safety events. It does
+        not include API keys, provider responses, scripts, prompts, images, audio, or video, and it
+        is never uploaded automatically.
+      </p>
+      {bundle && (
+        <div className="support-result">
+          <span>Saved locally</span>
+          <strong title={bundle.bundlePath}>{bundle.bundlePath}</strong>
+          <small>{bundle.eventCount} redacted events included</small>
+        </div>
+      )}
+      {message && (
+        <div className={`safety-feedback ${failed ? 'error' : ''}`} role="status">
+          {message}
+        </div>
+      )}
+      <button
+        className="button button-secondary"
+        disabled={creating}
+        onClick={() => void createBundle()}
+      >
+        {creating ? 'Creating safe support file…' : 'Create redacted support file'}
+      </button>
+    </div>
+  )
+}
+
 function Settings({
   status,
   cloudStatus,
@@ -699,6 +752,14 @@ function Settings({
             <strong>{status ? `Electron ${status.electronVersion}` : '—'}</strong>
           </div>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <div>
+          <h2>Safe support file</h2>
+          <p>Create diagnostics you can inspect and choose to share if the studio needs help.</p>
+        </div>
+        <SupportDiagnosticsPanel />
       </section>
     </div>
   )

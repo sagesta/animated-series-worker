@@ -4,6 +4,22 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-21 (redacted diagnostics and local support file)
+
+- Added `packages/support-diagnostics` with bounded structured events, correlation IDs, flushed JSONL writes, protected-field removal, known RunPod/OpenAI/Anthropic/Bearer secret patterns, configured private-path replacement, and a second redaction/contract pass during support-file creation.
+- Added safe application/project/backup/restore/cloud/credential lifecycle events without raw provider errors, payloads, project content, or credential values.
+- Replaced the renderer error-boundary placeholder with one schema-validated protected IPC report; no generic renderer logger or filesystem method was exposed.
+- Added a Settings action that explains exactly what is excluded and creates a local JSON support file only after the known-secret scan passes. Nothing is uploaded automatically.
+- Expanded the automated suite from 28 to 31 tests, including direct log/bundle secret and private-path checks plus the non-technical Settings flow.
+
+User impact: the creator can make an inspectable local troubleshooting file without using a terminal and without copying scripts, prompts, projects, media, provider responses, or API keys. This creates no network request, GPU, paid job, or charge.
+
+Migration impact: project schema and project files are unchanged. New session logs are stored under application user data `logs/`; explicitly requested support JSON files are stored under `support/`. Neither location is inside a project or backup.
+
+Documentation impact: README, architecture, API/UX/security contracts, implementation plan/backlog, test evidence, traceability, decisions, status, and changelog now describe the working diagnostics boundary and the remaining retention, broader-pattern, packaged-scan, and clean-machine gates.
+
+Rollback: revert this feature commit after closing the app. Existing log/support JSON files are inert and may be retained for inspection or manually removed; rollback does not touch projects, backups, credentials, or provider resources.
+
 ### Added — 2026-08-21 (verified project backup, restore, and writer safety)
 
 - Added plain-language “Create verified backup” controls on each production overview and a Backup and recovery section in Settings.
