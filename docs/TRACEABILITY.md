@@ -22,6 +22,10 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | FR-041 | `UPSTREAM_INTEGRATION.md` | update script, upstream adapter | AT-005, AT-008 |
 | FR-042 | `MEDIA_PIPELINE.md` §10, `CHANGE_CONTROL.md` | compatibility/benchmark promotion | AT-009, AT-010, AT-020 |
 | FR-043 | `SECURITY_AND_RECOVERY.md` §6 | rights registry, release gate | AT-012, AT-026 |
+| FR-044, FR-045 | `ARCHITECTURE.md` writing-provider boundary, `API_CONTRACTS.md` writing contract, `UX_SPEC.md` provider settings | `provider-openai`, `provider-anthropic`, writing orchestrator, credential vault | AT-036, AT-039 |
+| FR-046, FR-047, FR-048 | `ARCHITECTURE.md` skill runtime, `API_CONTRACTS.md` skill contracts, `SECURITY_AND_RECOVERY.md` extension controls | skill registry, router, permission broker, execution-receipt store | AT-037, security suite |
+| FR-049, FR-050 | `ARCHITECTURE.md` media-review flow, `UX_SPEC.md` review screen, `MEDIA_PIPELINE.md` | artifact service, local media protocol, gallery/player, proxy service | AT-038, AT-040 |
+| FR-051 | `DOMAIN_MODEL.md` character/style bindings, `UX_SPEC.md` scoped style-change flow, `MEDIA_PIPELINE.md` character workflow | continuity/impact engine, image engine, review UI | AT-003, AT-009, AT-041 |
 
 ## Non-functional requirements
 
@@ -41,6 +45,9 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-012 | `CHANGE_CONTROL.md`, `AGENTS.md` | docs checker, PR template | AT-033 |
 | NFR-013 | `ARCHITECTURE.md` §10, `UPSTREAM_INTEGRATION.md` | compatibility matrix and release tooling | AT-005, AT-008, AT-034 |
 | NFR-014 | `GPU_OPERATIONS.md` §6–7 | remote watchdog and provider guard | AT-015, AT-018, AT-019 |
+| NFR-015 | `ARCHITECTURE.md` writing-provider boundary, `DOMAIN_MODEL.md` canonical versions | provider adapters, project store | AT-036, AT-039 |
+| NFR-016 | `ARCHITECTURE.md` skill runtime, `SECURITY_AND_RECOVERY.md` extension controls | skill registry/router, permission broker, receipts | AT-037, security suite |
+| NFR-017 | `ARCHITECTURE.md` media-review flow, `MEDIA_PIPELINE.md` artifact handling | local media protocol, proxy service, review UI | AT-038, AT-040 |
 
 ## Current implementation evidence — version 0.3.0
 
@@ -54,6 +61,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-007 portability | Partial | Canonical schema-1 `project.json`, documented folder layout, rebuildable local catalog | Export, backup, restore, media inventory, and clean-machine AT-030 |
 | NFR-011 accessibility | Partial | Semantic controls, labels, focus-visible states, keyboard wizard navigation, non-color status text, reduced-motion CSS | Automated accessibility audit and representative-user AT-035 |
 | NFR-012 documentation | Implemented for this slice | `pnpm docs:check` passes with synchronized status/decision/source/test/changelog updates | Continuous enforcement on every later change |
+| FR-044–FR-051 and NFR-015–NFR-017 provider/skill/media-viewing/style-change design | Documented; not implemented | Provider-neutral writing, enforced external-skill provenance, in-app media review, and scoped character redesign are now locked requirements and architecture decisions | Provider adapters, skill runtime, media protocol/player, scoped presentation bindings, tests AT-036–AT-041, and non-technical acceptance |
 
 ## Change rule
 

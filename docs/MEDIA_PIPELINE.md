@@ -38,6 +38,8 @@ The exact checkpoint and quantization are selected by the Phase 0 benchmark and 
 
 Do not independently prompt every view from text; each later board must condition on approved images.
 
+For a deliberate character style/redesign change, preserve the approved identity anchors and old presentation pack, create a new presentation version, generate the required multi-view/expression/wardrobe consistency board, and test it in representative environments and multi-character compositions. Only after approval may the continuity engine bind it to the selected shot/scene/episode/season/future scope. A 2D-to-3D-look change is therefore a traceable new presentation, not an in-place prompt edit.
+
 ### Environment and prop workflow
 
 - Generate an empty master before character composites.
@@ -163,6 +165,19 @@ Lip-sync effort follows visibility:
 - Multiple visible speakers: prefer shot/reverse-shot or controlled staging rather than ambiguous simultaneous speech.
 
 Primary path is locked Qwen3-TTS audio → LTX A2V. LTX lip-dub is a repair/re-voice path for an existing clip. No shot is accepted solely because an automated score passes.
+
+## 6.1 Headless generation and local review
+
+ComfyUI runs headlessly on the temporary worker and is addressed only by the authenticated gateway on loopback. The studio submits a pinned compiled workflow, receives bounded progress/preview events, downloads completed artifacts, validates type/size/hash/media properties, and writes the original atomically into the local project before presenting it as a take.
+
+The normal creator experience is entirely inside Animated Series Studio:
+
+- Images: gallery, zoom/pan, reference toggles, side-by-side and overlay comparison.
+- Audio: player, waveform, transcript/captions, line/version identity, synchronized A/B.
+- Video: player, scrubbing, frame/time navigation, captions, volume, loop range, full screen, synchronized A/B.
+- Review: approve, reject, annotate, retake, repair, and return to storyboard with complete lineage.
+
+Low-resolution generation previews are temporary and visibly labelled. They never become approved assets. Every canonical original has rebuildable derived review media—thumbnail, poster frame, waveform, or proxy—with its own recipe and hash. A derivative failure can be retried locally and cannot replace, edit, or invalidate the original.
 
 ## 7. Editorial and audio pipeline
 

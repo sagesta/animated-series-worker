@@ -32,6 +32,10 @@ Structured redaction/support bundles, backups, restore, migration rollback, sing
 | Remote volume loss | Treat as rebuildable cache, never authoritative project store |
 | Voice/likeness misuse | Rights/consent records and release gate |
 | Secret in support bundle/log | Structured redaction and automated secret scanning |
+| Malicious or over-broad external skill | Manifest/schema validation, least-privilege grants, project scope, no code by default, isolation, time/output limits, exact-version receipts |
+| Skill silently ignored or falsely reported | Orchestrator-required execution plan, validated result, immutable receipt, and blocked completion when a required receipt is absent |
+| Excess project context sent to a writing provider/tool | User-visible context selection, task-scoped data pack, provider/skill permission preview, and recorded disclosure lineage |
+| Media viewer path escape or original replacement | Project-scoped `studio://media` authorization, normalized paths, immutable original hashes, rebuildable derivatives |
 
 ## 3. Credential handling
 
@@ -41,6 +45,8 @@ Structured redaction/support bundles, backups, restore, migration rollback, sing
 - Logs replace tokens, authorization headers, signed URLs, and likely secret patterns with `[REDACTED]`.
 - Project export and backup exclude credential stores.
 - Credential test, rotation, and removal are explicit settings actions.
+- RunPod, OpenAI, Anthropic, and any future service each use a separate protected credential record and opaque connection status; disabling one provider does not expose or remove another.
+- External skills receive neither raw credentials nor a generic “call any provider” capability. Provider calls remain controlled by the writing adapter and permissioned tool broker.
 - A worker receives a short-lived session token, never the main provider key unless a narrowly scoped termination design absolutely requires it and passes threat review.
 - On Windows, Electron `safeStorage` uses DPAPI: it protects the encrypted value from other Windows users, but it is not a defence against malicious software already running as the same signed-in user. Endpoint security and a protected Windows account remain necessary.
 
@@ -71,6 +77,16 @@ For each worker release:
 - Keep the previous production image available for rollback.
 
 An upstream or model Git branch name such as `main` is not a production pin.
+
+### External skill controls
+
+- Installation first copies the candidate into a quarantine area, parses its manifest without execution, computes hashes, and displays source, publisher, signature/checksum status, task kinds, permissions, and compatibility.
+- Declarative instruction/schema skills are the default trust class and cannot execute code, read arbitrary files, access credentials, use the network, or cross projects.
+- Local tools, remote tools/MCP, executable extensions, and ComfyUI custom nodes are separate higher-risk classes. Each requires explicit permission, allowlisting, isolation, time/output limits, dependency review, and security/compatibility tests before enablement.
+- Permissions are granted per skill version and project or deliberately approved wider scope. An update invalidates the old grant until its changed permissions and compatibility are reviewed.
+- The router sends only the selected task context. Required skills must return schema-valid output or tool results and an execution receipt; a model statement that it “used” a skill is not evidence.
+- Skill logs and receipts contain hashes and sanitized calls/results, never provider keys, authorization headers, unrelated creative content, or arbitrary local paths.
+- Removing a skill does not delete historic receipts or outputs. Existing drafts retain provenance and can still be opened; rerunning requires a compatible installed version.
 
 ## 6. Creative rights and consent
 
@@ -206,6 +222,9 @@ Before creation, show included categories. Run automated secret scans. The bundl
 
 - Credential leakage tests pass.
 - Public-port scan confirms ComfyUI is unreachable externally.
+- External-skill permission, path, network, timeout, output-validation, required-receipt, and cross-project tests pass.
+- Writing-provider secret scans and task-context disclosure tests pass for OpenAI and Anthropic adapters.
+- Local media protocol rejects unauthorized paths, and proxy failure/rebuild tests prove original hashes are unchanged.
 - Wrong-project and path-traversal tests pass.
 - Forced desktop/network/worker failures demonstrate bounded termination.
 - Duplicate-create reconciliation test passes.

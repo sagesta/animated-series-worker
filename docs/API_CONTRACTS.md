@@ -45,6 +45,10 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | `worker.setup/start/status/stopNow` | Guided cloud control |
 | `take.review/approve/reject/retake` | Candidate review |
 | `timeline.assemble/validate/export` | Rough cut and delivery |
+| `writingProvider.status/connect/test/disconnect/selectProfile` | Protected OpenAI/Anthropic setup and provider-neutral profile selection |
+| `creative.generate/rewrite/checkContinuity` | Structured creative drafting with explicit source versions and skill plan |
+| `skill.inspect/install/enable/disable/remove/plan` | Permissioned external-skill lifecycle and routing preview |
+| `media.open/thumbnail/proxy/compare/playbackState` | Project-scoped local media review without arbitrary filesystem access |
 | `support.bundle.create` | Redacted diagnostics |
 
 The renderer never receives a raw provider key. IPC validates caller, project scope, and payload schema.
@@ -95,6 +99,71 @@ interface VideoEngine {
 ```
 
 Neutral jobs contain narrative and media intent, not ComfyUI node IDs. Compiled workflows record the adapter and workflow version that produced them.
+
+## 4.1 Writing-provider and external-skill contracts
+
+```ts
+type WritingTaskKind =
+  | 'develop_story'
+  | 'develop_character'
+  | 'develop_world'
+  | 'outline_season'
+  | 'outline_episode'
+  | 'draft_scene'
+  | 'rewrite_dialogue'
+  | 'check_continuity'
+  | 'compile_storyboard';
+
+interface WritingProvider {
+  validateAccount(): Promise<OpaqueWritingAccountStatus>;
+  capabilities(): WritingCapabilities;
+  estimate(task: NeutralWritingTask, skillPlan: SkillPlan): Promise<WritingEstimate>;
+  generate(task: NeutralWritingTask, skillPlan: SkillPlan): Promise<WritingDraftResult>;
+}
+
+interface ExternalSkillManifest {
+  schemaVersion: 1;
+  skillId: string;
+  version: string;
+  displayName: string;
+  source: SkillSource;
+  packageSha256: string;
+  signatureStatus: 'verified' | 'unverified' | 'invalid';
+  taskKinds: WritingTaskKind[];
+  instructionsEntry: string;
+  inputSchema: JsonSchema;
+  outputSchema: JsonSchema;
+  requestedPermissions: SkillPermission[];
+  executionClass: 'declarative' | 'local_tool' | 'remote_tool' | 'comfy_node';
+  compatibility: SkillCompatibility;
+}
+
+interface SkillPlan {
+  taskKind: WritingTaskKind;
+  required: PlannedSkill[];
+  optional: PlannedSkill[];
+  excluded: Array<{ skillId: string; reason: string }>;
+  approvedPermissionGrantIds: string[];
+}
+
+interface SkillExecutionReceipt {
+  receiptId: string;
+  skillId: string;
+  skillVersion: string;
+  packageSha256: string;
+  executionClass: ExternalSkillManifest['executionClass'];
+  inputHashes: string[];
+  toolCalls: SanitizedToolCall[];
+  outputSha256: string;
+  status: 'succeeded' | 'failed' | 'timed_out' | 'blocked';
+  startedAt: string;
+  completedAt: string;
+}
+```
+
+`NeutralWritingTask` references explicit local versions and contains only the context approved for that request. `WritingDraftResult` contains schema-validated proposals, provider/model/profile identity, token usage, estimate/actual API cost where supplied, and exact skill receipts. A draft cannot claim a required skill unless a matching successful receipt exists. Provider response/conversation IDs are lineage metadata, never the canonical story store.
+
+API adapters may compile declared skills into provider tool/function definitions or task instructions. The studio router—not the model alone—determines the allowed skill set, validates calls/results, and rejects unapproved tools. Raw provider keys are injected only inside the main-process adapter and never appear in these contracts.
 
 ## 5. Worker gateway
 
@@ -189,6 +258,8 @@ Each artifact response and manifest provides:
 - QC summary and warnings.
 - Local download state and verified local path are recorded by the desktop, not trusted from the worker.
 
+Media artifacts additionally distinguish an immutable `original` from rebuildable `derivatives` such as thumbnails, poster frames, waveforms, and review proxies. Each derivative records its source hash, recipe/version, MIME type, dimensions/duration, and its own hash. The renderer receives only project-authorized `studio://media/...` handles, never arbitrary local paths.
+
 ## 8. Upstream adapter contract
 
 The adapter exposes stable studio operations:
@@ -239,4 +310,7 @@ Retry classifications: `never`, `automatic_safe`, `after_delay`, `after_reconcil
 - Worker readiness includes a signed capability document; the desktop compares it against the batch before uploading large files.
 - A workflow/model hash mismatch blocks paid execution.
 - Provider rate changes refresh the estimate and may require renewed user authorization.
+- Writing-provider model/profile changes create new draft lineage; they never mutate an approved creative version in place.
+- External skills are compatible only when skill schema, execution class, permission grant, provider capability, and package hash match the recorded plan.
+- A required skill receipt, original artifact hash, or local media authorization mismatch fails closed.
 - Contract changes update this document, JSON Schema, generated types, contract tests, traceability, and changelog together.

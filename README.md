@@ -12,6 +12,9 @@ This repository now contains a working local desktop foundation and the first sa
 - LTX-2.5 is the only video engine in version 1. Wan is not installed or operated. The design keeps an engine interface so another model can be added later without rewriting the studio.
 - Qwen-Image/Qwen-Image-Edit is the initial image family; Qwen3-TTS is the initial voice family.
 - RunPod is the first GPU provider. A provider interface prevents permanent lock-in.
+- OpenAI Responses and Anthropic Messages are the first bring-your-own-key writing providers behind a neutral creative-writing interface; text API usage is billed separately from RunPod GPU usage.
+- External creative skills are versioned and permissioned. The studio routes applicable enabled skills and records exact execution receipts, so an attached required skill cannot be silently ignored.
+- Images, audio, and videos are reviewed inside Animated Series Studio. ComfyUI runs headlessly as an internal worker engine rather than the required viewing interface.
 - The upstream `shuohao-skills` project is a pinned Git submodule under `vendor/` and is never edited in place.
 - A 20–35 minute episode is assembled from approved generated motion, lip-synced dialogue, reusable loops, held frames, pans, reaction shots, sound, and editorial timing. The system does not assume that every second must be newly generated video.
 
@@ -72,6 +75,8 @@ node scripts/check-docs.mjs
 | Desktop application | Local projects plus guided secure RunPod account connection; unsigned test installer; production setup incomplete |
 | Series/film project storage | Create/list/open implemented and tested; backup/restore incomplete |
 | RunPod provider | API v2 account validation and price reads implemented; Pod/storage/template creation and termination not implemented |
+| Writing providers and external skills | OpenAI/Anthropic and enforced skill-runtime architecture documented; not implemented |
 | Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |
+| In-app media review | Gallery/player/proxy architecture documented; not implemented |
 | LTX/Qwen workflows | Not benchmarked or implemented |
 | Production readiness | Not achieved |

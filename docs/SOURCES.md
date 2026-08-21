@@ -16,6 +16,16 @@ External models, APIs, prices, licenses, and platform recommendations can change
 
 Implementation consequence: Electron is pinned at 43.4.1, Electron Vite at 5.0.0, Vite at compatible 7.3.6, and TypeScript at 5.9.3. The main process owns SQLite, files, provider calls, and `safeStorage`; the renderer receives nine narrow schema-validated methods through the preload bridge and never receives a saved key value.
 
+## Writing APIs and external skills
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| OpenAI Responses | The Responses API accepts text/image inputs, can return text or structured JSON, and supports built-in tools, MCP tools, and typed custom function calls with configurable tool choice. | [OpenAI Responses API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create) |
+| Claude tool use | Claude's Messages API supports declared client/server tools; Claude returns a structured tool call and the application executes and returns client-tool results. | [Claude tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview) |
+| MCP interoperability | MCP is an open standard for connecting AI applications to external data, tools, and workflows and is supported across multiple AI clients. | [Model Context Protocol introduction](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) |
+
+Design consequence: the studio uses provider-neutral writing tasks with OpenAI and Anthropic adapters rather than making either provider's conversation the project database. External skills are selected by the studio router and compiled to provider instructions/tools only after manifest, compatibility, permission, and context checks. A model's claim that it used a skill is not proof; the studio records validated exact-version execution receipts.
+
 ## LTX
 
 | Topic | Current verified fact used by the design | Source |
@@ -43,10 +53,10 @@ Design consequence: Qwen families are initial defaults behind adapters. Human be
 
 | Topic | Current verified fact used by the design | Source |
 | --- | --- | --- |
-| Workflow server | ComfyUI's server accepts complete queued workflows and communicates progress through HTTP/WebSocket mechanisms. | [ComfyUI server overview](https://docs.comfy.org/development/comfyui-server/comms_overview), [server messages](https://docs.comfy.org/development/comfyui-server/comms_messages) |
+| Workflow server | ComfyUI can run headlessly without opening a browser; its self-hosted server accepts workflows, uploads/downloads files, and communicates status, progress, errors, previews, and completed output through HTTP/WebSocket mechanisms. | [ComfyUI server overview](https://docs.comfy.org/development/comfyui-server/comms_overview), [server messages](https://docs.comfy.org/development/comfyui-server/comms_messages) |
 | Workflow format | Official documentation describes API-format workflows as JSON node graphs and asynchronous job handling. | [ComfyUI API overview](https://docs.comfy.org/development/cloud/overview) |
 
-Design consequence: ComfyUI is a loopback-only worker engine behind the studio gateway; its native public/cloud API is not the studio security boundary.
+Design consequence: ComfyUI is a headless, loopback-only worker engine behind the studio gateway; its browser graph and native public/cloud API are not the creator interface or studio security boundary. Verified outputs are downloaded to the local project and reviewed through the studio's own gallery/player.
 
 ## RunPod
 
@@ -89,3 +99,5 @@ Local inspection at the pin established the H3-specific storyboard, 2–5 second
 - Music, sound, font, reference image, likeness, and voice permissions.
 - RunPod data region, privacy, billing, retention, and account limits.
 - Current YouTube delivery/policy requirements before publishing.
+- Current OpenAI/Anthropic model availability, context behavior, pricing, data handling, and skill/tool features before provider implementation or default changes.
+- External Agent Skill/MCP package compatibility and security requirements before non-declarative skill classes are enabled.

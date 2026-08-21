@@ -57,7 +57,9 @@ Select a pilot scene that is difficult enough to be honest. A silent landscape s
 
 ## 4. Stage 1 — story development and upstream import
 
-Use the pinned upstream skills where they help:
+Choose a connected OpenAI or Anthropic writing profile, select the local context the request may use, and preview the matched external-skill plan. The studio then uses the provider as a drafting assistant while locally versioned facts remain authoritative. Every proposed draft shows provider/model, usage/cost, and `Skills used`; accepting a proposal creates a new local version rather than replacing an approved version silently.
+
+Use the pinned upstream skills and other enabled compatible skills where they help:
 
 1. Outline and adaptation facts.
 2. Character roster and design prompts.
@@ -65,7 +67,7 @@ Use the pinned upstream skills where they help:
 4. Script scenes, beat flow, dialogue, delivery notes, and line book.
 5. Storyboard segment/cut suggestions and shot vocabulary.
 
-The studio copies imported source files unchanged, records the upstream commit, runs upstream validation, and generates a normalization preview.
+The studio copies imported source files unchanged, records the upstream commit, runs upstream validation, and generates a normalization preview. A required skill that fails, times out, produces invalid output, or lacks an execution receipt blocks that creative job until the creator retries or explicitly changes the plan.
 
 For long-form episodes, the creator and studio then organize material into acts/sequences. The upstream short-drama cut cadence is a suggestion, not the final pacing law. The normalized episode may contain longer holds and editorial construction while retaining story evidence and IDs.
 
@@ -175,7 +177,7 @@ Batch only shots with locked inputs. The recommended daily session:
 3. Start the cloud session.
 4. Let the scheduler provision, verify, generate, download, and terminate.
 5. Confirm the session says `GPU terminated`.
-6. Review takes locally.
+6. Review verified takes locally inside the studio gallery/player; ComfyUI can already be closing or terminated.
 7. Approve, reject, or make targeted retake requests.
 
 Group work by workflow/model so the GPU does not repeatedly load different large models. Voice lines can be prepared before video batches.

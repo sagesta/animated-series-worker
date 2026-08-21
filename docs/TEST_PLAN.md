@@ -110,6 +110,15 @@ The suite contains 23 automated tests. AT-001 remains open because backup/restor
 - **AT-034:** Package/install/upgrade/rollback on a clean supported Windows environment without losing projects or credentials.
 - **AT-035:** Representative non-technical user completes setup, pilot generation, review, termination confirmation, backup, and restore without terminal assistance.
 
+### Writing providers, skills, and media viewing
+
+- **AT-036:** Connect test OpenAI and Anthropic accounts independently, switch the writing provider for equivalent fixtures, and prove canonical story/character/script records remain provider-neutral while keys never enter renderer state, projects, logs, exports, or skill input.
+- **AT-037:** Attach required and optional fixture skills, run matching and non-matching tasks, and prove routing, declared permissions, output validation, timeout/failure behavior, exact-version receipts, and the user-visible `Skills used` list. A deliberately ignored required skill must fail the job.
+- **AT-038:** Generate fixture image/audio/video artifacts through a mocked headless ComfyUI worker, close the worker, and prove the studio still displays, plays, compares, approves, rejects, and retakes locally verified media without opening ComfyUI.
+- **AT-039:** Run locked story, character, and script benchmarks through each supported writing profile; record quality review, token usage, actual API cost, context selection, and continuity differences before choosing defaults.
+- **AT-040:** Interrupt preview and proxy creation, then prove originals and manifests remain unchanged and local review recovers by rebuilding derived media.
+- **AT-041:** Change a locked character from one visual style to another, approve a new multi-view consistency board, and apply it separately to a shot, episode, and future season. Verify identity anchors remain acceptable, prior outputs/bindings are unchanged, only the selected scope becomes stale/rebound, and the impact/cost preview is accurate.
+
 ## 5. Human benchmark rubrics
 
 ### Image identity
@@ -147,6 +156,7 @@ For each compatibility row capture:
 - Transfer rates and sync overhead.
 - Attempts to approval and failure distribution.
 - Cost per attempt, approved second, shot type, and workflow.
+- Writing-provider input/output tokens, skill/tool/context overhead, latency, actual API cost, and accepted-draft rate by task/profile.
 - One/two/three-worker scaling efficiency.
 
 Regression thresholds are set after Phase 0. A material regression blocks default promotion even if output still renders.
@@ -161,6 +171,9 @@ Regression thresholds are set after Phase 0. A material regression blocks defaul
 - Tampered workflow/model/image capability rejection.
 - Provider API idempotency and least-privilege failure tests.
 - Malicious/corrupt upstream fixture isolation.
+- OpenAI/Anthropic key isolation, renderer/skill non-disclosure, task-context minimization, and provider-switch lineage tests.
+- External-skill quarantine, manifest/schema/signature state, permission scope, path/network denial, timeout/output limits, required-receipt enforcement, update/rollback, and project-isolation tests.
+- Local media protocol authorization, path escape, MIME/hash mismatch, corrupt media, preview spoofing, and immutable-original/proxy-rebuild tests.
 
 ## 8. Release evidence
 

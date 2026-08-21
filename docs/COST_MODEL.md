@@ -14,9 +14,10 @@ If all work truly completes in five total GPU-hours at $2/hour, compute is $10. 
 | Persistent model storage | Even when no GPU is active | Right-size cache, remove obsolete model versions deliberately |
 | Local storage/backup | As project media grows | Retention and backup policy |
 | Transfer/provider extras | If provider pricing applies | Measure and display current provider terms |
+| OpenAI/Anthropic writing API | Input/output tokens and any selected provider tools/caching/service tier | Task estimate, context preview, model/profile choice, token cap, actual usage ledger |
 | Optional external tools/assets | Music, effects, fonts, editor, APIs | Rights and purchase records |
 
-The product must not claim “GPU is the only cost.” It shows the current provider/storage assumptions and separates optional expenses.
+The product must not claim “GPU is the only cost.” A creator-supplied OpenAI or Anthropic key creates a separate text-API bill on that provider account; RunPod balance does not cover it. The studio shows the current provider/storage assumptions and separates optional expenses.
 
 ## 3. Forecast variables
 
@@ -169,6 +170,7 @@ Dashboard levels:
 - Shot: total and cost per approved second.
 - Episode/film: image, voice, video, repair, upscale, and overhead.
 - Project: compute, storage estimate, optional assets/tools.
+- Creative writing: provider/model/profile, context and output tokens, skill/tool overhead, estimated/actual API cost per draft and accepted version.
 - Workflow/GPU: runtime, approval rate, out-of-memory rate, cost effectiveness.
 
 Provider statements are the billing authority. Studio measurements aid decisions and must reconcile differences rather than hiding them.

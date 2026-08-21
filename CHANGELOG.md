@@ -4,6 +4,23 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-21 (writing providers, external skills, and in-app media review design)
+
+- Locked OpenAI Responses and Anthropic Messages as the first bring-your-own-key writing adapters behind a provider-neutral creative contract; provider conversations cannot become the canonical story database.
+- Added requirements for protected separate writing credentials, per-task provider/profile selection, local structured creative versions, token/cost lineage, and explicit notice that text API charges are separate from RunPod GPU charges.
+- Added a permissioned external-skill architecture with manifest inspection, project-scoped enablement, task matching, required/optional plans, provider tool/instruction compilation, output validation, timeouts, and immutable exact-version execution receipts. Installing a skill is explicitly not evidence that it ran.
+- Locked Animated Series Studio as the image/audio/video gallery and player. ComfyUI remains a headless, loopback-only worker engine that reports progress and outputs through the authenticated gateway.
+- Added acceptance tests AT-036–AT-040 for provider neutrality/secret safety, skill execution proof, headless media review, writing benchmarks, and immutable originals during proxy failures.
+- Added a scoped character-style/redesign rule: identity and presentation are separate versions, a new consistency board is required, and changes can target a shot, scene, episode, season, or future work without rewriting completed episodes.
+
+User impact: future creative work can use a chosen Claude or GPT account, can be improved by attached skills with visible proof of use, and can be reviewed without learning or opening ComfyUI. This documentation-only change does not yet add those screens or make an API call.
+
+Migration impact: none. No application schema, credential record, project, skill package, or media file changed.
+
+Documentation impact: PRD, architecture, contracts, UX, security, implementation plan, tests, traceability, decisions, sources, status, README, and changelog now carry the new locked behavior and honest implementation boundary.
+
+Rollback: revert this documentation commit. Version 0.3.0 application behavior and the pinned upstream checkout are unchanged.
+
 ### Added — 2026-08-21 (secure RunPod account connection)
 
 - Added a guided RunPod Settings flow with a masked key field, explicit no-cost validation, refresh/replacement/removal, aggregate warning for existing active account Pods, live API v2 GPU catalogue planning prices, conservative default cost/runtime/idle/concurrency limits, and an honest prepared-studio checklist.

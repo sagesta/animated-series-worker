@@ -9,7 +9,7 @@ Build vertical, testable slices. The first meaningful output is a representative
 ```mermaid
 flowchart LR
     P0[0 Baseline and benchmarks] --> P1[1 Local foundation]
-    P1 --> P2[2 Upstream normalization]
+    P1 --> P2[2 Writing, skills, normalization]
     P2 --> P3[3 Bibles and images]
     P3 --> P4[4 Voices and lines]
     P4 --> P5[5 Cloud worker automation]
@@ -38,6 +38,9 @@ flowchart LR
 3. LTX draft/final, I2V, A2V, keyframe, retake, and lip-dub on candidate GPUs.
 4. RunPod template/network-volume startup and termination.
 5. FFmpeg delivery profile and media probes.
+6. OpenAI/Anthropic story, character, long-form script, structured-output, context, and cost benchmark.
+7. Declarative external-skill routing/required-receipt spike plus higher-risk MCP/tool/custom-node threat review.
+8. Headless ComfyUI progress/output integration and local image/audio/video/proxy playback spike.
 
 ### Exit gate
 
@@ -72,10 +75,16 @@ flowchart LR
 - Project isolation, atomic-write interruption, SQLite integrity, credential non-leakage, and migration rollback tests pass.
 - A clean machine/user profile can launch the packaged shell without a developer environment.
 
-## 5. Phase 2 — upstream skills adapter and long-form normalization
+## 5. Phase 2 — writing providers, external skills, upstream adapter, and long-form normalization
 
 ### Build
 
+- Extend the protected credential vault and guided Settings UI for separate OpenAI and Anthropic accounts.
+- Implement a provider-neutral writing contract plus first OpenAI Responses and Anthropic Messages adapters.
+- Implement task-scoped context selection, structured draft validation, token/cost records, provider switching, and immutable creative lineage.
+- Implement the external-skill manifest, quarantine/inspection, project-scoped enablement, compatibility and permission grants.
+- Implement task-to-skill routing, visible plan, provider tool/instruction compilation, required-skill enforcement, output validation, timeouts, and exact-version execution receipts.
+- Start with declarative skills; keep executable/MCP/remote-tool/Comfy-node classes locked until their stronger security gates pass.
 - Implement read-only submodule version inspector and adapter process runner.
 - Add contract fixtures for all six skills plus combined report.
 - Import original JSON/reports into immutable project source folders.
@@ -88,6 +97,8 @@ flowchart LR
 
 ### Exit gate
 
+- OpenAI and Anthropic fixture accounts can be connected independently without secret leakage, and equivalent creative tasks produce provider-neutral validated drafts with recorded usage/cost.
+- Required/optional/mismatched skill fixtures route correctly; a skipped required skill fails, and every claimed use has an exact-version receipt visible to the creator.
 - Pinned upstream fixtures validate and normalize deterministically.
 - Long-form conversion supports a 20–35 minute episode structure without editing upstream files or weakening its own validations.
 - Upstream update candidate can fail compatibility and roll back cleanly.
@@ -98,7 +109,9 @@ flowchart LR
 ### Build
 
 - Implement versioned characters, styles, locations, props, wardrobe, approvals, locks, dependency edges, and impact preview.
+- Separate character identity from presentation/style/wardrobe/story-state versions and implement scoped shot/scene/episode/season/future bindings plus redesign impact/cost preview.
 - Implement Qwen image adapter and worker workflows selected in Phase 0.
+- Implement locally authorized media routes, immutable originals, rebuildable thumbnails/proxies, and in-app image comparison.
 - Add candidate comparison, targeted edit, image metadata, hashes, and manifests.
 - Implement required identity-pack checklist and consistency test pack.
 - Add visual board, continuity table, and source/reference binding.
@@ -108,7 +121,9 @@ flowchart LR
 
 - Lead identity pack is approved across required views, two environments, expressions, and multi-character test.
 - A locked style/character/location change marks exactly the expected downstream fixtures stale.
+- Scoped style-change fixtures preserve prior episodes and rebind only the approved boundary after the new consistency board passes.
 - Image jobs are reproducible at the manifest level and do not cross projects.
+- Approved images remain viewable and comparable after the worker/ComfyUI session is terminated.
 - No bulk-video-ready shot can reference an unlocked lead identity.
 
 ## 7. Phase 4 — voice, line book, and captions source
@@ -265,12 +280,15 @@ Do not:
 | 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
 | 2 | `DATA-001` project store | In progress | Series/film create/open, files, SQLite, migrations |
 | 3 | `SEC-001` credential/logging | In progress — protected RunPod vault and non-leakage tests pass; redacted diagnostics remain | Vault adapter and redacted diagnostics |
-| 4 | `UP-001` adapter process runner | Not started | Pinned version and validation contract |
-| 5 | `UP-002` normalized domain import | Not started | Long-form project facts and source provenance |
-| 6 | `CONT-001` versions/dependencies | Not started | Locks, impact, stale propagation |
-| 7 | `BENCH-001` image/voice/video test harness | Not started | Repeatable quality/runtime/cost pack |
-| 8 | `WORKER-001` gateway/watchdog | Not started | Secure local GPU smoke worker |
-| 9 | `CLOUD-001` RunPod lifecycle | In progress — API v2 account/price reads and local limits pass mocked tests; every mutating lifecycle method remains locked | One-click create/reconcile/terminate |
-| 10 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
-| 11 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
-| 12 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |
+| 4 | `WRITE-001` provider-neutral creative writing | Not started | Protected OpenAI/Anthropic accounts and structured story/character/script drafts |
+| 5 | `SKILL-001` external-skill runtime | Not started | Safe install, routing, required execution, validation, and receipts |
+| 6 | `UP-001` adapter process runner | Not started | Pinned version and validation contract |
+| 7 | `UP-002` normalized domain import | Not started | Long-form project facts and source provenance |
+| 8 | `CONT-001` versions/dependencies | Not started | Locks, impact, stale propagation |
+| 9 | `BENCH-001` writing/image/voice/video test harness | Not started | Repeatable quality/runtime/token/GPU cost pack |
+| 10 | `VIEW-001` local media review | Not started | Secure gallery, audio/video player, comparisons, proxies |
+| 11 | `WORKER-001` gateway/watchdog | Not started | Secure local GPU smoke worker |
+| 12 | `CLOUD-001` RunPod lifecycle | In progress — API v2 account/price reads and local limits pass mocked tests; every mutating lifecycle method remains locked | One-click create/reconcile/terminate |
+| 13 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
+| 14 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
+| 15 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |

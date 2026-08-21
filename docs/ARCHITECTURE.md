@@ -10,6 +10,9 @@ Animated Series Studio is a local control plane with disposable cloud execution 
 - The **network volume** caches models and workflow dependencies; it is never the only copy of creative work.
 - The **provider adapter** creates and terminates compute. RunPod is the first implementation.
 - The **media-engine adapters** translate neutral jobs into Qwen, LTX, FFmpeg, and QC operations.
+- The **writing-provider adapters** send a task-scoped, user-previewed context pack to the selected OpenAI or Anthropic API; locally validated bibles and scripts remain authoritative.
+- The **skill runtime** matches enabled external skills to a task, enforces permissions and required-skill completion, validates outputs, and records exact execution receipts.
+- The **studio media viewer** serves verified local images, audio, proxies, and video through the restricted application protocol. ComfyUI executes workflows but is not the creator-facing review platform.
 
 ## 2. Context diagram
 
@@ -18,6 +21,8 @@ flowchart LR
     Creator[Creator] --> Desktop[Local Studio Desktop]
     Desktop --> LocalStore[(Local Project Files\nSQLite Index\nCredential Vault)]
     Desktop --> Upstream[Pinned shuohao-skills\nsubmodule + adapter]
+    Desktop --> Writing[OpenAI / Anthropic\nwriting adapters]
+    Desktop --> Skills[Versioned skill registry\nrouter + permission broker]
     Desktop --> Provider[RunPod Provider API]
     Provider --> Worker[Temporary GPU Worker]
     Desktop -->|authenticated job channel| Worker
@@ -25,6 +30,7 @@ flowchart LR
     Worker --> Engines[Qwen Image\nQwen3-TTS\nLTX-2.5\nFFmpeg/QC]
     Worker --> Cache[(Persistent Model Cache)]
     Worker -->|verified outputs| Desktop
+    Desktop --> Review[In-app image gallery\naudio/video player\nA/B review]
     Desktop --> Export[YouTube-ready package\nand optional editor handoff]
 ```
 
@@ -35,6 +41,8 @@ flowchart LR
 | Local project workspace | Story facts, bibles, scripts, shot plans, approvals, manifests, final media | Rebuildable thumbnails, waveform caches, UI indexes |
 | SQLite | Transactional index, dependency and queue state | Rebuildable from manifests and project files where documented |
 | Operating-system credential vault | Provider and service credentials | Short-lived worker session tokens |
+| External writing provider | Only the explicit task context sent for the selected request | Provider-side response/conversation state is never the canonical project record |
+| External skill package | Pinned manifest, instructions, schemas, permissions, source, checksum/signature status | Derived routing cache; no credential access or arbitrary project access |
 | GPU worker | Active job workspace and runtime logs until synchronized | Model memory, temporary intermediates, failed partial outputs |
 | Network volume | Pinned model/workflow cache | Never the only copy of project source or approved output |
 | Upstream submodule | Exact upstream source at a pinned commit | Generated upstream reports are rebuildable |
@@ -54,12 +62,15 @@ animated-series-studio/
 │   ├── credential-vault/         OS-protected provider secret storage
 │   ├── cloud-setup/              account check, local limits, setup state
 │   ├── upstream-adapter/         pinned skill invocation and normalization
+│   ├── skill-runtime/             registry, routing, permissions, receipts
 │   ├── orchestrator/             durable queues, dependencies, approvals
 │   ├── provider-runpod/          GPU lifecycle and cost polling
+│   ├── provider-openai/          provider-neutral writing -> Responses API
+│   ├── provider-anthropic/       provider-neutral writing -> Messages API
 │   ├── engine-qwen-image/        neutral image job -> workflow
 │   ├── engine-qwen-tts/          voice job -> Qwen3-TTS request
 │   ├── engine-ltx/               neutral video job -> LTX workflow
-│   ├── media/                    FFmpeg assembly, captions, probing, QC
+│   ├── media/                    local serving/proxies, players, FFmpeg, captions, probing, QC
 │   └── ui-kit/                   accessible shared controls and language
 ├── worker/
 │   ├── gateway/                  authenticated job API and watchdog
@@ -93,6 +104,9 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Media processing | FFmpeg/ffprobe | Deterministic assembly, normalization, probing, and export |
 | Worker packaging | Docker image pinned by digest | Repeatable GPU setup with no per-session installation |
 | Cloud provider | RunPod through an adapter | Temporary GPU lifecycle, templates, API control, persistent network cache |
+| Writing providers | Provider-neutral contract; OpenAI Responses and Anthropic Messages adapters first | Bring-your-own-key choice, structured outputs/tool use, and no canonical-data lock-in |
+| External skills | Declarative, versioned studio capability packages first; compatible Agent Skill/MCP bridges only after security review | Extensibility with explicit routing, permissions, validation, execution proof, and rollback |
+| Media review | Restricted `studio://` local media routes plus native image/audio/video elements and derived proxies | Review remains available after the GPU/ComfyUI worker is gone |
 | Secrets | Electron asynchronous `safeStorage`; Windows DPAPI protects encrypted vault bytes | No plaintext project or repository credentials; fail closed when protection is unavailable |
 
 Versions are chosen and pinned during implementation spikes. “Latest” is never a production version.
@@ -110,7 +124,7 @@ The local project store currently provides:
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Backup/restore, migration preview/rollback, structured redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. Provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented.
+Backup/restore, migration preview/rollback, structured redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented.
 
 ## 6. Local component responsibilities
 
@@ -144,6 +158,7 @@ Backup/restore, migration preview/rollback, structured redacted support logging,
 ### Continuity and impact engine
 
 - Records `depends_on` edges between versions.
+- Resolves character identity separately from scoped presentation/style/wardrobe/story-state bindings at shot, scene, episode, season, and future-default boundaries.
 - Computes impact when a locked upstream version changes.
 - Marks dependants stale without deleting approved historical outputs.
 - Presents the user with `keep old`, `regenerate`, `relink`, or `defer` choices.
@@ -160,6 +175,32 @@ Backup/restore, migration preview/rollback, structured redacted support logging,
 - Provider adapter handles infrastructure only: create, inspect, estimate, terminate, and billing metadata.
 - Engine adapters handle media intent only: validate capability, estimate, render, retake, and inspect result.
 - Neither adapter is allowed to mutate canonical story data.
+
+### Writing-provider adapters
+
+- Accept a neutral task such as `develop_character`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, or `check_continuity` plus explicitly selected local context versions.
+- Compile the task to the selected provider API without storing provider conversation state as the project source of truth.
+- Return schema-validated draft proposals, usage, cost metadata, model identity, and safe errors; only a reviewed studio operation can create a canonical version.
+- Obtain provider credentials in the main process immediately before the call. The renderer and skill runtime receive only opaque provider status.
+
+### External-skill runtime
+
+1. Validate and pin the installed manifest, source, version, checksum/signature status, compatibility, and requested permissions.
+2. Match the current task to enabled project-scoped skills and show the proposed required/optional skill plan.
+3. Compile instructions and declared tools into the provider request; never inject every installed skill indiscriminately.
+4. Enforce required-skill calls or validated prompt-skill output before the job can succeed.
+5. Validate each skill result, apply timeout/output limits, and persist an execution receipt containing the exact skill version, inputs by hash, calls, result hash, and status.
+6. Display `Skills used` on the draft and manifest. A missing required receipt is a failed job, not a successful unskilled fallback.
+
+Declarative instruction/schema skills cannot execute arbitrary code. Executable extensions, ComfyUI custom nodes, local MCP servers, and remote MCP tools are separate permission classes with installation preview, allowlists, isolation, and compatibility/security tests. Skills never receive raw provider credentials.
+
+### Local media review and serving
+
+- The artifact service downloads every completed output, verifies size/type/hash, writes it atomically to the project, and indexes the canonical original before review.
+- A restricted `studio://media/...` handler serves only project-authorized files; direct arbitrary `file://` access is not exposed to the renderer.
+- The media package creates rebuildable thumbnails, waveforms, poster frames, and lightweight review proxies. Originals are immutable inputs to those derivatives.
+- The renderer provides image zoom/pan, side-by-side comparison, audio playback/waveform/captions, and video playback, scrubbing, frame/time navigation, synchronized A/B review, approval, rejection, and targeted retake.
+- During generation, bounded preview frames and progress events may be relayed from the worker. A preview is never accepted as the final artifact.
 
 ## 7. Remote worker architecture
 
@@ -185,7 +226,7 @@ flowchart TB
 
 The gateway provides health, capability, upload, job, progress, artifact, drain, and shutdown operations. It validates signed job contracts, restricts file paths to the assigned workspace, redacts secrets, and refuses unrecognized workflow versions.
 
-ComfyUI is an internal implementation detail. It binds to `127.0.0.1`; only the gateway is reachable through an authenticated, encrypted channel.
+ComfyUI is an internal implementation detail. It runs headlessly, binds to `127.0.0.1`, accepts compiled workflows from the gateway, and emits progress/preview/output events; only the gateway is reachable through an authenticated, encrypted channel. The normal user never needs its browser graph. Any future expert diagnostic access must be time-limited, authenticated, off by default, and unable to bypass workflow/version recording.
 
 The watchdog has the session's absolute termination deadline at boot. It must be able to call the provider termination path or shut down the machine independently of the desktop job connection.
 
@@ -210,7 +251,7 @@ sequenceDiagram
     App->>W: Drain and purge temporary project data
     App->>RP: Terminate worker
     App->>DB: Record termination proof and final actual cost
-    App-->>User: Present takes for review
+    App-->>User: Present verified local takes in gallery/player
 ```
 
 The orchestrator does not mark a job `succeeded` until the local artifact, manifest, and hash have been verified. Provider termination is a separate recorded state.
@@ -245,7 +286,10 @@ Every production manifest records:
 - Worker image digest, CUDA/runtime compatibility, GPU class, and driver information.
 - Workflow ID/version/hash and engine adapter version.
 - Canonical input and reference asset IDs, versions, and hashes.
+- Resolved character identity and presentation/style binding IDs plus the scope boundary that selected them.
 - Prompt, negative prompt, seed, duration, resolution, frame rate, audio, and advanced parameters.
+- Writing provider/model/profile, token usage/cost, selected canonical context versions, and external-skill execution receipts where applicable.
+- Original media hash plus derived thumbnail/proxy recipes and hashes; derived files never replace the original identity.
 - Start/end timestamps, retries, provider IDs, measured GPU runtime, and actual/estimated cost.
 
 A compatibility matrix in `config/` will declare tested combinations. The UI may warn about or block untested combinations; it never silently substitutes a model.
@@ -273,6 +317,9 @@ A compatibility matrix in `config/` will declare tested combinations. The UI may
 | Local disk fills | Stop new jobs, preserve remote result within grace period, explain recovery path |
 | Upstream/model update fails | Return to previous pin and leave current productions unchanged |
 | Migration fails | Restore automatic pre-migration backup and retain incident report |
+| Writing provider fails or changes response shape | Preserve the local task/context, record safe error/usage where available, and retry or switch provider only with a new draft lineage |
+| Required skill fails or is ignored | Fail the creative job, preserve diagnostics without secrets, and require retry, compatible skill version, or explicit plan change |
+| Preview/proxy generation fails | Keep the verified original unchanged and rebuild only the derived review media locally |
 
 ## 13. Architecture acceptance gates
 
@@ -280,6 +327,8 @@ Before production use, tests must prove:
 
 - No public ComfyUI exposure.
 - Secrets cannot enter logs, project exports, manifests, or Git.
+- Required external skills cannot be silently skipped and every claimed use has a valid exact-version receipt.
+- Images/audio/video remain reviewable in the studio after the remote worker and ComfyUI session terminate.
 - Provider create retries cannot duplicate workers.
 - A locally verified output exists before success and termination completion.
 - Both local and remote shutdown guards work independently.

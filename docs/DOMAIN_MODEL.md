@@ -98,7 +98,7 @@ Version status is `draft`, `in_review`, `approved`, `locked`, `superseded`, or `
 | `storyIntent` | Narrative purpose and required action |
 | `cameraIntent` | Framing and movement, engine-neutral |
 | `dialogueLineIds` | Approved line versions used by the shot |
-| `referenceBindings` | Pinned character/style/location/prop/wardrobe versions |
+| `referenceBindings` | Pinned character identity + scoped presentation/style, location, prop, and wardrobe versions |
 | `acceptanceNotes` | What must be true for approval |
 | `state` | Planning/review/production state |
 
@@ -154,6 +154,33 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 | `workerLeaseId` | Assigned remote session, if any |
 | `attempts` | Retry history and errors |
 | `resultManifestPath` | Verified result |
+
+### Creative writing job and external-skill receipt
+
+A creative writing job proposes a new local version; it never edits a locked version or treats a provider conversation as canonical.
+
+| Field | Meaning |
+| --- | --- |
+| `taskKind` | Story, character, world, outline, scene, dialogue rewrite, continuity, or storyboard planning |
+| `sourceVersionIds` | Exact local facts/bibles/scripts selected as context |
+| `providerProfile` | Provider, model, adapter/profile version, and request settings |
+| `contextManifestPath` | User-previewed task-scoped context with hashes |
+| `skillPlanPath` | Required, optional, excluded, permissions, and routing reasons |
+| `skillReceiptIds` | Exact successful/failed skill execution records |
+| `usageAndCost` | Input/output tokens and estimate/actual text API cost where available |
+| `proposalPath` | Schema-validated draft proposal; not yet approved canonical content |
+
+Each skill receipt pins skill ID/version/package hash, execution class, input hashes, sanitized calls, output hash, status, and timestamps. Historic receipts remain after a skill is disabled or removed.
+
+### Character identity, presentation, and scoped style binding
+
+Character identity facts (recognition anchors, stable biography, relationships, and proportions that must persist) are separate from presentation versions such as rendering style, age/story state, hair, wardrobe, and deliberate transformation. A `CharacterPresentationBinding` pins the identity version, presentation/style version, optional wardrobe/state versions, scope type/ID, start boundary, reason, and approval. More specific scopes override broader future defaults without modifying earlier bindings.
+
+A new presentation version requires its own reference/consistency board and impact review. Voice and personality bindings do not change unless explicitly versioned in the same reviewed operation.
+
+### Media asset and derivatives
+
+A media asset version identifies one immutable, locally verified original by hash. Thumbnails, poster frames, waveforms, and review proxies are derivative records with source hash, recipe/version, format, dimensions/duration, and their own hashes. Derivatives are rebuildable caches and cannot replace the original or become an approved take silently.
 
 ### Production manifest
 
@@ -232,6 +259,8 @@ Examples:
 - Character v3 → storyboard frame v2 → LTX job → take v4 → timeline v6 → export v1.
 - Script line v5 → TTS audio v3 → A2V take v2 → caption cue v4.
 - Style bible v2 → environment board v3 and every shot that pins it.
+- Character/script source versions + skill receipts → proposed creative draft → reviewed canonical version.
+- Verified original media → local thumbnail/proxy → review session; derivative failure never makes the original stale.
 
 When a new version is locked, the impact engine does not mark everything stale blindly. It compares edge kind and changed fields. A pronunciation-only voice change affects dialogue audio and downstream video/captions, but not silent establishing shots. Conservative fallback is to mark stale and ask for review.
 
@@ -255,10 +284,13 @@ projects/
     │   ├── seasons/S##/episodes/E###/
     │   └── film/sequences/SQ###/
     ├── assets/
-    │   ├── images/
-    │   ├── audio/
-    │   ├── video/
+    │   ├── images/                    immutable originals + derived review media
+    │   ├── audio/                     immutable originals + waveforms/proxies
+    │   ├── video/                     immutable originals + poster frames/proxies
     │   └── documents/
+    ├── provenance/
+    │   ├── writing/                   provider-neutral request/result manifests
+    │   └── skills/                    exact-version execution receipts
     ├── manifests/
     ├── jobs/
     ├── timelines/

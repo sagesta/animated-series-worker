@@ -50,6 +50,14 @@ Explain in one page:
 - Store it in the operating-system credential vault.
 - Test account access without displaying or saving the key in logs.
 
+### Step 3b: Writing accounts (optional until creative assistance is requested)
+
+- Offer separate **OpenAI** and **Anthropic** cards with `Connect`, `Test`, `Replace`, `Disable`, and `Remove` actions.
+- Explain plainly: “These services charge separately for text usage. They are not covered by your RunPod GPU balance.”
+- Accept each key in a masked field and return only opaque connected/error status after the main process stores it with OS protection.
+- Let the creator choose a default `Balanced`, `Best draft`, or later benchmarked custom writing profile, while keeping a provider/model selector available per task.
+- Where a provider cannot perform a free credential check, show the maximum token/cost of the smallest test before asking for approval.
+
 ### Step 4: Spending guardrails
 
 - Default hard session budget.
@@ -117,6 +125,31 @@ Changing a lock opens an impact preview:
 
 Choices are `Create new version`, `Cancel`, and—only where safe—`Create and review impact`.
 
+### Creative Room and attached skills
+
+Story, character, world, episode, scene, dialogue, and continuity assistants share one non-technical pattern:
+
+1. Select the exact local facts/versions the assistant may use.
+2. Choose the writing profile or keep the project default.
+3. Preview **Skills planned**: required, optional, incompatible, and why each matched.
+4. Preview estimated text-service usage/cost where available, then generate a draft.
+5. Compare the proposal with the current version; accept selected changes rather than silently overwriting.
+6. Show **Skills used** with exact versions and expandable execution receipts.
+
+The Skills settings page shows source, publisher, version, task types, requested permissions, signature/checksum state, update impact, and `Enable for this project`. Installation never enables a skill globally without an explicit choice. If a required skill fails or is ignored, the result is visibly blocked; the app offers retry, compatible-version selection, or a clearly explained plan change instead of pretending the skill ran.
+
+### Changing a character's visual style
+
+The character page provides **Create style/redesign version**. It asks what is changing—rendering style, proportions, age/story state, wardrobe, hair/details, or a complete approved redesign—and where it applies:
+
+- This shot only.
+- This scene.
+- This episode.
+- This season.
+- Future work from a selected episode/season onward.
+
+The app keeps the identity record and old versions, generates a new multi-view/expression/wardrobe board from approved identity anchors, and runs consistency checks before the new look can be locked. An A/B impact preview lists existing frames, boards, shots, voices, and exports; voice/personality remain unchanged unless separately edited. The confirmation shows what will become stale, what can stay, and an estimated regeneration cost. Nothing already published or approved is silently restyled.
+
 ## 6. Storyboard experience
 
 The storyboard shows one card per shot:
@@ -172,12 +205,17 @@ A persistent **Stop GPU now** button explains whether the current partial output
 
 ## 8. Review screen
 
-- Grid or focused view of pending takes.
+- Grid or focused view of verified local pending takes; opening ComfyUI is never required.
+- Images support fit/actual-size zoom, pan, side-by-side/overlay comparison, and reference toggles.
+- Audio supports playback, waveform, transcript/captions, line/version identity, and A/B synchronization.
+- Video supports play/pause, volume, scrubbing, frame/time navigation, loop range, captions, full screen, poster frame, and synchronized A/B playback.
+- During generation, low-resolution progress previews are labelled `Preview — not downloaded master`; the final take appears only after local integrity and media checks pass.
 - A/B comparison synchronized to the same audio and time.
 - Plain review tags: identity, movement, framing, continuity, mouth, hands, artifacts, audio, other.
 - Actions: `Approve`, `Reject`, `Retake`, `Repair mouth`, `Repair section`, `Return to storyboard`.
 - Retake form defaults to preserving approved inputs and asks what should change.
 - Cost and technical data are in a collapsible panel.
+- `Made with` lists provider/model/workflow and exact external skills used without exposing raw keys or technical graphs by default.
 
 Bulk approval is available only for low-risk assets after individual inspection and is never the default for final dialogue close-ups.
 
@@ -239,5 +277,6 @@ A representative non-technical user must be able to:
 - Confirm the cloud worker terminated.
 - Restore a test backup.
 - Understand a stale-dependency impact message.
+- Connect or skip a writing provider, attach a fixture skill, verify that it was used, and review image/audio/video entirely inside the studio.
 
 No facilitator may use a terminal or cloud console during the acceptance session.

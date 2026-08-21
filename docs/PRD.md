@@ -139,6 +139,20 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **FR-042:** Model and workflow updates are treated like schema changes: benchmarked on a locked test pack before becoming the default for new work.
 - **FR-043:** Rights and consent metadata can be attached to voices, likeness references, music, effects, fonts, and imported assets; release checks flag missing evidence.
 
+### Writing providers and external skills
+
+- **FR-044:** The user can add, test, replace, disable, and remove OpenAI and Anthropic API credentials through protected settings, then choose a default writing provider/model profile without exposing keys to the renderer, projects, skills, logs, or exports.
+- **FR-045:** Story development, character development, world building, outlines, scripts, rewrites, and continuity checks use a provider-neutral writing contract. Canonical creative facts are validated and stored locally; every generated draft records provider, model, settings, source versions, token usage, estimated/actual API cost, and lineage.
+- **FR-046:** The user can inspect, install, enable, disable, update, and remove external creative skills whose manifest declares identity, version, source, checksum/signature status, task kinds, instructions entrypoint, input/output schemas, permissions, compatibility, and whether the skill is optional or required.
+- **FR-047:** Before a writing or planning job runs, the studio creates a visible skill plan from the task and enabled compatible skills. A required applicable skill cannot be silently skipped; successful output records immutable skill execution receipts and displays `Skills used` with exact versions.
+- **FR-048:** Skill failure, timeout, invalid output, missing permission, or incompatibility blocks required-skill completion and offers a safe retry, disable, or explicitly approved fallback. Skills cannot directly read credentials, arbitrary projects, or run executable code by default.
+
+### In-application media viewing
+
+- **FR-049:** Generated images, audio, and videos are downloaded, integrity-checked, indexed, and viewable inside the studio through galleries and native media players; the normal workflow never requires opening ComfyUI or a cloud console.
+- **FR-050:** The studio shows bounded progress/previews during generation and creates local thumbnails/proxies for responsive review while preserving original media unchanged. Image/video comparison, zoom, playback, frame/time navigation, captions, audio, approval, rejection, and retake actions retain lineage.
+- **FR-051:** The user can create an intentional character-style or redesign version and apply it to one shot, scene, episode, season, or future project work. The studio preserves prior bindings/outputs, separates identity from rendering style/wardrobe/story state, requires a new consistency board, and previews affected assets, stale work, and estimated regeneration cost before rebinding or generating.
+
 ## 7. Non-functional requirements
 
 - **NFR-001 Usability:** After initial installation, the primary workflow must require no terminal, Docker command, SSH session, ComfyUI graph editing, or manual cloud console operation.
@@ -155,6 +169,9 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **NFR-012 Documentation:** Every behavior, fix, migration, external assumption, and release status change updates the affected documents and tests in the same change.
 - **NFR-013 Compatibility:** A production release supports the currently documented Windows version, pinned upstream commit, worker image, workflow pack, and model set as one tested compatibility matrix.
 - **NFR-014 Budget enforcement:** The remote watchdog must terminate compute at the hard session limit even when the desktop cannot be reached.
+- **NFR-015 Provider neutrality:** A writing-provider or model change cannot rewrite canonical creative data or make an existing project unreadable; provider-specific state is replaceable and versioned.
+- **NFR-016 Skill safety and proof:** External skills are least-privilege, project-scoped, version-pinned, auditable, timeout-bounded, output-validated, and cannot be represented as used without an execution receipt.
+- **NFR-017 Media review:** Completed media remains locally reviewable without an active GPU or ComfyUI session, and preview/proxy failure cannot corrupt or replace an original.
 
 ## 8. Release success criteria
 
