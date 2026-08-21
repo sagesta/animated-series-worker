@@ -26,6 +26,13 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | FR-046, FR-047, FR-048 | `ARCHITECTURE.md` skill runtime, `API_CONTRACTS.md` skill contracts, `SECURITY_AND_RECOVERY.md` extension controls | skill registry, router, permission broker, execution-receipt store | AT-037, security suite |
 | FR-049, FR-050 | `ARCHITECTURE.md` media-review flow, `UX_SPEC.md` review screen, `MEDIA_PIPELINE.md` | artifact service, local media protocol, gallery/player, proxy service | AT-038, AT-040 |
 | FR-051 | `DOMAIN_MODEL.md` character/style bindings, `UX_SPEC.md` scoped style-change flow, `MEDIA_PIPELINE.md` character workflow | continuity/impact engine, image engine, review UI | AT-003, AT-009, AT-041 |
+| FR-052 | `PRODUCTION_WORKFLOW.md` timed animatic gate, `DOMAIN_MODEL.md` animatic version, `UX_SPEC.md` animatic flow | previsualization, timeline, project store | AT-042 |
+| FR-053 | `ARCHITECTURE.md` control assets, `API_CONTRACTS.md` control-pack contract, `MEDIA_PIPELINE.md` control compilation | previsualization, control registry, image/video adapters | AT-043, AT-045 |
+| FR-054 | `MEDIA_PIPELINE.md` layered workflow, `DOMAIN_MODEL.md` layered composite | image engine, previsualization, media/timeline | AT-044 |
+| FR-055 | `MEDIA_PIPELINE.md` advanced LTX profiles, `ARCHITECTURE.md` compatibility model | engine-ltx, workflow registry, benchmark store | AT-020, AT-045, AT-049 |
+| FR-056 | `ARCHITECTURE.md` creative QC, `MEDIA_PIPELINE.md` assistive checks, `API_CONTRACTS.md` artifact contract | creative-qc, media probes, speech verifier, review UI | AT-046 |
+| FR-057 | `MEDIA_PIPELINE.md` ambience/effects/foley, `DOMAIN_MODEL.md` audio-effects cue | engine-audio-fx, rights registry, timeline/mix | AT-047 |
+| FR-058 | `MEDIA_PIPELINE.md` optional adaptation, `DOMAIN_MODEL.md` adaptation profile, `SECURITY_AND_RECOVERY.md` dataset controls | adaptation, benchmark store, project store | AT-048, AT-049 |
 
 ## Non-functional requirements
 
@@ -48,6 +55,8 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-015 | `ARCHITECTURE.md` writing-provider boundary, `DOMAIN_MODEL.md` canonical versions | provider adapters, project store | AT-036, AT-039 |
 | NFR-016 | `ARCHITECTURE.md` skill runtime, `SECURITY_AND_RECOVERY.md` extension controls | skill registry/router, permission broker, receipts | AT-037, security suite |
 | NFR-017 | `ARCHITECTURE.md` media-review flow, `MEDIA_PIPELINE.md` artifact handling | local media protocol, proxy service, review UI | AT-038, AT-040 |
+| NFR-018 | `ARCHITECTURE.md` remote worker, `SECURITY_AND_RECOVERY.md` worker controls, `GPU_OPERATIONS.md` execution | worker image, gateway, workflow registry | AT-045, AT-049, security suite |
+| NFR-019 | `ARCHITECTURE.md` creative QC, `API_CONTRACTS.md` authorization boundary, `UX_SPEC.md` review warnings | creative-qc, review UI, authorization service | AT-046, security suite |
 
 ## Current implementation evidence — version 0.3.0
 
@@ -62,6 +71,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-011 accessibility | Partial | Semantic controls, labels, focus-visible states, keyboard wizard navigation, non-color status text, reduced-motion CSS | Automated accessibility audit and representative-user AT-035 |
 | NFR-012 documentation | Implemented for this slice | `pnpm docs:check` passes with synchronized status/decision/source/test/changelog updates | Continuous enforcement on every later change |
 | FR-044–FR-051 and NFR-015–NFR-017 provider/skill/media-viewing/style-change design | Documented; not implemented | Provider-neutral writing, enforced external-skill provenance, in-app media review, and scoped character redesign are now locked requirements and architecture decisions | Provider adapters, skill runtime, media protocol/player, scoped presentation bindings, tests AT-036–AT-041, and non-technical acceptance |
+| FR-052–FR-058 and NFR-018–NFR-019 rich previsualization/control/QC/sound/adaptation design | Documented; not implemented | Timed animatic, neutral controls, layered parallax, advanced LTX, warning-only creative QC, separate foley, optional adaptation, and immutable runtime are locked | Packages/workflows, compatibility benchmarks, tests AT-042–AT-049, and non-technical acceptance |
 
 ## Change rule
 

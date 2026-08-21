@@ -55,6 +55,8 @@ The product may later support collaborators, but version 1 is optimized for one 
 - One to three concurrent workers, limited by budget and compatibility.
 - Shot review, comparison, approval, rejection, notes, and targeted retake.
 - Automatic rough-cut assembly, dialogue placement, captions, sound layers, technical QC, and YouTube-ready export.
+- A versioned timed animatic, engine-neutral pose/depth/edge/mask/motion controls, layered 2D parallax assets, advanced benchmark-approved LTX control/fidelity profiles, creative-assist QC, and rights-aware effects/foley.
+- Optional project-scoped character or style adaptation only when the reference-only consistency benchmark proves it is needed.
 - Backup, restore, crash recovery, audit history, and upstream update controls.
 
 ### 5.2 Explicitly outside version 1
@@ -69,6 +71,8 @@ The product may later support collaborators, but version 1 is optimized for one 
 - Voice cloning without documented rights and consent.
 - Automatic acquisition of copyrighted music, celebrity likenesses, or unlicensed training/reference material.
 - Live multi-user collaboration and cloud-hosted project databases.
+- Unreviewed runtime installation of ComfyUI nodes, Python packages, models, or workflow dependencies during a production session.
+- Treating an automated identity, motion, lip-sync, or speech-recognition score as creative approval.
 
 ## 6. Functional requirements
 
@@ -153,6 +157,16 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **FR-050:** The studio shows bounded progress/previews during generation and creates local thumbnails/proxies for responsive review while preserving original media unchanged. Image/video comparison, zoom, playback, frame/time navigation, captions, audio, approval, rejection, and retake actions retain lineage.
 - **FR-051:** The user can create an intentional character-style or redesign version and apply it to one shot, scene, episode, season, or future project work. The studio preserves prior bindings/outputs, separates identity from rendering style/wardrobe/story state, requires a new consistency board, and previews affected assets, stale work, and estimated regeneration cost before rebinding or generating.
 
+### Rich previsualization, control, sound, and adaptation
+
+- **FR-052:** The studio creates a versioned timed animatic from storyboard frames, shot durations, approved dialogue or explicitly labelled temporary audio, captions, and simple editorial motion. The creator can review pacing and revise shot timing before bulk video generation without losing earlier animatic versions.
+- **FR-053:** A shot can bind a versioned engine-neutral control pack containing any supported combination of start/end frames, pose skeletons, depth maps, edge maps, segmentation maps, region masks, motion tracks, and rights-cleared reference clips. Every control asset records source, hash, scope, rights, and lineage; an engine adapter uses only controls declared compatible with its pinned workflow.
+- **FR-054:** The studio can import or create approved layer-separated foreground, subject, and background assets with masks, occlusion order, camera-safe margins, and deterministic composite instructions for parallax or limited 2D animation. Derived layers never replace the approved source image.
+- **FR-055:** The LTX adapter can expose benchmark-approved advanced profiles—including reference-video/IC-LoRA control, motion tracks, structural control, in/outpainting, relighting, native multishot, diffusion-fidelity rendering, and temporal upsampling—only when the exact model, adapter, node, and workflow combination is present in the compatibility matrix. Unsupported or cross-version combinations are blocked rather than substituted.
+- **FR-056:** The studio runs creative-assist checks for identity drift, palette/wardrobe/prop mismatch, temporal flicker, suspicious motion/freezes, face/hand/text defects, mouth/audio timing, and approved-script-versus-speech mismatch. Results are explainable warnings with confidence and evidence frames/times; they cannot approve, reject, or release a take without human review.
+- **FR-057:** The studio can import or generate versioned ambience, synchronized effects, and foley through a rights-aware audio-effects contract. Dialogue masters remain separate and immutable, generated sound never silently replaces speech or music, and every source/model/prompt/reference has lineage and compatibility evidence.
+- **FR-058:** For a long-running project that fails the locked reference-only consistency benchmark, the creator can explicitly authorize a project-scoped character or style adaptation such as a LoRA. Training data, rights, captions/tags, base model, settings, cost, output hash, evaluation, scope, and rollback are recorded; the adaptation is promoted only if it beats the prior workflow without unacceptable regression.
+
 ## 7. Non-functional requirements
 
 - **NFR-001 Usability:** After initial installation, the primary workflow must require no terminal, Docker command, SSH session, ComfyUI graph editing, or manual cloud console operation.
@@ -172,6 +186,8 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **NFR-015 Provider neutrality:** A writing-provider or model change cannot rewrite canonical creative data or make an existing project unreadable; provider-specific state is replaceable and versioned.
 - **NFR-016 Skill safety and proof:** External skills are least-privilege, project-scoped, version-pinned, auditable, timeout-bounded, output-validated, and cannot be represented as used without an execution receipt.
 - **NFR-017 Media review:** Completed media remains locally reviewable without an active GPU or ComfyUI session, and preview/proxy failure cannot corrupt or replace an original.
+- **NFR-018 Immutable production runtime:** A production worker cannot install or update ComfyUI, custom nodes, Python/CUDA dependencies, models, LoRAs, or workflows while executing an authorized session. Changes occur only through a separately built, scanned, benchmarked, pinned, and rollback-capable worker release.
+- **NFR-019 Human creative authority:** Automated creative, identity, speech, motion, and synchronization checks assist review but cannot create an approval, lock, release waiver, or destructive correction. The creator sees the evidence and makes the final decision.
 
 ## 8. Release success criteria
 

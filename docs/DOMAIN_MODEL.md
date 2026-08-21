@@ -64,6 +64,12 @@ The following use a stable identity record plus immutable versions:
 - Wardrobe and wardrobe version.
 - Script and script version.
 - Storyboard and storyboard version.
+- Animatic and animatic version.
+- Control pack and control-asset version.
+- Layered composite and layered-composite version.
+- Creative-QC report version.
+- Audio-effects cue and audio-effects cue version.
+- Adaptation profile and adaptation-profile version.
 - Delivery profile and workflow profile.
 
 Each version contains:
@@ -94,11 +100,13 @@ Version status is `draft`, `in_review`, `approved`, `locked`, `superseded`, or `
 | `sceneId` | Owning scene |
 | `editorialOrder` | Stable planned order |
 | `durationFrames` | Canonical duration in frames, not a floating-point guess |
-| `productionMethod` | `hold`, `pan_zoom`, `parallax`, `loop`, `ltx_i2v`, `ltx_a2v`, `ltx_keyframe`, `ltx_retake`, `ltx_lipdub`, `external` |
+| `productionMethod` | `hold`, `pan_zoom`, `layered_parallax`, `loop`, `ltx_i2v`, `ltx_a2v`, `ltx_keyframe`, `ltx_control`, `ltx_v2v`, `ltx_multishot`, `ltx_dfr`, `ltx_retake`, `ltx_lipdub`, `external` |
 | `storyIntent` | Narrative purpose and required action |
 | `cameraIntent` | Framing and movement, engine-neutral |
 | `dialogueLineIds` | Approved line versions used by the shot |
 | `referenceBindings` | Pinned character identity + scoped presentation/style, location, prop, and wardrobe versions |
+| `controlPackVersionId` | Optional pinned engine-neutral control assets and compatibility requirements |
+| `animaticBinding` | Animatic version and exact shot-timing revision approved for production |
 | `acceptanceNotes` | What must be true for approval |
 | `state` | Planning/review/production state |
 
@@ -145,7 +153,7 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 | `id` | Studio job ULID |
 | `idempotencyKey` | Stable key for external retries |
 | `projectId` | Isolation scope |
-| `jobType` | Image, TTS, video, retake, lip-dub, upscale, assembly, QC |
+| `jobType` | Image, TTS, video, retake, lip-dub, upscale, layer extraction, animatic, audio effects, adaptation, assembly, technical QC, creative QC |
 | `engine` and `workflowVersion` | Exact implementation |
 | `inputManifestPath` | Immutable request file |
 | `estimate` | Expected GPU time/cost and confidence |
@@ -181,6 +189,24 @@ A new presentation version requires its own reference/consistency board and impa
 ### Media asset and derivatives
 
 A media asset version identifies one immutable, locally verified original by hash. Thumbnails, poster frames, waveforms, and review proxies are derivative records with source hash, recipe/version, format, dimensions/duration, and their own hashes. Derivatives are rebuildable caches and cannot replace the original or become an approved take silently.
+
+### Animatic, control pack, and layered composite
+
+An `AnimaticVersion` pins storyboard-frame versions, shot order/durations, dialogue or temporary-audio versions, caption cues, simple editorial motion, output hash, review notes, and approval. Temporary audio is visibly typed and cannot satisfy final voice lock.
+
+A `ControlPackVersion` contains ordered control bindings. Each binding records its role (`start_frame`, `end_frame`, `pose`, `depth`, `edge`, `segmentation`, `mask`, `motion_track`, or `reference_clip`), immutable asset version/hash, coordinate/time basis, strength intent, rights record, and supported engine capability. Engine-specific node fields exist only in compiled job manifests.
+
+A `LayeredCompositeVersion` pins its source image, foreground/subject/background layer assets, masks, occlusion order, anchor points, safe movement bounds, composite recipe, and preview. Layers are derivatives; the approved source remains immutable.
+
+### Creative-QC report and audio-effects cue
+
+A `CreativeQcReportVersion` records checker/model version, expected facts/reference hashes, observations with confidence and frame/time evidence, and reviewer disposition. It has no field capable of approving or rejecting a take.
+
+An `AudioEffectsCueVersion` records cue type, time range, source mode (`imported`, `generated_from_text`, or `generated_from_video`), prompt/reference hashes, model/workflow, rights, original audio hash, and mix role. It cannot replace a dialogue or music asset ID.
+
+### Adaptation profile
+
+An `AdaptationProfileVersion` records the project scope, purpose (`character` or `style`), rights-approved dataset manifest, captions/tags, exact base model, training recipe, worker/cost record, output hash, benchmark comparison, status, and rollback parent. Status is `draft`, `training`, `candidate`, `approved`, `rejected`, or `archived`; only an approved version can be compiled into a production job.
 
 ### Production manifest
 
@@ -261,6 +287,9 @@ Examples:
 - Style bible v2 → environment board v3 and every shot that pins it.
 - Character/script source versions + skill receipts → proposed creative draft → reviewed canonical version.
 - Verified original media → local thumbnail/proxy → review session; derivative failure never makes the original stale.
+- Storyboard frames + dialogue timing → animatic → approved shot timing → video jobs.
+- Control assets + adaptation profile → compiled workflow → take; changing one control marks only bound attempts/downstream outputs stale.
+- Approved take → creative-QC report and foley cue → timeline mix; warning disposition remains separate from approval.
 
 When a new version is locked, the impact engine does not mark everything stale blindly. It compares edge kind and changed fields. A pronunciation-only voice change affects dialogue audio and downstream video/captions, but not silent establishing shots. Conservative fallback is to mark stale and ask for review.
 
@@ -288,6 +317,9 @@ projects/
     │   ├── audio/                     immutable originals + waveforms/proxies
     │   ├── video/                     immutable originals + poster frames/proxies
     │   └── documents/
+    ├── controls/                      pose/depth/edge/masks/tracks/reference clips
+    ├── animatics/                     versioned previews and timing manifests
+    ├── adaptations/                   datasets, candidate profiles, benchmark reports
     ├── provenance/
     │   ├── writing/                   provider-neutral request/result manifests
     │   └── skills/                    exact-version execution receipts

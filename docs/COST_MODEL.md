@@ -95,6 +95,7 @@ The first cost forecast is provisional. Run at least a 20-shot benchmark spannin
 - Peak VRAM and out-of-memory rate.
 - Attempts to approval.
 - Repair/upscale time.
+- Control-map preprocessing, layer extraction/repair, diffusion-fidelity/temporal-upsample passes, creative-QC/ASR checks, foley candidates, and optional adaptation training/evaluation.
 - Transfer and sync time.
 - Cost per attempt and per approved second.
 - Failure category.
@@ -147,6 +148,8 @@ Use savings that also improve consistency:
 5. Batch compatible workflows to avoid repeated model loads.
 6. Retake only the bad line/time region when possible.
 7. Upscale only approved content.
+8. Approve timing in the animatic before multiplying motion takes.
+9. Use advanced control/DFR/temporal-upsample and adaptation only when a cheaper tested method cannot meet the shot acceptance criteria.
 8. Terminate immediately after verified synchronization.
 9. Measure failure reasons and change the shot rather than repeating identical attempts.
 

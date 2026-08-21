@@ -11,6 +11,7 @@ Idea/source
   -> script and line book
   -> engine-neutral storyboard
   -> approved voice and reference assets
+  -> timed animatic and shot-control packs
   -> cheap draft tests
   -> selected final generations
   -> review and targeted repair
@@ -32,6 +33,7 @@ The difference is organization:
 | G2 Bible lock | Style, lead characters, voices, recurring locations/props | Multiplied consistency depends on these |
 | G3 Script lock | Scene action, dialogue, line IDs, timing target | Voice and shot timing need stable text |
 | G4 Storyboard lock | Shot intent, method, duration, references, continuity | Paid generation must not decide the story accidentally |
+| G4A Animatic/control lock | Pacing preview, approved timing, supported control packs, fallback method | Finds coverage/timing/control problems before GPU multiplication |
 | G5 Pilot lock | Representative image, voice, dialogue shot, motion shot, measured cost | Proves quality and economics before scale |
 | G6 Batch authorization | Ready jobs, estimate, hard cap, worker count | Makes spending explicit |
 | G7 Picture/voice lock | Approved takes and final line audio | Edit and captions must have stable sources |
@@ -135,6 +137,7 @@ For every shot decide:
 - Continuity from the previous and to the next shot.
 - Production method and fallback.
 - Approval criteria.
+- Optional start/end frame, pose/depth/edge/mask, motion track, layered composite, or rights-cleared motion reference.
 
 ### Production-method selection
 
@@ -146,9 +149,25 @@ For every shot decide:
 | Visible speaking close-up | Approved TTS + LTX audio-to-video |
 | Existing good clip with a small bad area | LTX retake |
 | Good acting but mouth/audio mismatch | LTX lip-dub/repair |
+| Precise object/character path | Benchmark-approved LTX motion control |
+| Pose/depth/edge-guided action | Benchmark-approved structural-control profile |
+| Existing motion should guide a new style/character | Rights-cleared reference-video control |
+| 2D shot needing controlled depth | Layered foreground/subject/background parallax |
+| High-detail approved motion | Diffusion-fidelity/final upscale profile |
 | Complex unsupported action | Split action, redesign shot, or external/manual method |
 
 The fallback is decided before generation, not improvised after unlimited retries.
+
+### Timed animatic and control lock
+
+Before the paid pilot or batch:
+
+1. Assemble storyboard frames, shot durations, captions, and approved dialogue or visibly temporary audio.
+2. Review the full scene/episode pacing, missing coverage, dialogue overruns, reaction time, and transition points.
+3. Revise script, shot order, or duration through new versions until timing is approved.
+4. Build each difficult shot's engine-neutral control pack and preview pose/depth/edge/mask/motion data over the frame.
+5. Validate the control roles against the selected pinned workflow and choose a fallback for unsupported combinations.
+6. Lock the animatic/timing and control versions used by the pilot. Later changes produce an impact report rather than silently changing queued jobs.
 
 ## 8. Stage 5 — pilot and benchmark
 
@@ -163,6 +182,12 @@ Run a locked test pack before bulk production:
 - Non-dialogue establishing shot.
 - Retake and lip-dub repair.
 - Draft and final workflow comparison.
+- Timed animatic reconstruction and a deliberate timing revision.
+- Pose/depth/edge/mask, motion-track, reference-video, and layered-parallax control samples where the production needs them.
+- Diffusion-fidelity and temporal-upsample comparison for one demanding approved shot.
+- Creative-assist identity/flicker/motion/lip/script-audio warnings with known positive and negative fixtures.
+- Generated/imported foley sample kept separate from dialogue and music.
+- Optional adaptation candidate only if the reference-only identity test fails.
 
 Capture runtime, attempts, cost, approval reason, failure class, identity drift, lip quality, and local/remote transfer time. Use the results to set workflow defaults and the episode forecast.
 
@@ -179,6 +204,7 @@ Batch only shots with locked inputs. The recommended daily session:
 5. Confirm the session says `GPU terminated`.
 6. Review verified takes locally inside the studio gallery/player; ComfyUI can already be closing or terminated.
 7. Approve, reject, or make targeted retake requests.
+8. Review creative-assist warnings as evidence; no warning or score changes approval automatically.
 
 Group work by workflow/model so the GPU does not repeatedly load different large models. Voice lines can be prepared before video batches.
 
@@ -189,6 +215,7 @@ The rough cut places approved takes by shot order and frame duration. Then:
 - Adjust safe trims and holds.
 - Add reaction holds and transitions.
 - Layer dialogue, room tone, effects, and music.
+- Generate or import synchronized foley/effects only into their own versioned layers; never overwrite dialogue masters.
 - Verify dialogue continuity and emotional rhythm.
 - Add titles/credits.
 - Generate captions from approved line timing.

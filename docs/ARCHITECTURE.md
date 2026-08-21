@@ -13,6 +13,8 @@ Animated Series Studio is a local control plane with disposable cloud execution 
 - The **writing-provider adapters** send a task-scoped, user-previewed context pack to the selected OpenAI or Anthropic API; locally validated bibles and scripts remain authoritative.
 - The **skill runtime** matches enabled external skills to a task, enforces permissions and required-skill completion, validates outputs, and records exact execution receipts.
 - The **studio media viewer** serves verified local images, audio, proxies, and video through the restricted application protocol. ComfyUI executes workflows but is not the creator-facing review platform.
+- The **previsualization and control layer** owns timed animatics plus engine-neutral pose, depth, edge, segmentation, mask, motion-track, reference-clip, and layered-parallax assets.
+- The **creative-QC layer** produces evidence-backed warnings without creating approvals, while the **audio-effects adapter** keeps ambience/foley separate from immutable dialogue masters.
 
 ## 2. Context diagram
 
@@ -31,6 +33,7 @@ flowchart LR
     Worker --> Cache[(Persistent Model Cache)]
     Worker -->|verified outputs| Desktop
     Desktop --> Review[In-app image gallery\naudio/video player\nA/B review]
+    Desktop --> Previz[Timed animatic\ncontrol packs + layered assets]
     Desktop --> Export[YouTube-ready package\nand optional editor handoff]
 ```
 
@@ -64,12 +67,16 @@ animated-series-studio/
 │   ├── upstream-adapter/         pinned skill invocation and normalization
 │   ├── skill-runtime/             registry, routing, permissions, receipts
 │   ├── orchestrator/             durable queues, dependencies, approvals
+│   ├── previsualization/         animatics, shot timing, control packs
+│   ├── creative-qc/              identity, flicker, motion, speech warnings
 │   ├── provider-runpod/          GPU lifecycle and cost polling
 │   ├── provider-openai/          provider-neutral writing -> Responses API
 │   ├── provider-anthropic/       provider-neutral writing -> Messages API
 │   ├── engine-qwen-image/        neutral image job -> workflow
 │   ├── engine-qwen-tts/          voice job -> Qwen3-TTS request
 │   ├── engine-ltx/               neutral video job -> LTX workflow
+│   ├── engine-audio-fx/          neutral ambience/effects/foley job
+│   ├── adaptation/               optional project-scoped LoRA training/evaluation
 │   ├── media/                    local serving/proxies, players, FFmpeg, captions, probing, QC
 │   └── ui-kit/                   accessible shared controls and language
 ├── worker/
@@ -107,6 +114,8 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Writing providers | Provider-neutral contract; OpenAI Responses and Anthropic Messages adapters first | Bring-your-own-key choice, structured outputs/tool use, and no canonical-data lock-in |
 | External skills | Declarative, versioned studio capability packages first; compatible Agent Skill/MCP bridges only after security review | Extensibility with explicit routing, permissions, validation, execution proof, and rollback |
 | Media review | Restricted `studio://` local media routes plus native image/audio/video elements and derived proxies | Review remains available after the GPU/ComfyUI worker is gone |
+| Previsualization/control | Versioned animatic and engine-neutral control-asset contracts | Rich pose/motion/compositing control without exposing node graphs |
+| Creative QC | Deterministic probes plus benchmarked assistive vision/speech checks | Finds likely defects while preserving human approval authority |
 | Secrets | Electron asynchronous `safeStorage`; Windows DPAPI protects encrypted vault bytes | No plaintext project or repository credentials; fail closed when protection is unavailable |
 
 Versions are chosen and pinned during implementation spikes. “Latest” is never a production version.
@@ -124,7 +133,7 @@ The local project store currently provides:
 
 The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
 
-Backup/restore, migration preview/rollback, structured redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented.
+Backup/restore, migration preview/rollback, structured redacted support logging, single-writer leasing, and continuity asset versions remain Phase 1 work. OpenAI/Anthropic writing adapters, the external-skill runtime, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, and project-scoped adaptation are also documented only and remain unimplemented.
 
 ## 6. Local component responsibilities
 
@@ -202,6 +211,26 @@ Declarative instruction/schema skills cannot execute arbitrary code. Executable 
 - The renderer provides image zoom/pan, side-by-side comparison, audio playback/waveform/captions, and video playback, scrubbing, frame/time navigation, synchronized A/B review, approval, rejection, and targeted retake.
 - During generation, bounded preview frames and progress events may be relayed from the worker. A preview is never accepted as the final artifact.
 
+### Previsualization and control assets
+
+- The animatic service assembles storyboard versions, approved or explicitly temporary audio, captions, shot durations, and simple editorial motion into a versioned preview timeline before bulk video generation.
+- A control pack references immutable control assets such as start/end frames, pose/depth/edge/segmentation maps, masks, motion tracks, and rights-cleared reference clips. Canonical records never contain ComfyUI node IDs.
+- The layer service derives or imports foreground/subject/background plates, masks, occlusion order, and camera-safe margins while retaining the original image unchanged.
+- Engine adapters declare supported control roles. Unsupported combinations fail before estimate/authorization rather than being ignored.
+
+### Creative QC and audio effects
+
+- Creative-QC adapters may compare approved references, expected continuity facts, script text, audio, and output frames to produce timestamped evidence and confidence-labelled warnings.
+- Automated checks cannot alter review state, approve a take, waive a right, or modify media.
+- Audio-effects adapters generate or import ambience, effects, and foley as independent media versions. Dialogue, music, room tone, and generated effects remain separate timeline layers.
+- Speech recognition is a verifier against the approved line, not the source of captions or canonical dialogue.
+
+### Optional adaptation
+
+- Adaptation jobs use only an explicitly approved, rights-reviewed project dataset and an exact base-model revision.
+- The trained LoRA or equivalent artifact is project-scoped, hashed, benchmarked against the reference-only baseline, and rejected if it regresses identity, style range, composition, safety, runtime, or cost beyond the accepted threshold.
+- A production workflow never starts training implicitly because a generation failed.
+
 ## 7. Remote worker architecture
 
 ```mermaid
@@ -224,7 +253,7 @@ flowchart TB
     Python --> Cache
 ```
 
-The gateway provides health, capability, upload, job, progress, artifact, drain, and shutdown operations. It validates signed job contracts, restricts file paths to the assigned workspace, redacts secrets, and refuses unrecognized workflow versions.
+The gateway provides health, capability, upload, job, progress, artifact, drain, and shutdown operations. It validates signed job contracts, restricts file paths to the assigned workspace, redacts secrets, and refuses unrecognized workflow versions. Production jobs cannot invoke ComfyUI Manager, package installers, Git, arbitrary downloads, or runtime dependency changes.
 
 ComfyUI is an internal implementation detail. It runs headlessly, binds to `127.0.0.1`, accepts compiled workflows from the gateway, and emits progress/preview/output events; only the gateway is reachable through an authenticated, encrypted channel. The normal user never needs its browser graph. Any future expert diagnostic access must be time-limited, authenticated, off by default, and unable to bypass workflow/version recording.
 
@@ -290,6 +319,7 @@ Every production manifest records:
 - Prompt, negative prompt, seed, duration, resolution, frame rate, audio, and advanced parameters.
 - Writing provider/model/profile, token usage/cost, selected canonical context versions, and external-skill execution receipts where applicable.
 - Original media hash plus derived thumbnail/proxy recipes and hashes; derived files never replace the original identity.
+- Animatic version, resolved control-pack assets/hashes, layered-composite recipe, prompt-enhancer input/output, advanced LTX adapter/profile, adaptation artifact, and creative-QC evidence where applicable.
 - Start/end timestamps, retries, provider IDs, measured GPU runtime, and actual/estimated cost.
 
 A compatibility matrix in `config/` will declare tested combinations. The UI may warn about or block untested combinations; it never silently substitutes a model.
@@ -320,6 +350,10 @@ A compatibility matrix in `config/` will declare tested combinations. The UI may
 | Writing provider fails or changes response shape | Preserve the local task/context, record safe error/usage where available, and retry or switch provider only with a new draft lineage |
 | Required skill fails or is ignored | Fail the creative job, preserve diagnostics without secrets, and require retry, compatible skill version, or explicit plan change |
 | Preview/proxy generation fails | Keep the verified original unchanged and rebuild only the derived review media locally |
+| Control asset unsupported or mismatched | Block before estimate/authorization and identify the incompatible control/profile |
+| Creative-QC service fails | Preserve the original take; mark assistive checks unavailable and require normal human review |
+| Adaptation benchmark regresses | Reject candidate and retain the reference-only workflow plus prior production pin |
+| Runtime requests a missing node/model | Quarantine and terminate; rebuild/test a new worker release outside production |
 
 ## 13. Architecture acceptance gates
 
@@ -337,3 +371,5 @@ Before production use, tests must prove:
 - A changed bible version marks the correct downstream set stale.
 - The pinned upstream can be updated and rolled back without editing it.
 - A production manifest can explain every approved frame and audio source.
+- A timed animatic can be rebuilt from its pinned inputs and changing timing marks only the correct downstream work stale.
+- Advanced control, layered-parallax, creative-QC, foley, and optional adaptation fixtures pass without runtime dependency installation or automated creative approval.

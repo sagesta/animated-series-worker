@@ -26,6 +26,9 @@ Structured redaction/support bundles, backups, restore, migration rollback, sing
 | Abandoned billable GPU | Local + remote watchdogs, hard deadline, startup reconciliation |
 | Duplicate worker after timeout | Idempotency tags and provider reconciliation |
 | Malicious/invalid workflow | Signed allowlisted workflow hash and worker capability check |
+| Runtime “install missing nodes” or model/package update | Manager/install routes disabled; immutable worker image and allowlisted cache hashes |
+| Poisoned adaptation dataset or cross-project LoRA | Project-scoped rights-approved dataset manifest, isolated paths/tokens, candidate benchmark and explicit promotion |
+| Assistive QC changes approval | Contract has no approval authority; authorization tests deny creative state mutation |
 | Path traversal or project crossover | Project-scoped roots/tokens, normalized paths, isolation tests |
 | Untrusted upstream/model update | Pins, checksums, source/license review, sandboxed tests, rollback |
 | Lost/corrupt local disk | Verified backups and restore drills |
@@ -60,6 +63,7 @@ Structured redaction/support bundles, backups, restore, migration rollback, sing
 - Job directories are worker/session/project scoped.
 - Workflow and model files are allowlisted by exact hash.
 - Worker refuses arbitrary shell commands, file paths, URLs, custom-node installation, or model downloads from a job.
+- ComfyUI Manager and dependency installers are absent or disabled in the production execution path. A missing dependency quarantines the worker instead of repairing it while billing is active.
 - Egress is restricted to required provider/model/cache endpoints during setup and disabled or allowlisted during production where feasible.
 
 ## 5. Supply-chain controls
@@ -75,6 +79,7 @@ For each worker release:
 - Sign the worker image and capability manifest.
 - Run GPU smoke and contract tests before promotion.
 - Keep the previous production image available for rollback.
+- Treat control preprocessors, creative-QC models, speech verifiers, audio-effects adapters, and adaptation trainers as separately allowlisted capability classes with exact hashes and least-privilege inputs.
 
 An upstream or model Git branch name such as `main` is not a production pin.
 
@@ -100,6 +105,8 @@ Every external or sensitive asset can carry:
 - Review/expiry date.
 
 Voice reference and recognizable likeness use requires explicit authorization. The release gate flags missing evidence; it cannot guarantee legal sufficiency. Commercial model licenses and provider terms are rechecked before public/monetized release.
+
+Pose/reference clips, adaptation datasets, generated/imported foley, and sound libraries also require project-scoped source/rights records. An adaptation dataset is never shared across projects or uploaded to a training job without an explicit preview and authorization.
 
 ## 7. Backup policy
 

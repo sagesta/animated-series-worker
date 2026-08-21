@@ -49,6 +49,12 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | `creative.generate/rewrite/checkContinuity` | Structured creative drafting with explicit source versions and skill plan |
 | `skill.inspect/install/enable/disable/remove/plan` | Permissioned external-skill lifecycle and routing preview |
 | `media.open/thumbnail/proxy/compare/playbackState` | Project-scoped local media review without arbitrary filesystem access |
+| `animatic.assemble/review/approve/version` | Timed storyboard/dialogue previsualization before bulk generation |
+| `controlPack.create/import/validate/bind` | Versioned pose/depth/edge/mask/motion/reference controls |
+| `layeredComposite.create/preview/approve` | Immutable-source layer separation and parallax recipe |
+| `creativeQc.run/disposition/list` | Assistive evidence warnings without approval authority |
+| `audioEffects.generate/import/review/approve` | Rights-aware ambience/effects/foley versions |
+| `adaptation.estimate/authorize/train/evaluate/promote` | Explicit project-scoped LoRA candidate lifecycle |
 | `support.bundle.create` | Redacted diagnostics |
 
 The renderer never receives a raw provider key. IPC validates caller, project scope, and payload schema.
@@ -96,9 +102,51 @@ interface VideoEngine {
   compile(job: NeutralVideoJob): CompiledWorkflow;
   compileRetake(job: NeutralRetakeJob): CompiledWorkflow;
 }
+
+interface AudioEffectsEngine {
+  capabilities(): EngineCapabilities;
+  validate(job: NeutralAudioEffectsJob): ValidationResult;
+  estimate(job: NeutralAudioEffectsJob, hardware: HardwareClass): Estimate;
+  compile(job: NeutralAudioEffectsJob): CompiledWorkflow;
+}
+
+interface AdaptationEngine {
+  capabilities(): EngineCapabilities;
+  validate(job: NeutralAdaptationJob): ValidationResult;
+  estimate(job: NeutralAdaptationJob, hardware: HardwareClass): Estimate;
+  compileTraining(job: NeutralAdaptationJob): CompiledWorkflow;
+  evaluate(candidate: AdaptationArtifact, benchmark: BenchmarkPack): EvaluationResult;
+}
 ```
 
-Neutral jobs contain narrative and media intent, not ComfyUI node IDs. Compiled workflows record the adapter and workflow version that produced them.
+Neutral jobs contain narrative and media intent, control roles, and immutable asset references—not ComfyUI node IDs. Compiled workflows record the adapter and workflow version that produced them. An unsupported control role, model/profile combination, runtime install request, or unapproved adaptation fails validation before estimation or authorization.
+
+### Control-pack contract
+
+```ts
+type ControlRole =
+  | 'start_frame'
+  | 'end_frame'
+  | 'pose'
+  | 'depth'
+  | 'edge'
+  | 'segmentation'
+  | 'mask'
+  | 'motion_track'
+  | 'reference_clip';
+
+interface NeutralControlBinding {
+  role: ControlRole;
+  assetVersionId: string;
+  sha256: string;
+  coordinateBasis?: { width: number; height: number };
+  frameRange?: { start: number; end: number };
+  strengthIntent?: 'subtle' | 'balanced' | 'strict';
+  rightsRecordId?: string;
+}
+```
+
+Control strengths are intent-level values in canonical data. The adapter resolves tested numerical node parameters and records them only in the compiled manifest.
 
 ## 4.1 Writing-provider and external-skill contracts
 
@@ -206,7 +254,8 @@ Base path: `/v1`. Transport must be encrypted and authenticated with a short-liv
   },
   "inputs": [
     { "role": "first_frame", "assetId": "01JIMG...", "sha256": "..." },
-    { "role": "locked_dialogue", "assetId": "01JAUD...", "sha256": "..." }
+    { "role": "locked_dialogue", "assetId": "01JAUD...", "sha256": "..." },
+    { "role": "motion_track", "assetId": "01JCTRL...", "sha256": "..." }
   ],
   "intent": {
     "durationFrames": 121,
@@ -215,7 +264,9 @@ Base path: `/v1`. Transport must be encrypted and authenticated with a short-liv
     "height": 544,
     "camera": "slow push toward the speaker",
     "action": "The character listens, answers calmly, then lowers their eyes.",
-    "continuity": ["CHAR-A-v3", "STYLE-v2", "LOC-KITCHEN-v4"]
+    "continuity": ["CHAR-A-v3", "STYLE-v2", "LOC-KITCHEN-v4"],
+    "animaticVersionId": "01JANIM...",
+    "controlPackVersionId": "01JCPACK..."
   },
   "output": {
     "container": "mp4",
@@ -256,6 +307,9 @@ Each artifact response and manifest provides:
 - Producing job ID and workflow/model versions.
 - Media probe: dimensions, duration, frames, frame rate, codec, audio streams, sample rate.
 - QC summary and warnings.
+- Creative-QC observations contain checker version, confidence, evidence frame/time references, and reviewer disposition but no approval state.
+- Audio-effects artifacts declare their independent timeline role and cannot claim a dialogue or music role.
+- Adaptation artifacts include dataset/base-model/training hashes and candidate evaluation; only promoted project-scoped versions can appear in production inputs.
 - Local download state and verified local path are recorded by the desktop, not trusted from the worker.
 
 Media artifacts additionally distinguish an immutable `original` from rebuildable `derivatives` such as thumbnails, poster frames, waveforms, and review proxies. Each derivative records its source hash, recipe/version, MIME type, dimensions/duration, and its own hash. The renderer receives only project-authorized `studio://media/...` handles, never arbitrary local paths.
@@ -313,4 +367,7 @@ Retry classifications: `never`, `automatic_safe`, `after_delay`, `after_reconcil
 - Writing-provider model/profile changes create new draft lineage; they never mutate an approved creative version in place.
 - External skills are compatible only when skill schema, execution class, permission grant, provider capability, and package hash match the recorded plan.
 - A required skill receipt, original artifact hash, or local media authorization mismatch fails closed.
+- A production worker rejects runtime dependency installation, unknown control roles, unsupported LTX profile/version combinations, and unapproved adaptation artifacts.
+- LTX-2.3-only or otherwise unvalidated Dub-It/Foley adapters cannot be silently compiled into the LTX-2.5 profile.
+- Creative-QC and ASR results cannot call asset approval, take approval, release lock, or destructive media methods.
 - Contract changes update this document, JSON Schema, generated types, contract tests, traceability, and changelog together.

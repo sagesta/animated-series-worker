@@ -54,20 +54,27 @@ Version 0.3.0 provides a working local Windows shell, isolated series/film proje
 | 16 | COMFY-004 output verification, retries, and QC handoff | 5–6 | Planned | Download atomically; verify size, MIME, hash, duration, resolution, frames, and audio; classify bounded retries | Corrupt, missing, partial, OOM, timeout, and repeated-creative-failure fixtures reach safe terminal states |
 | 17 | COMFY-005 update qualification and rollback | 5–6 | Planned | Test every ComfyUI/node/model/workflow update against the locked pack and retain the last working worker image | Candidate failure leaves production pin unchanged and rollback smoke passes |
 | 18 | IMAGE-001 character, style, environment, prop, and storyboard generation | 3–5 | Planned | Qwen generation/editing with reference packs, candidates, targeted corrections, locks, and lineage | Lead consistency board and scoped style-change gate pass |
-| 19 | VOICE-001 recurring voice and line-book production | 4–5 | Planned | Qwen3-TTS voice design/authorized reference, reusable conditioning, pronunciation, delivery, and line retakes | Two recurring voices pass identity and pronunciation benchmark |
-| 20 | VIDEO-001 LTX shot production | 6 | Planned | Draft/final I2V, A2V, keyframe, retake, and upscale profiles compiled from neutral shot plans | AT-020 and representative shot review pass |
-| 21 | LIPSYNC-001 dialogue timing and mouth repair | 4–6 | Planned | Preserve approved speech, select framing-aware sync method, detect timing mismatch, and offer targeted repair | Close, medium, profile, two-person, and off-screen dialogue pack passes human review |
-| 22 | COST-001 estimates, limits, reservations, and actual ledger | 5–8 | Planned | Explain and enforce GPU rate, storage, text API, retries, runtime, idle, and total batch limits | Forecast calibration and actual provider reconciliation pass |
-| 23 | PILOT-001 60–90 second vertical production | 6 | Planned | Produce one representative sequence from writing through approved image, voice, video, review, and local storage | End-to-end pilot passes without terminal or cloud-console use |
-| 24 | EDIT-001 deterministic rough-cut timeline | 7 | Planned | Assemble approved shots with holds, pans, loops, trims, transitions, and replace-safe timing | Timeline rebuild from manifests is deterministic |
-| 25 | SOUND-001 dialogue, ambience, effects, and music layers | 7 | Planned | Preserve source audio, create versioned mixes, and track rights/source information | Mix QC and rights-readiness checks pass |
-| 26 | CAPTION-001 captions and pronunciation timing | 7 | Planned | Generate editable SRT/VTT from approved script/line timings | Caption overlap, reading-speed, sync, and export tests pass |
-| 27 | EXPORT-001 YouTube delivery and editor handoff | 7 | Planned | Render the approved 1080p package, manifest, captions, QC report, and selected interchange format | AT-026–AT-028 pass and full human watch is signed |
-| 28 | MULTI-001 multiple-series and one-off-film isolation | 8 | In progress | Keep every project's characters, styles, voices, caches, costs, and outputs separate | Cross-project path/query/token/cache attack tests pass |
-| 29 | SCALE-001 two- and three-GPU scheduling | 8 | Planned | Run independent compatible jobs concurrently with deterministic result ordering and hard budget limits | One/two/three-worker benchmark has accurate combined GPU-hours and no collisions |
-| 30 | RECOVERY-001 full backup, restore, and disaster drill | 8 | Planned | Restore projects and approved assets without the GPU worker or network model cache | Clean-machine restore and interrupted-job recovery pass |
-| 31 | EPISODE-001 representative 20–35 minute validation episode | 8 | Planned | Prove continuity, cost, review load, storage, recovery, and export at the intended duration | Full episode meets creative, technical, recovery, and budget gates |
-| 32 | RELEASE-001 non-technical production release | 9 | Planned | Signed installer, first-run guidance, updates, rollback, help, privacy, licenses, and support | Clean-account/clean-machine usability and release rehearsal pass |
+| 19 | LAYER-001 layered 2D/parallax assets | 3–7 | Planned | Create/import foreground, subject, background, masks, occlusion, and safe camera bounds without altering the source | AT-044 passes with deterministic composite and repair |
+| 20 | ADAPT-001 optional project adaptation | 3–6 | Planned | Train/evaluate a project-scoped character/style LoRA only after the reference-only benchmark fails | AT-048/AT-049 plus dataset rights and rollback pass |
+| 21 | VOICE-001 recurring voice and line-book production | 4–5 | Planned | Qwen3-TTS voice design/authorized reference, reusable conditioning, pronunciation, delivery, and line retakes | Two recurring voices pass identity and pronunciation benchmark |
+| 22 | ANIMATIC-001 timed pacing preview | 4–7 | Planned | Versioned storyboard/dialogue/caption animatic with timing and dependency impact before bulk video | AT-042 passes without final video generation |
+| 23 | CONTROL-001 engine-neutral shot controls | 3–6 | Planned | Version pose/depth/edge/segmentation/mask/motion/reference assets and validate workflow support before spend | AT-043 and rights/isolation tests pass |
+| 24 | VIDEO-001 LTX shot production | 6 | Planned | Draft/final I2V, A2V, keyframe, retake, and upscale profiles compiled from neutral shot plans | AT-020 and representative shot review pass |
+| 25 | LTXADV-001 advanced LTX profiles | 0–6 | Planned | Benchmark compatible IC-LoRA/reference control, motion tracks, structural control, repair, DFR, temporal upscale, and multishot | AT-045 passes with exact pins, costs, fallbacks, and incompatible paths disabled |
+| 26 | LIPSYNC-001 dialogue timing and mouth repair | 4–6 | Planned | Preserve approved speech, select framing-aware sync method, detect timing mismatch, and offer targeted repair | Close, medium, profile, two-person, and off-screen dialogue pack passes human review |
+| 27 | CREATIVE-QC-001 assistive review evidence | 6–7 | Planned | Produce identity/continuity/flicker/motion/defect/lip/script-audio warnings with evidence and no approval authority | AT-046 plus authorization security tests pass |
+| 28 | COST-001 estimates, limits, reservations, and actual ledger | 5–8 | Planned | Explain and enforce GPU rate, storage, text API, retries, advanced passes, training, runtime, idle, and batch limits | Forecast calibration and actual provider reconciliation pass |
+| 29 | PILOT-001 60–90 second vertical production | 6 | Planned | Produce one representative sequence from writing through approved image, voice, animatic, controlled video, QC, review, and local storage | End-to-end pilot passes without terminal or cloud-console use |
+| 30 | EDIT-001 deterministic rough-cut timeline | 7 | Planned | Assemble approved shots with holds, pans, loops, trims, transitions, and replace-safe timing | Timeline rebuild from manifests is deterministic |
+| 31 | FOLEY-001 rights-aware synchronized effects | 0–7 | Planned | Import/generate separate ambience/effects/foley cues without changing dialogue or music | AT-047 passes and exact engine compatibility is recorded |
+| 32 | SOUND-001 dialogue, ambience, effects, and music layers | 7 | Planned | Preserve source audio, create versioned mixes, and track rights/source information | Mix QC and rights-readiness checks pass |
+| 33 | CAPTION-001 captions and pronunciation timing | 7 | Planned | Generate editable SRT/VTT from approved script/line timings; ASR is QC only | Caption overlap, reading-speed, sync, and export tests pass |
+| 34 | EXPORT-001 YouTube delivery and editor handoff | 7 | Planned | Render the approved 1080p package, manifest, captions, QC report, and selected interchange format | AT-026–AT-028 pass and full human watch is signed |
+| 35 | MULTI-001 multiple-series and one-off-film isolation | 8 | In progress | Keep every project's characters, styles, voices, controls, adaptations, caches, costs, and outputs separate | Cross-project path/query/token/cache/control/dataset attack tests pass |
+| 36 | SCALE-001 two- and three-GPU scheduling | 8 | Planned | Run independent compatible jobs concurrently with deterministic result ordering and hard budget limits | One/two/three-worker benchmark has accurate combined GPU-hours and no collisions |
+| 37 | RECOVERY-001 full backup, restore, and disaster drill | 8 | Planned | Restore projects and approved assets without the GPU worker or network model cache | Clean-machine restore and interrupted-job recovery pass |
+| 38 | EPISODE-001 representative 20–35 minute validation episode | 8 | Planned | Prove continuity, cost, review load, storage, recovery, and export at the intended duration | Full episode meets creative, technical, recovery, and budget gates |
+| 39 | RELEASE-001 non-technical production release | 9 | Planned | Signed installer, first-run guidance, updates, rollback, help, privacy, licenses, and support | Clean-account/clean-machine usability and release rehearsal pass |
 
 ## 6. ComfyUI reliability gate
 
@@ -81,6 +88,7 @@ ComfyUI is accepted for production only when all of the following are true:
 - An unchanged creative prompt is not retried indefinitely. The studio stops spending and asks for a changed approach or human decision.
 - A technically valid render is still only a take. It requires creative review before approval.
 - A failed update cannot replace the working production pin, and the previous worker image remains available for rollback.
+- Production never installs a missing node/model/package at runtime; optional advanced capabilities are disabled until their exact worker release passes.
 
 This gate makes workflow execution dependable; it does not claim that generative media becomes creatively perfect.
 
@@ -93,9 +101,9 @@ Unless a safety defect changes priority, implementation proceeds in this order:
 3. Implement UP-001/UP-002 and CONT-001 so creative facts and dependencies are durable before media multiplication.
 4. Build BENCH-001 and VIEW-001 before enabling paid generation.
 5. Build WORKER-001, the COMFY-001–COMFY-005 stack, and the remaining CLOUD-001 lifecycle behind locked spending gates.
-6. Prove IMAGE-001 and VOICE-001 before bulk LTX video.
-7. Complete VIDEO-001/LIPSYNC-001 and produce PILOT-001.
-8. Add editorial/export work, then concurrency, recovery, the full-length episode, and production release.
+6. Prove IMAGE-001, LAYER-001, VOICE-001, ANIMATIC-001, and needed CONTROL-001 paths before bulk LTX video; run ADAPT-001 only if the reference-only benchmark fails.
+7. Complete VIDEO-001/LTXADV-001/LIPSYNC-001/CREATIVE-QC-001 and produce PILOT-001.
+8. Add EDIT-001/FOLEY-001/SOUND-001/captions/export, then concurrency, recovery, the full-length episode, and production release.
 
 ## 8. Intake template for future additions
 
@@ -108,4 +116,3 @@ Every newly accepted item is recorded with:
 - Acceptance test or concrete exit proof.
 - Migration and rollback needs where applicable.
 - Documents and source assumptions that must change.
-

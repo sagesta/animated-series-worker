@@ -28,6 +28,7 @@ Maintain small, rights-safe fixtures:
 - Two visually distinct series to detect cross-project leakage.
 - Two recurring characters, one functional character, two voices, two locations, two props.
 - Silent, dialogue, two-person, hand/prop, camera, keyframe, retake, and lip-dub shots.
+- Timed animatic revisions; pose/depth/edge/mask/motion-track/reference-video controls; layered-parallax plates; DFR/temporal-upsample candidates; known creative-QC positives/negatives; foley; and an optional adaptation candidate.
 - Valid and intentionally invalid upstream JSON for every skill.
 - Corrupt/truncated media, wrong hashes, missing files, bad captions, clipped/silent audio.
 - Mock provider responses for success, timeout-after-create, rate change, capacity failure, termination delay, and billing discrepancy.
@@ -118,6 +119,14 @@ The suite contains 23 automated tests. AT-001 remains open because backup/restor
 - **AT-039:** Run locked story, character, and script benchmarks through each supported writing profile; record quality review, token usage, actual API cost, context selection, and continuity differences before choosing defaults.
 - **AT-040:** Interrupt preview and proxy creation, then prove originals and manifests remain unchanged and local review recovers by rebuilding derived media.
 - **AT-041:** Change a locked character from one visual style to another, approve a new multi-view consistency board, and apply it separately to a shot, episode, and future season. Verify identity anchors remain acceptable, prior outputs/bindings are unchanged, only the selected scope becomes stale/rebound, and the impact/cost preview is accurate.
+- **AT-042:** Assemble a timed animatic from locked storyboard frames and approved dialogue, revise one shot duration, and prove version history, total timing, captions, dependency impact, and deterministic rebuild remain correct without generating final video.
+- **AT-043:** Bind pose, depth, edge, mask, motion-track, start/end-frame, and reference-clip fixtures to neutral shots; compile supported roles exactly and reject unsupported, wrong-project, unapproved, rights-missing, dimension/time-base, and hash-mismatch controls before spend.
+- **AT-044:** Create a layered foreground/subject/background composite, detect a mask/occlusion defect, repair the derivative, and prove the approved source image is unchanged while deterministic parallax output and lineage remain valid.
+- **AT-045:** Benchmark compatible LTX control, reference-video, in/outpaint/relight, multishot, DFR, and temporal-upsample candidates. Cross-version or unavailable adapters must remain disabled; every accepted profile records quality, VRAM, runtime, cost, workflow/model/node hashes, and fallback.
+- **AT-046:** Inject known identity drift, continuity mismatch, flicker, bad motion, face/hand/text defects, lip-timing error, and script-versus-speech mismatch. Creative-QC reports the expected evidence while false-positive fixtures remain reviewable and no checker can approve/reject/repair/release media.
+- **AT-047:** Import and generate rights-safe ambience/foley fixtures, align them to picture, and prove dialogue/music masters remain byte-identical, source/model/rights lineage is complete, incompatible LTX adapters are blocked, and failed candidates do not overwrite approved cues.
+- **AT-048:** After the reference-only identity fixture fails its declared threshold, explicitly authorize a project-scoped adaptation, train/evaluate a candidate, reject a regressing fixture, promote a passing fixture prospectively, and roll back without changing historical manifests or another project.
+- **AT-049:** Submit production jobs that request ComfyUI Manager, Git, pip/package installation, model download, unknown nodes, or unpinned workflow changes; the worker rejects/quarantines them and the last production image remains unchanged and rollback-capable.
 
 ## 5. Human benchmark rubrics
 
@@ -173,6 +182,8 @@ Regression thresholds are set after Phase 0. A material regression blocks defaul
 - Malicious/corrupt upstream fixture isolation.
 - OpenAI/Anthropic key isolation, renderer/skill non-disclosure, task-context minimization, and provider-switch lineage tests.
 - External-skill quarantine, manifest/schema/signature state, permission scope, path/network denial, timeout/output limits, required-receipt enforcement, update/rollback, and project-isolation tests.
+- Production-runtime immutability tests for disabled Manager/install/update paths, pinned control/QC/audio/adaptation dependencies, and quarantine on missing nodes/models.
+- Control/reference/adaptation dataset rights and cross-project isolation tests plus denial of creative-QC approval mutations.
 - Local media protocol authorization, path escape, MIME/hash mismatch, corrupt media, preview spoofing, and immutable-original/proxy-rebuild tests.
 
 ## 8. Release evidence

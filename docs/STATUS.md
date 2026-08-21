@@ -23,6 +23,10 @@ Animated Series Studio now has a working local Windows desktop foundation and a 
 | RunPod automation | In progress — API v2 read-only account validation, aggregate active-Pod/rate warning, GPU catalogue prices, protected key storage, refresh/removal, and local default limits pass mocked tests; there is no billable method | Provision, execute, download, remote watchdog, purge, termination, and provider-cost test passes |
 | LTX video workflow | Not started | Draft, final, A2V, retake, and failure tests pass |
 | In-app image/audio/video review | Not started — the studio is locked as the creator interface and ComfyUI as a headless loopback engine | Secure local media protocol, immutable originals/proxies, gallery/player/A-B review, and AT-038/AT-040 pass |
+| Timed animatic and advanced shot controls | Not started — versioned animatic, control-pack, layered-parallax, and plain-language UX contracts are documented | AT-042–AT-045 pass with exact compatible workflow pins |
+| Creative-assist QC and speech verification | Not started — warning-only authority and evidence contracts are documented | AT-046 plus security denial of automated approval pass |
+| Ambience/effects/foley generation | Not started — separate rights-aware audio-effects contract is documented; current LTX Foley compatibility is not assumed | AT-047 and exact engine/license compatibility pass |
+| Optional character/style adaptation | Not started — project-scoped benchmark-gated LoRA lifecycle is documented | AT-048/AT-049 plus dataset-rights and rollback evidence pass |
 | Rough-cut editor and export | Not started | YouTube-ready technical QC passes |
 | Multiple series isolation | In progress — identity-scoped project folders and same-title isolation tests pass locally | Asset/query/token/cache leakage and concurrent-worker tests |
 | Production-ready 20–35 minute episode | Not started | Full pilot episode meets quality, recovery, and budget gates |
@@ -39,7 +43,7 @@ No row may be changed to “Complete” solely because code was written. The nam
 - A user-scoped silent upgrade over the development machine's version-0.2.0 installation exited successfully; the installed executable reports product version `0.3.0.0`, launches, and exposes the version-0.3.0 local/no-spend shell. This is an upgrade smoke on one machine, not clean-machine release evidence.
 - A final packaged-window accessibility smoke confirmed version 0.3.0, the explicit local/no-spend home state, and locked project-dependent generation navigation. Renderer tests cover the complete RunPod Settings flow; a fresh pixel-level Settings review could not be captured while the Windows desktop was locked. An earlier packaged pass covered the 1429×915 home layout and four-step series/film wizard; no production was created during either pass.
 
-The OpenAI/Anthropic, external-skill, ComfyUI, and media-viewing additions in the current documents are design decisions only; no new provider credential, text request, skill execution, media job, or charge was created by documenting them.
+The OpenAI/Anthropic, external-skill, ComfyUI, media-viewing, animatic/control, layered-parallax, advanced-LTX, creative-QC, foley, and adaptation additions in the current documents are design decisions only; no new provider credential, text request, skill execution, media/training job, or charge was created by documenting them.
 
 This is development-machine and mocked-provider evidence only. It does not satisfy the Phase 1 clean-machine credential-persistence, backup/restore, migration-rollback, or production-signing gates, and it does not satisfy the cloud worker/termination gate.
 The test installer also uses Electron's default icon; branded icon assets remain release work.

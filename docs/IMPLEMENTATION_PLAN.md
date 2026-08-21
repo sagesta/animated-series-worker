@@ -41,6 +41,10 @@ flowchart LR
 6. OpenAI/Anthropic story, character, long-form script, structured-output, context, and cost benchmark.
 7. Declarative external-skill routing/required-receipt spike plus higher-risk MCP/tool/custom-node threat review.
 8. Headless ComfyUI progress/output integration and local image/audio/video/proxy playback spike.
+9. Timed animatic rebuild/timing-impact spike plus layered Qwen-image separation/parallax evaluation.
+10. LTX-2.5 pose/depth/edge/mask, motion-track, reference-video, DFR, temporal-upsample, in/outpaint/relight, and multishot compatibility/cost spike.
+11. Creative-assist identity/flicker/motion/lip/script-audio checker spike with human-reviewed positive/negative fixtures.
+12. Rights-safe audio-effects/Foley spike and an optional project-adaptation spike only if reference-only consistency fails.
 
 ### Exit gate
 
@@ -115,6 +119,7 @@ flowchart LR
 - Add candidate comparison, targeted edit, image metadata, hashes, and manifests.
 - Implement required identity-pack checklist and consistency test pack.
 - Add visual board, continuity table, and source/reference binding.
+- Implement versioned control assets and layered foreground/subject/background composites with deterministic parallax preview.
 - Add stale propagation from bible changes.
 
 ### Exit gate
@@ -135,6 +140,7 @@ flowchart LR
 - Store original WAV and derived normalized audio separately.
 - Implement line review/retake, timing, waveform preview, and caption cue source.
 - Add voice/line dependency and stale propagation.
+- Implement timed animatic assembly/review/versioning from storyboard frames, approved/temporary audio, captions, and shot durations.
 
 ### Exit gate
 
@@ -167,8 +173,9 @@ flowchart LR
 
 ### Build
 
-- Implement neutral video jobs and LTX compilation for draft/final I2V, A2V, keyframe, retake, lip-dub, and upscale profiles selected in Phase 0.
+- Implement neutral video jobs and LTX compilation for draft/final I2V, A2V, keyframe, retake, lip-dub, upscale, benchmark-approved structural/motion/reference control, DFR, temporal-upsample, in/outpaint/relight, and multishot profiles selected in Phase 0.
 - Implement audio-preservation and A/V timing checks.
+- Implement creative-assist identity/continuity/flicker/motion/face/hand/text/lip/script-audio evidence without approval authority.
 - Implement dependency-aware queue, estimates, budget reservations, retry classes, and changed-hypothesis retake notes.
 - Implement shot/take states, A/B review, quality tags, approvals, rejection, targeted repair, and manifest inspector.
 - Implement production-method fallbacks and retry stop rules.
@@ -188,6 +195,7 @@ flowchart LR
 - Implement deterministic rough-cut timeline from approved shot order/duration.
 - Add holds, pan/zoom, simple parallax, loops, safe trim/replace, transitions, and title cards.
 - Add dialogue, ambience, effects, music layers and derived mix.
+- Implement the rights-aware audio-effects adapter and separate synchronized foley/ambience cue review; keep incompatible LTX adapters disabled.
 - Generate/adjust SRT/VTT from approved line timings.
 - Implement FFmpeg render profiles and automated technical QC.
 - Implement final human checklist, rights readiness, release lock, export package, and optional editor handoff selected in Phase 0/O-005.
@@ -296,6 +304,13 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 | 15 | `COMFY-003` headless execution bridge | Not started | Plain-language queue/progress/preview/error states |
 | 16 | `COMFY-004` output verification/retry/QC | Not started | Corrupt or unsafe output and wasteful retry paths fail safely |
 | 17 | `COMFY-005` update qualification/rollback | Not started | Failed candidate cannot replace the last working production pin |
-| 18 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
-| 19 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
-| 20 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |
+| 18 | `ANIMATIC-001` timed pacing preview | Not started | Versioned storyboard/dialogue animatic and timing-impact gate |
+| 19 | `CONTROL-001` engine-neutral shot controls | Not started | Pose/depth/edge/mask/motion/reference controls validated before spend |
+| 20 | `LAYER-001` layered parallax assets | Not started | Immutable-source foreground/subject/background composites |
+| 21 | `LTXADV-001` advanced LTX profiles | Not started | Compatible control, DFR, temporal, repair, and multishot benchmark |
+| 22 | `CREATIVE-QC-001` assistive review evidence | Not started | Identity/flicker/motion/lip/script-audio warnings without auto-approval |
+| 23 | `FOLEY-001` rights-aware sound effects | Not started | Separate synchronized ambience/effects/foley assets |
+| 24 | `ADAPT-001` optional project adaptation | Not started | Benchmark-gated character/style LoRA with dataset rights and rollback |
+| 25 | `MEDIA-001` image + voice vertical slice | Not started | Locked character and voice assets |
+| 26 | `VIDEO-001` LTX vertical slice | Not started | One reviewed dialogue/motion shot |
+| 27 | `PILOT-001` 60–90 second production | Not started | Full end-to-end proof |

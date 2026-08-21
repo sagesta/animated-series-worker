@@ -52,6 +52,7 @@ The versioned image contains:
 - Worker gateway and watchdog.
 - ComfyUI and pinned custom nodes.
 - LTX/Qwen runtime dependencies.
+- Pinned control preprocessors, advanced LTX adapters, creative-QC helpers, and any benchmark-approved audio-effects/adaptation dependencies.
 - FFmpeg/ffprobe and QC tools.
 - Workflow pack and capability manifest.
 
@@ -64,6 +65,7 @@ The setup finishes only after it proves:
 - A compatible worker can be created.
 - Gateway authentication and capability checks succeed.
 - A tiny smoke job returns and verifies locally.
+- Every promoted control/audio/adaptation capability declares and passes its own small smoke fixture; unavailable optional capabilities remain visibly disabled.
 - The remote watchdog has the correct hard deadline.
 - Temporary project data can be purged.
 - Provider termination returns a receipt and later reconciliation confirms no active worker.
@@ -137,6 +139,7 @@ stateDiagram-v2
 
 - Authenticate gateway with a short-lived token.
 - Compare worker image, GPU, disk, mount, model hashes, workflow hashes, schemas, and watchdog deadline.
+- Compare the declared control roles, advanced LTX profiles, QC checkers, audio-effects/adaptation capabilities, and exact node/package hashes.
 - Reject and terminate on any required mismatch.
 - Perform no large upload before readiness passes.
 
@@ -147,6 +150,7 @@ stateDiagram-v2
 - Persist progress and provider cost snapshots.
 - Continue within the authorized batch only.
 - Reject unplanned jobs or jobs after budget/deadline expiry.
+- Reject jobs that request runtime installation, arbitrary downloads, Git/package operations, unknown control roles, unapproved adaptations, or unvalidated cross-version model adapters.
 
 ### Drain and sync
 
@@ -223,6 +227,8 @@ Start with one GPU during pilot. Enable two or three only after job recovery, co
 | Create request timeout | Reconcile by tags/idempotency | “Checking whether a machine was already created before retrying.” |
 | Worker capability mismatch | Quarantine and terminate | “Prepared studio did not match the tested version; no generation began.” |
 | Model cache missing/corrupt | Refuse batch; optionally repair within approved setup action | Explain expected time/cost before cache repair |
+| Workflow requests missing/unpinned node | Quarantine and terminate; do not install it during production | “This prepared studio is incomplete. No workflow update will be installed while billing is active.” |
+| Advanced control/profile unsupported | Refuse the affected job before generation | Offer a tested simpler method or a separately approved worker release |
 | Job out of memory | Stop retry loop; record hardware/workflow failure | Offer compatible larger GPU or draft workflow |
 | Desktop disconnect | Worker lease/watchdog continues within bound | Reconnect and reconcile; do not create replacement blindly |
 | Download interrupted | Resume within sync grace | Keep user informed of active billing and stop deadline |

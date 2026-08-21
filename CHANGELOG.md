@@ -4,6 +4,23 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-21 (full rich animation workflow adopted)
+
+- Added locked requirements for versioned timed animatics, engine-neutral pose/depth/edge/segmentation/mask/motion/reference control packs, layered 2D parallax assets, and explicit pre-generation timing/control approval.
+- Expanded the LTX plan with benchmark-gated IC-LoRA/reference control, motion tracks, structural control, in/outpainting, relighting, native multishot, diffusion-fidelity rendering, and temporal upsampling.
+- Added warning-only creative QC for identity/continuity/flicker/motion/defects/lip timing/script-audio comparison, a separate rights-aware ambience/effects/foley contract, and optional project-scoped character/style adaptation with dataset rights, benchmark promotion, and rollback.
+- Locked production worker immutability: ComfyUI Manager, arbitrary downloads, Git, package installation, model changes, and missing-node repair cannot run during an authorized production session.
+- Recorded current compatibility evidence that official Dub-It and Foley adapters are not assumed compatible with the selected LTX-2.5 baseline until exact benchmarks pass.
+- Added acceptance tests AT-042–AT-049 and work packages ANIMATIC-001, CONTROL-001, LAYER-001, LTXADV-001, CREATIVE-QC-001, FOLEY-001, and ADAPT-001.
+
+User impact: the planned studio now covers richer 2D/3D-look previsualization, explicit movement/structure guidance, high-fidelity final passes, synchronized sound, and assisted defect finding while keeping the experience inside the non-technical desktop application. These capabilities remain locked and unimplemented in version 0.3.0.
+
+Migration impact: none. No project schema, application data, provider resource, model, workflow, training dataset, or media file changed.
+
+Documentation impact: PRD, architecture, decisions, domain/contracts, UX, production/media/GPU/security/cost workflows, tests, traceability, sources, status, glossary, implementation plan, master backlog, README, and changelog now carry the accepted behavior and compatibility boundaries.
+
+Rollback: revert this documentation change. Version 0.3.0 application behavior, credentials, projects, and pinned upstream checkout remain unchanged.
+
 ### Changed — 2026-08-21 (living build backlog and ComfyUI reliability gate)
 
 - Added one master build ledger that retains every accepted capability, production risk, fix, dependency, status, and exit proof instead of relying only on broad phases.

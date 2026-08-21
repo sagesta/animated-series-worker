@@ -17,7 +17,7 @@ Primary navigation:
 1. **Home** — projects, blocked decisions, active work, spend.
 2. **Story** — outline, acts/sequences, scripts, episode status.
 3. **World** — style, characters, voices, locations, props, wardrobe.
-4. **Storyboard** — scenes, shots, timing, production method.
+4. **Storyboard & Animatic** — scenes, shots, timing, production method, control packs, and pacing preview.
 5. **Generate** — ready queue, estimates, cloud session.
 6. **Review** — images, voice lines, video takes, retakes.
 7. **Edit & Export** — timeline, sound, captions, QC, delivery.
@@ -175,6 +175,26 @@ The app recommends inexpensive production methods where valid:
 
 Recommendations never silently change story or approval state.
 
+### Timed animatic
+
+The creator selects **Build pacing preview** after storyboard frames and dialogue timing are available. The studio assembles a low-cost animatic with shot order, captions, approved dialogue or visibly labelled temporary audio, and simple hold/pan/zoom/parallax motion.
+
+The screen shows total duration, scene/shot timing, dialogue overruns, silent gaps, missing coverage, and versions affected by a timing change. Actions are **Approve timing**, **Adjust shot**, **Return to script**, and **Create new animatic version**. Animatic approval does not approve final video.
+
+### Shot control panel
+
+The default panel uses plain choices:
+
+- Start image and optional end image.
+- Character pose or body direction.
+- Foreground/background depth.
+- Area that may change or must remain fixed.
+- Object/character movement path.
+- Reference motion clip.
+- Layered parallax.
+
+The UI creates or imports the underlying pose/depth/edge/segmentation/mask/motion assets and previews them over the shot. It shows unsupported combinations before cost approval. Numerical node strengths and ComfyUI graph fields remain in an optional expert drawer.
+
 ## 7. Generate screen
 
 Before a batch starts, show:
@@ -187,6 +207,8 @@ Hard spending limit:     user-selected
 Maximum running GPUs:    1–3
 Automatic shutdown:      after queue + sync + idle grace
 Missing approvals:       0
+Unsupported controls:    0
+Animatic timing locked:  yes
 ```
 
 Primary button: **Start generation**.
@@ -212,6 +234,7 @@ A persistent **Stop GPU now** button explains whether the current partial output
 - During generation, low-resolution progress previews are labelled `Preview — not downloaded master`; the final take appears only after local integrity and media checks pass.
 - A/B comparison synchronized to the same audio and time.
 - Plain review tags: identity, movement, framing, continuity, mouth, hands, artifacts, audio, other.
+- Assistive warnings may point to identity drift, flicker, unusual motion, dialogue mismatch, or lip timing with evidence frames/times and confidence. They are labelled `Check suggested` and never approve or reject automatically.
 - Actions: `Approve`, `Reject`, `Retake`, `Repair mouth`, `Repair section`, `Return to storyboard`.
 - Retake form defaults to preserving approved inputs and asks what should change.
 - Cost and technical data are in a collapsible panel.
@@ -227,6 +250,7 @@ The timeline initially assembles itself from approved shot order. The creator ca
 - Replace a take.
 - Adjust shot duration where the production method permits.
 - Move dialogue, ambience, effects, and music levels.
+- Generate, import, review, and place independent ambience/foley/effect cues without altering dialogue masters.
 - Review captions.
 - Insert title/end cards.
 
@@ -278,5 +302,6 @@ A representative non-technical user must be able to:
 - Restore a test backup.
 - Understand a stale-dependency impact message.
 - Connect or skip a writing provider, attach a fixture skill, verify that it was used, and review image/audio/video entirely inside the studio.
+- Build and revise a timed animatic, attach a supported motion/control pack, understand an assistive QC warning, and confirm that no warning approved a take automatically.
 
 No facilitator may use a terminal or cloud console during the acceptance session.

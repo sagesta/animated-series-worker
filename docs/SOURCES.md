@@ -35,6 +35,8 @@ Design consequence: the studio uses provider-neutral writing tasks with OpenAI a
 | Hardware | Current open-source requirements list 32GB minimum VRAM and recommend A100/H100 80GB class hardware plus larger storage headroom. | [LTX system requirements](https://docs.ltx.io/open-source-model/getting-started/system-requirements) |
 | Pipelines | Official pipelines include production/draft text/image-to-video, audio+image-to-video, keyframes, retake, and lip-dub/re-voice paths. | [LTX pipelines overview](https://github.com/Lightricks/LTX-2/blob/main/packages/ltx-pipelines/README.md), [pipeline details](https://github.com/Lightricks/LTX-2/blob/main/packages/ltx-pipelines/docs/pipelines.md) |
 | Audio conditioning | The A2V pipeline is documented for video generation conditioned on input audio and optional image conditioning. | [LTX PyTorch API](https://docs.ltx.io/open-source-model/integration-tools/pytorch-api) |
+| Advanced control/fidelity | Current LTX documentation describes IC-LoRA reference/control inputs, sparse motion tracks, structural control signals, in/outpainting, relight, native multishot, Diffusion Fidelity Rendering, and optional temporal upsampling. Exact adapters still require compatibility benchmarks. | [LTX IC-LoRA](https://docs.ltx.io/open-source-model/usage-guides/ic-lo-ra), [motion control](https://docs.ltx.io/open-source-model/feature-guides/structural-control/motion-control), [pipeline details](https://github.com/Lightricks/LTX-2/blob/main/packages/ltx-pipelines/docs/pipelines.md) |
+| Dub-It/Foley compatibility | Current official Dub-It and Foley guides state those adapters are validated on LTX-2.3 while LTX-2.5 support is in development. They therefore cannot be assumed compatible with the version-1 LTX-2.5 pin. | [Dub-It beta](https://docs.ltx.io/open-source-model/feature-guides/audio/dub-it-beta), [video-to-audio Foley](https://docs.ltx.io/open-source-model/feature-guides/audio/video-to-audio-foley) |
 | License | The current LTX-2 community license and model card include commercial-use conditions tied to organization revenue; this must be rechecked for the user's entity and exact model files before monetized release. | [LTX-2 license](https://github.com/Lightricks/LTX-2/blob/main/LICENSE.md), [LTX-2.5 model card](https://huggingface.co/Lightricks/LTX-2.5) |
 
 Design consequence: version 1 uses only LTX video, but pins exact open-source model/workflow versions and requires a license check. Hosted LTX API capabilities are not assumed to exist identically in the open-source worker.
@@ -44,6 +46,7 @@ Design consequence: version 1 uses only LTX video, but pins exact open-source mo
 | Topic | Current verified fact used by the design | Source |
 | --- | --- | --- |
 | Qwen-Image | Official repository documents image generation/editing, multi-image input in later edit releases, improved character consistency, native ComfyUI support, and Apache-2.0 licensing. | [Qwen-Image official repository](https://github.com/QwenLM/Qwen-Image) |
+| Qwen layered images | The current official Qwen-Image repository includes Qwen-Image-Layered among the released image assets. Its suitability for production layer separation/parallax still requires the locked benchmark. | [Qwen-Image official repository](https://github.com/QwenLM/Qwen-Image) |
 | Qwen-Image ComfyUI | Official ComfyUI documentation includes a native Qwen-Image workflow and identifies the open model/license. | [ComfyUI Qwen-Image tutorial source](https://github.com/Comfy-Org/docs/blob/main/tutorials/image/qwen/qwen-image.mdx) |
 | Qwen3-TTS | Official repository documents 0.6B/1.7B models, voice design, custom voices, reusable voice-clone prompts, multiple languages, Python 3.12 guidance, and Apache-2.0 licensing. | [Qwen3-TTS official repository](https://github.com/QwenLM/Qwen3-TTS) |
 
@@ -55,6 +58,7 @@ Design consequence: Qwen families are initial defaults behind adapters. Human be
 | --- | --- | --- |
 | Workflow server | ComfyUI can run headlessly without opening a browser; its self-hosted server accepts workflows, uploads/downloads files, and communicates status, progress, errors, previews, and completed output through HTTP/WebSocket mechanisms. | [ComfyUI server overview](https://docs.comfy.org/development/comfyui-server/comms_overview), [server messages](https://docs.comfy.org/development/comfyui-server/comms_messages) |
 | Workflow format | Official documentation describes API-format workflows as JSON node graphs and asynchronous job handling. | [ComfyUI API overview](https://docs.comfy.org/development/cloud/overview) |
+| Custom-node management risk | ComfyUI Manager can install missing node packs, while official troubleshooting documents dependency-version and frontend conflicts. The production design therefore permits controlled build-time installation only, not runtime repair. | [ComfyUI Manager node management](https://docs.comfy.org/manager/pack-management), [custom-node troubleshooting](https://docs.comfy.org/troubleshooting/custom-node-issues) |
 
 Design consequence: ComfyUI is a headless, loopback-only worker engine behind the studio gateway; its browser graph and native public/cloud API are not the creator interface or studio security boundary. Verified outputs are downloaded to the local project and reviewed through the studio's own gallery/player.
 
@@ -81,6 +85,12 @@ Design consequence: version 0.3.0 can validate/store/refresh/remove an API key a
 
 Design consequence: default delivery is a versioned 1080p/24fps SDR H.264/AAC profile with technical QC. The platform settings are rechecked before release changes.
 
+## FFmpeg encoding
+
+| Topic | Current verified fact used by the design | Source |
+| --- | --- | --- |
+| CRF | FFmpeg documents CRF as an encoding quality/file-size control. It is not treated as a generative-motion control or a way to repair model motion. | [FFmpeg codec documentation](https://www.ffmpeg.org/ffmpeg-codecs.html) |
+
 ## Upstream skills
 
 | Topic | Current verified fact used by the design | Source |
@@ -101,3 +111,4 @@ Local inspection at the pin established the H3-specific storyboard, 2–5 second
 - Current YouTube delivery/policy requirements before publishing.
 - Current OpenAI/Anthropic model availability, context behavior, pricing, data handling, and skill/tool features before provider implementation or default changes.
 - External Agent Skill/MCP package compatibility and security requirements before non-declarative skill classes are enabled.
+- Exact speech-verification/ASR engine, creative-QC models/thresholds, layer-separation implementation, LTX advanced adapter compatibility, Foley engine, and project-adaptation training recipe before those features are enabled.

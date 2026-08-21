@@ -15,6 +15,8 @@ This repository now contains a working local desktop foundation and the first sa
 - OpenAI Responses and Anthropic Messages are the first bring-your-own-key writing providers behind a neutral creative-writing interface; text API usage is billed separately from RunPod GPU usage.
 - External creative skills are versioned and permissioned. The studio routes applicable enabled skills and records exact execution receipts, so an attached required skill cannot be silently ignored.
 - Images, audio, and videos are reviewed inside Animated Series Studio. ComfyUI runs headlessly as an internal worker engine rather than the required viewing interface.
+- Timed animatics, pose/depth/edge/mask/motion controls, layered parallax, advanced benchmark-approved LTX profiles, warning-only creative QC, separate foley, and optional project-scoped adaptation are part of the planned rich production workflow.
+- Production workers never repair themselves with “Install Missing Nodes”; exact dependencies are built, tested, pinned, and rollback-capable before billing begins.
 - The upstream `shuohao-skills` project is a pinned Git submodule under `vendor/` and is never edited in place.
 - A 20–35 minute episode is assembled from approved generated motion, lip-synced dialogue, reusable loops, held frames, pans, reaction shots, sound, and editorial timing. The system does not assume that every second must be newly generated video.
 
@@ -25,6 +27,7 @@ This repository now contains a working local desktop foundation and the first sa
 3. [System architecture](docs/ARCHITECTURE.md)
 4. [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 5. [Production workflow](docs/PRODUCTION_WORKFLOW.md)
+6. [Master build backlog](docs/BUILD_BACKLOG.md)
 
 ## Repository boundary
 
@@ -78,5 +81,6 @@ node scripts/check-docs.mjs
 | Writing providers and external skills | OpenAI/Anthropic and enforced skill-runtime architecture documented; not implemented |
 | Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |
 | In-app media review | Gallery/player/proxy architecture documented; not implemented |
+| Animatic, advanced controls, creative QC, foley, and optional adaptation | Fully specified and test-mapped; not implemented |
 | LTX/Qwen workflows | Not benchmarked or implemented |
 | Production readiness | Not achieved |

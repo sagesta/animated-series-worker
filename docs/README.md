@@ -62,3 +62,5 @@ Do not quietly choose one. Record the resolution in `CHANGELOG.md` and update ev
 - Voice engine: Qwen3-TTS initial baseline, behind an adapter.
 - GPU provider: RunPod first, behind an adapter.
 - Editor: automatic rough assembly and export; optional handoff to an external editor.
+- Previsualization/control: versioned timed animatics, engine-neutral control packs, layered parallax, advanced benchmark-approved LTX profiles, warning-only creative QC, and separate rights-aware foley.
+- Production workers are immutable: no runtime “install missing nodes,” model, or package updates.
