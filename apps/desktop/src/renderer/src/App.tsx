@@ -14,6 +14,7 @@ import { CloudSetup } from './CloudSetup'
 import { CreativeDirectionPanel } from './CreativeDirectionPanel'
 import { CreativeRoom } from './CreativeRoom'
 import { ProjectWizard } from './ProjectWizard'
+import { SkillSetup } from './SkillSetup'
 import { WritingSetup } from './WritingSetup'
 
 type Page = 'home' | 'story' | 'world' | 'storyboard' | 'generate' | 'review' | 'edit' | 'settings'
@@ -42,7 +43,7 @@ const pageCopy: Record<
 > = {
   story: {
     eyebrow: 'Creative room',
-    title: 'Shape the story with protected GPT or Claude connections',
+    title: 'Shape the story with protected GPT, Claude, or Gemini connections',
     description:
       'Create locally stored character, world, outline, scene, dialogue, and continuity proposals.',
     next: 'The first guided writing workflow is ready.'
@@ -778,6 +779,7 @@ function Settings({
   status,
   cloudStatus,
   writingStatus,
+  projects,
   projectIds,
   onCloudStatus,
   onWritingStatus,
@@ -786,6 +788,7 @@ function Settings({
   status?: SystemStatus
   cloudStatus?: CloudConnectionStatus
   writingStatus?: WritingSettingsStatus
+  projects: ProjectSummary[]
   projectIds: ReadonlySet<string>
   onCloudStatus(status: CloudConnectionStatus): void
   onWritingStatus(status: WritingSettingsStatus): void
@@ -804,13 +807,23 @@ function Settings({
 
       <section className="settings-section">
         <div>
-          <h2>GPT and Claude writing</h2>
+          <h2>GPT, Claude, and Gemini writing</h2>
           <p>
-            Connect either service, see the models available to your own account, and choose what
-            the Story room should use.
+            Connect a service, see the models available to your own account, and choose what the
+            Story room should use.
           </p>
         </div>
         <WritingSetup status={writingStatus} onStatus={onWritingStatus} />
+      </section>
+
+      <section className="settings-section">
+        <div>
+          <h2>Creative skills</h2>
+          <p>
+            Add reviewed writing guidance and choose exactly which production may use each skill.
+          </p>
+        </div>
+        <SkillSetup projects={projects} />
       </section>
 
       <section className="settings-section">
@@ -996,6 +1009,7 @@ export function App(): JSX.Element {
           status={status}
           cloudStatus={cloudStatus}
           writingStatus={writingStatus}
+          projects={projects}
           projectIds={projectIds}
           onCloudStatus={setCloudStatus}
           onWritingStatus={setWritingStatus}

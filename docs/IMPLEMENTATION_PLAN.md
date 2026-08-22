@@ -56,7 +56,7 @@ flowchart LR
 
 ## 4. Phase 1 — local application foundation
 
-### Current checkpoint — version 0.7.0
+### Current checkpoint — version 0.8.0
 
 - `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, shared required markers/live constraints/keyboard correction summaries, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
 - `DATA-001` is in progress: series/film create, list, open, current schema-2/backward-compatible schema-1 manifests, a guided v1→v2 preview with automatic verified backup and rollback at four injected failure points, identity-scoped folders, atomic manifest and sidecar writes/hashes, per-project SQLite, rebuildable catalog, startup reconciliation, verified full backup/restore, tamper refusal, and live/stale single-writer handling are implemented and tested.
@@ -313,7 +313,7 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 | 3 | `SEC-001` credential/logging | In progress — separate protected RunPod/OpenAI/Anthropic/Gemini vaults plus local redacted diagnostics/support file pass; broader provider/worker/skill and packaged scans remain | Vault adapter and redacted diagnostics |
 | 3A | `DIRECTION-001` audience and creative compass | In progress — guided create/revise, immutable project sidecars, old-project compatibility, and exact writing lineage pass | Upstream/canon/media/voice/video/release compilation plus impact preview and AT-059 |
 | 4 | `WRITE-001` provider-neutral creative writing | In progress — three-provider setup, controlled catalogue, structured adapters, context preview, explicit approval, local proposal lineage, and mocked tests pass | Live provider switching/benchmark/cost evidence plus canon promotion and full AT-036/AT-039 |
-| 5 | `SKILL-001` external-skill runtime | Not started | Safe install, routing, required execution, validation, and receipts |
+| 5 | `SKILL-001` external-skill runtime | In progress — declarative JSON quarantine/hash/install, per-project grants, visible task plan, stale-plan refusal, provider instruction compilation, required-section validation, update grant revocation, removal preservation, exact receipts, and local tests pass | Signed-package/update-diff, richer schema, future tool/MCP isolation/timeouts, packaged scan, and complete AT-037 |
 | 6 | `UP-001` adapter process runner | Not started | Pinned version and validation contract |
 | 7 | `UP-002` normalized domain import | Not started | Long-form project facts and source provenance |
 | 8 | `CONT-001` versions/dependencies | Not started | Locks, impact, stale propagation |

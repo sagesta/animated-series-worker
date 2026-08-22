@@ -98,7 +98,7 @@ interface GPUProvider {
 
 `createLease` must tag the provider resource with project, studio session, idempotency key, hard deadline, and worker-image version. A timeout is reconciled by tag before retry.
 
-Version 0.7.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
+Version 0.8.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
 
 ## 4. Media-engine interfaces
 
@@ -172,7 +172,9 @@ Control strengths are intent-level values in canonical data. The adapter resolve
 
 ## 4.1 Writing-provider and external-skill contracts
 
-Current version 0.7.0 implements the safe first subset: `develop_character`, `build_world`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, and `check_continuity`; balanced/deep/custom depth; exact manifest plus optional creative-direction context preview/hash; structured output through OpenAI Responses, Anthropic Messages, and Gemini GenerateContent; and immutable schema-2 proposal records with provider/model/profile, source versions, token usage, request ID, and dollar-cost state `not-calculated`. Schema-1 proposal records remain readable. The release-controlled catalogue is intersected with each key's live model list before selection. The implemented request requires `paidConfirmed: true`. Renderer length/selection/confirmation guidance blocks incomplete calls before IPC, while the trusted service still enforces the schema and confirmation. The current proposal contract requires empty skill-plan/skill-use arrays because the external-skill runtime is still locked. Story/season/board compilation, estimate/actual dollar profiles, skill execution, selective canon promotion, and approved creative versions remain the target contract below, not implemented behavior.
+Current version 0.8.0 implements `develop_character`, `build_world`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, and `check_continuity`; balanced/deep/custom depth; exact manifest plus optional creative-direction context preview/hash; structured output through OpenAI Responses, Anthropic Messages, and Gemini GenerateContent; and immutable schema-3 proposal records with provider/model/profile, source versions, token usage, request ID, dollar-cost state `not-calculated`, exact skill-plan hash, plan items, and skill receipts. Schema-1 and schema-2 proposal records remain readable. The release-controlled catalogue is intersected with each key's live model list before selection. The implemented request requires `paidConfirmed: true` and the SHA-256 of the visible current skill plan. Renderer guidance blocks incomplete calls before IPC, while the trusted service still enforces request, context, plan freshness, required skills, and proposal schemas.
+
+The version-0.8 skill installer accepts only a strict declarative JSON package up to 256 KB. It quarantines and hashes the file before activation, never executes package content, installs with zero project grants, and stores project enablement outside canonical project data. The ready plan is capped at four matching skills. Only `read-project` and `read-creative-direction` are implemented; `read-writing-history`, executable/local/remote tools, MCP, custom nodes, and network access remain blocked. A new version revokes grants. General signature verification and arbitrary JSON-Schema evaluation remain planned; the current two schema contracts are bounded and deterministic.
 
 The current creative-direction write contract contains `projectId`, `expectedProfileId` (or `null` for an older project with no profile), and the complete validated direction. This optimistic check refuses a stale overview before appending the next revision. The writing context selection contains `includeProjectManifest` and `includeCreativeDirection`; old schema-1 writing records retain their original two-field context selection.
 
@@ -191,33 +193,50 @@ type WritingTaskKind =
 interface WritingProvider {
   validateAccount(): Promise<OpaqueWritingAccountStatus>;
   capabilities(): WritingCapabilities;
-  estimate(task: NeutralWritingTask, skillPlan: SkillPlan): Promise<WritingEstimate>;
-  generate(task: NeutralWritingTask, skillPlan: SkillPlan): Promise<WritingDraftResult>;
+  estimate(task: NeutralWritingTask, skillPlan: SkillPlanPreview): Promise<WritingEstimate>;
+  generate(task: NeutralWritingTask, skillPlan: SkillPlanPreview): Promise<WritingDraftResult>;
 }
 
-interface ExternalSkillManifest {
+interface ExternalSkillPackage {
   schemaVersion: 1;
   skillId: string;
-  version: string;
   displayName: string;
-  source: SkillSource;
-  packageSha256: string;
-  signatureStatus: 'verified' | 'unverified' | 'invalid';
+  description: string;
+  publisher: string;
+  version: string;
+  source: string;
   taskKinds: WritingTaskKind[];
-  instructionsEntry: string;
-  inputSchema: JsonSchema;
-  outputSchema: JsonSchema;
-  requestedPermissions: SkillPermission[];
-  executionClass: 'declarative' | 'local_tool' | 'remote_tool' | 'comfy_node';
-  compatibility: SkillCompatibility;
+  instructionsEntry: 'inline';
+  instructions: string;
+  inputSchema: {
+    contract: 'studio-writing-context-v1';
+    requiredContext: Array<'project-brief' | 'production-settings' | 'creative-direction'>;
+  };
+  outputSchema: {
+    contract: 'studio-creative-draft-v1';
+    minimumSections: number;
+    requiredSectionHeadings: string[];
+  };
+  requestedPermissions: Array<'read-project' | 'read-creative-direction' | 'read-writing-history'>;
+  executionClass: 'declarative';
+  required: boolean;
+  compatibility: { minStudioVersion?: string; maxStudioVersion?: string };
 }
 
-interface SkillPlan {
+interface ExternalSkillManifest extends ExternalSkillPackage {
+  packageSha256: string;
+  signatureStatus: 'verified' | 'unverified';
+  installedAt: string;
+}
+
+interface SkillPlanPreview {
+  projectId: string;
   taskKind: WritingTaskKind;
+  planSha256: string;
   required: PlannedSkill[];
   optional: PlannedSkill[];
-  excluded: Array<{ skillId: string; reason: string }>;
-  approvedPermissionGrantIds: string[];
+  blockingIssues: string[];
+  ready: boolean;
 }
 
 interface SkillExecutionReceipt {
@@ -225,17 +244,21 @@ interface SkillExecutionReceipt {
   skillId: string;
   skillVersion: string;
   packageSha256: string;
-  executionClass: ExternalSkillManifest['executionClass'];
-  inputHashes: string[];
-  toolCalls: SanitizedToolCall[];
+  executionClass: 'declarative';
+  taskKind: WritingTaskKind;
+  inputSha256: string;
   outputSha256: string;
-  status: 'succeeded' | 'failed' | 'timed_out' | 'blocked';
+  providerRequestId: string;
+  applicationMode: 'provider-instructions';
+  status: 'succeeded' | 'failed';
   startedAt: string;
   completedAt: string;
+  durationMs: number;
+  failureReason: string | null;
 }
 ```
 
-`NeutralWritingTask` references explicit local versions and contains only the context approved for that request. `WritingDraftResult` contains schema-validated proposals, provider/model/profile identity, token usage, estimate/actual API cost where supplied, and exact skill receipts. A draft cannot claim a required skill unless a matching successful receipt exists. Provider response/conversation IDs are lineage metadata, never the canonical story store.
+`NeutralWritingTask` references explicit local versions and contains only the context approved for that request. `WritingDraftResult` contains schema-validated proposals, provider/model/profile identity, token usage, estimate/actual API cost where supplied, and exact skill receipts. A schema-3 draft cannot claim a required skill unless a matching successful receipt exists. If the visible plan hash changes, a required plan item is blocked, required context is absent, or a required output section is missing, no proposal is saved. Provider response/conversation IDs are lineage metadata, never the canonical story store.
 
 API adapters may compile declared skills into provider tool/function definitions or task instructions. The studio router—not the model alone—determines the allowed skill set, validates calls/results, and rejects unapproved tools. Raw provider keys are injected only inside the main-process adapter and never appear in these contracts.
 

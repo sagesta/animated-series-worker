@@ -4,6 +4,24 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-22 (project-scoped declarative creative skills)
+
+- Added a strict declarative skill package contract plus `packages/skill-runtime`. Installation first copies a JSON candidate into a size-limited quarantine area, parses it without execution, computes SHA-256, rejects changed contents under the same version, and installs with no project access.
+- Added a non-technical **Creative skills** Settings area showing self-declared publisher/source, compatibility, signature state, package fingerprint, tasks, instructions, permissions, and explicit per-production enablement. Updating a version clears prior grants; removal requires confirmation and preserves package evidence plus historical proposal receipts.
+- Added exact skill-plan preview to the Creative Room. Only enabled project/task matches can enter a request; incompatible or unsupported required skills block before provider contact, and a changed plan hash requires a fresh review.
+- Replaced the unfinished false-receipt path. Declarative instructions are now actually compiled into the selected GPT/Claude/Gemini request. The provider result is checked against declared minimum/required proposal sections; unmet required output saves no proposal.
+- Added writing-proposal schema 3 with the exact plan hash, plan items, package/input/output hashes, provider request linkage, status, and immutable skill receipts. Schema-1/schema-2 proposals remain readable.
+- Added registry, routing, permission, version-conflict, update, removal, stale-plan, required-output, successful-receipt, and renderer project-enablement tests. General signature verification, arbitrary JSON Schema, executable/local/remote/MCP skills, and tool timeouts remain locked.
+- The 67-test suite, documentation, formatting, type, lint, and production build gates pass. A separate unpacked Windows 0.8.0 smoke artifact reports SHA-256 `2B6A4A154E9E889C948D53D47A0DE607B3D66ADC4A1B24FA5B03C5631AD0B999`; an isolated-profile launch initialized its catalog. The artifact is unsigned and is not a production installer.
+
+User impact: a creator can install a reviewed writing-skill JSON file without running package code, choose exactly which series or film may use it, see the plan before approving a paid text request, and verify the exact skills that affected a saved proposal. Installing alone never counts as use.
+
+Migration impact: application version advances to 0.8.0. Existing project manifests, provider keys, settings, and schema-1/schema-2 proposals remain unchanged and readable. New active skill state is stored under application user data, outside projects. New proposals use schema 3. Installing an updated skill version intentionally revokes prior project grants until reviewed.
+
+Documentation impact: synchronized the documentation map, README, status, architecture, API/domain/security/UX contracts, test plan, backlog, traceability, and changelog with the implemented declarative boundary and remaining higher-risk work.
+
+Rollback: disable or remove active skills in Settings, close the application, and revert this feature change. Existing schema-3 proposals and retained package files are inert evidence; version 0.7.0 cannot display schema-3 proposals, so keep 0.8.0 or export/back up those records before rollback. No GPU, cloud worker, provider credential, canonical story record, or media is created or deleted by skill installation/removal. A writing request already approved before rollback remains a normal provider charge and its local proposal record is not rewritten.
+
 ### Added — 2026-08-22 (guided required-field and caution feedback)
 
 - Added reusable visible required asterisks, live minimum/remaining/maximum text feedback, allowed-range messages, and non-color invalid styling.

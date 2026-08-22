@@ -14,6 +14,7 @@ const aliases = {
   '@studio/provider-gemini': resolve(rootDirectory, 'packages/provider-gemini/src/index.ts'),
   '@studio/provider-openai': resolve(rootDirectory, 'packages/provider-openai/src/index.ts'),
   '@studio/provider-runpod': resolve(rootDirectory, 'packages/provider-runpod/src/index.ts'),
+  '@studio/skill-runtime': resolve(rootDirectory, 'packages/skill-runtime/src/index.ts'),
   '@studio/support-diagnostics': resolve(rootDirectory, 'packages/support-diagnostics/src/index.ts')
 }
 

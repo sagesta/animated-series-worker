@@ -312,7 +312,16 @@ export const SupportEventSchema = z
     correlationId: z.string().uuid(),
     timestamp: z.string().datetime({ offset: true }),
     level: z.enum(['info', 'warning', 'error']),
-    area: z.enum(['application', 'project', 'backup', 'cloud', 'writing', 'security', 'renderer']),
+    area: z.enum([
+      'application',
+      'project',
+      'backup',
+      'cloud',
+      'writing',
+      'skill',
+      'security',
+      'renderer'
+    ]),
     eventName: z
       .string()
       .regex(/^[a-z][a-z0-9]*(?:\.[a-z0-9]+)*$/)
@@ -646,6 +655,209 @@ export const WritingTaskKindSchema = z.enum([
 ])
 export type WritingTaskKind = z.infer<typeof WritingTaskKindSchema>
 
+export const ExternalSkillPermissionSchema = z.enum([
+  'read-project',
+  'read-creative-direction',
+  'read-writing-history'
+])
+export type ExternalSkillPermission = z.infer<typeof ExternalSkillPermissionSchema>
+
+export const ExternalSkillSignatureStatusSchema = z.enum(['verified', 'unverified'])
+export type ExternalSkillSignatureStatus = z.infer<typeof ExternalSkillSignatureStatusSchema>
+
+export const ExternalSkillExecutionClassSchema = z.literal('declarative')
+export type ExternalSkillExecutionClass = z.infer<typeof ExternalSkillExecutionClassSchema>
+
+export const ExternalSkillCompatibilitySchema = z
+  .object({
+    minStudioVersion: z.string().min(1).max(80).optional(),
+    maxStudioVersion: z.string().min(1).max(80).optional()
+  })
+  .strict()
+export type ExternalSkillCompatibility = z.infer<typeof ExternalSkillCompatibilitySchema>
+
+export const ExternalSkillRequiredContextSchema = z.enum([
+  'project-brief',
+  'production-settings',
+  'creative-direction'
+])
+export type ExternalSkillRequiredContext = z.infer<typeof ExternalSkillRequiredContextSchema>
+
+export const ExternalSkillInputSchemaSchema = z
+  .object({
+    contract: z.literal('studio-writing-context-v1'),
+    requiredContext: ExternalSkillRequiredContextSchema.array().max(3)
+  })
+  .strict()
+
+export const ExternalSkillOutputSchemaSchema = z
+  .object({
+    contract: z.literal('studio-creative-draft-v1'),
+    minimumSections: z.number().int().min(1).max(20).default(1),
+    requiredSectionHeadings: z.string().trim().min(1).max(160).array().max(12)
+  })
+  .strict()
+
+export const ExternalSkillPackageSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    skillId: z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9.-]{1,119}$/, 'Use a lowercase skill ID without spaces.'),
+    displayName: z.string().trim().min(2).max(200),
+    description: z.string().trim().min(10).max(1_000),
+    publisher: z.string().trim().min(2).max(200),
+    version: z
+      .string()
+      .regex(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/, 'Use a semantic version such as 1.0.0.'),
+    source: z.string().min(1).max(240),
+    taskKinds: WritingTaskKindSchema.array().min(1).max(20),
+    instructionsEntry: z.literal('inline'),
+    instructions: z.string().trim().min(20).max(2_000),
+    inputSchema: ExternalSkillInputSchemaSchema,
+    outputSchema: ExternalSkillOutputSchemaSchema,
+    requestedPermissions: ExternalSkillPermissionSchema.array().max(3),
+    executionClass: ExternalSkillExecutionClassSchema,
+    required: z.boolean(),
+    compatibility: ExternalSkillCompatibilitySchema
+  })
+  .strict()
+export type ExternalSkillPackage = z.infer<typeof ExternalSkillPackageSchema>
+
+export const ExternalSkillManifestSchema = ExternalSkillPackageSchema.extend({
+  packageSha256: Sha256Schema,
+  signatureStatus: ExternalSkillSignatureStatusSchema,
+  installedAt: z.string().datetime({ offset: true })
+}).strict()
+export type ExternalSkillManifest = z.infer<typeof ExternalSkillManifestSchema>
+
+export const ExternalSkillPlanStateSchema = z.enum(['ready', 'incompatible', 'permission-blocked'])
+export type ExternalSkillPlanState = z.infer<typeof ExternalSkillPlanStateSchema>
+
+export const ExternalSkillPlanItemSchema = z
+  .object({
+    skillId: z.string().min(1).max(120),
+    displayName: z.string().min(1).max(200),
+    version: z.string().min(1).max(64),
+    publisher: z.string().min(1).max(200),
+    source: z.string().min(1).max(240),
+    packageSha256: Sha256Schema,
+    signatureStatus: ExternalSkillSignatureStatusSchema,
+    executionClass: ExternalSkillExecutionClassSchema,
+    taskKind: WritingTaskKindSchema,
+    required: z.boolean(),
+    requestedPermissions: ExternalSkillPermissionSchema.array().max(3),
+    requiredContext: ExternalSkillRequiredContextSchema.array().max(3),
+    instructionsSha256: Sha256Schema,
+    state: ExternalSkillPlanStateSchema,
+    reason: z.string().min(1).max(600)
+  })
+  .strict()
+export type ExternalSkillPlanItem = z.infer<typeof ExternalSkillPlanItemSchema>
+
+export const ExternalSkillPlanPreviewInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    taskKind: WritingTaskKindSchema
+  })
+  .strict()
+export type ExternalSkillPlanPreviewInput = z.infer<typeof ExternalSkillPlanPreviewInputSchema>
+
+export const ExternalSkillPlanPreviewSchema = z
+  .object({
+    projectId: UlidSchema,
+    taskKind: WritingTaskKindSchema,
+    planSha256: Sha256Schema,
+    required: ExternalSkillPlanItemSchema.array(),
+    optional: ExternalSkillPlanItemSchema.array(),
+    blockingIssues: z.string().min(1).max(600).array(),
+    ready: z.boolean()
+  })
+  .strict()
+export type ExternalSkillPlanPreview = z.infer<typeof ExternalSkillPlanPreviewSchema>
+
+export const ExternalSkillReceiptStatusSchema = z.enum(['succeeded', 'failed'])
+export type ExternalSkillReceiptStatus = z.infer<typeof ExternalSkillReceiptStatusSchema>
+
+export const ExternalSkillExecutionReceiptSchema = z
+  .object({
+    receiptId: UlidSchema,
+    skillId: z.string().min(1).max(120),
+    displayName: z.string().min(1).max(200),
+    skillVersion: z.string().min(1).max(64),
+    packageSha256: Sha256Schema,
+    executionClass: ExternalSkillExecutionClassSchema,
+    taskKind: WritingTaskKindSchema,
+    status: ExternalSkillReceiptStatusSchema,
+    startedAt: z.string().datetime({ offset: true }),
+    completedAt: z.string().datetime({ offset: true }),
+    durationMs: z.number().int().nonnegative(),
+    inputSha256: Sha256Schema,
+    outputSha256: Sha256Schema,
+    providerRequestId: z.string().min(1).max(240),
+    applicationMode: z.literal('provider-instructions'),
+    failureReason: z.string().min(1).max(600).nullable()
+  })
+  .strict()
+export type ExternalSkillExecutionReceipt = z.infer<typeof ExternalSkillExecutionReceiptSchema>
+
+export const InstalledExternalSkillSchema = z
+  .object({
+    manifest: ExternalSkillManifestSchema,
+    enabledProjectIds: UlidSchema.array(),
+    compatibilityState: z.enum(['compatible', 'incompatible']),
+    compatibilityReason: z.string().min(1).max(600)
+  })
+  .strict()
+export type InstalledExternalSkill = z.infer<typeof InstalledExternalSkillSchema>
+
+export const ExternalSkillStatusSchema = z
+  .object({
+    installed: InstalledExternalSkillSchema.array()
+  })
+  .strict()
+export type ExternalSkillStatus = z.infer<typeof ExternalSkillStatusSchema>
+
+export const ExternalSkillSetProjectEnabledInputSchema = z
+  .object({
+    skillId: z.string().min(1).max(120),
+    projectId: UlidSchema,
+    enabled: z.boolean()
+  })
+  .strict()
+export type ExternalSkillSetProjectEnabledInput = z.infer<
+  typeof ExternalSkillSetProjectEnabledInputSchema
+>
+
+export const ExternalSkillRemoveInputSchema = z
+  .object({ skillId: z.string().min(1).max(120) })
+  .strict()
+export type ExternalSkillRemoveInput = z.infer<typeof ExternalSkillRemoveInputSchema>
+
+export const ExternalSkillErrorCodeSchema = z.enum([
+  'cancelled',
+  'invalid-package',
+  'version-conflict',
+  'not-found',
+  'incompatible',
+  'storage-error',
+  'unknown'
+])
+export type ExternalSkillErrorCode = z.infer<typeof ExternalSkillErrorCodeSchema>
+
+const ExternalSkillActionErrorSchema = z
+  .object({
+    code: ExternalSkillErrorCodeSchema,
+    message: z.string().min(1).max(600)
+  })
+  .strict()
+
+export const ExternalSkillActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), status: ExternalSkillStatusSchema }).strict(),
+  z.object({ ok: z.literal(false), error: ExternalSkillActionErrorSchema }).strict()
+])
+export type ExternalSkillActionResult = z.infer<typeof ExternalSkillActionResultSchema>
+
 const WritingContextSelectionV1Schema = z
   .object({
     includeProjectBrief: z.boolean(),
@@ -694,6 +906,7 @@ export const WritingDraftRequestSchema = z
     model: z.string().trim().min(1).max(200),
     profile: WritingProfileSchema,
     maxOutputTokens: z.number().int().min(256).max(4_000),
+    skillPlanSha256: Sha256Schema,
     paidConfirmed: z.literal(true)
   })
   .strict()
@@ -825,9 +1038,7 @@ const WritingDraftRecordFields = {
       state: z.literal('not-calculated')
     })
     .strict(),
-  providerRequestId: z.string().min(1).max(240),
-  skillsPlanned: z.array(z.never()).length(0),
-  skillsUsed: z.array(z.never()).length(0)
+  providerRequestId: z.string().min(1).max(240)
 } as const
 
 const WritingDraftRecordV1Schema = z
@@ -835,7 +1046,9 @@ const WritingDraftRecordV1Schema = z
     schemaVersion: z.literal(1),
     ...WritingDraftRecordFields,
     contextSelection: WritingContextSelectionV1Schema,
-    sourceVersions: WritingManifestSourceVersionSchema.array().length(1)
+    sourceVersions: WritingManifestSourceVersionSchema.array().length(1),
+    skillsPlanned: z.array(z.never()).length(0),
+    skillsUsed: z.array(z.never()).length(0)
   })
   .strict()
 
@@ -844,13 +1057,28 @@ const WritingDraftRecordV2Schema = z
     schemaVersion: z.literal(2),
     ...WritingDraftRecordFields,
     contextSelection: WritingContextSelectionSchema,
-    sourceVersions: WritingSourceVersionSchema.array().min(1).max(2)
+    sourceVersions: WritingSourceVersionSchema.array().min(1).max(2),
+    skillsPlanned: z.array(z.never()).length(0),
+    skillsUsed: z.array(z.never()).length(0)
+  })
+  .strict()
+
+const WritingDraftRecordV3Schema = z
+  .object({
+    schemaVersion: z.literal(3),
+    ...WritingDraftRecordFields,
+    contextSelection: WritingContextSelectionSchema,
+    sourceVersions: WritingSourceVersionSchema.array().min(1).max(2),
+    skillPlanSha256: Sha256Schema,
+    skillsPlanned: ExternalSkillPlanItemSchema.array(),
+    skillsUsed: ExternalSkillExecutionReceiptSchema.array()
   })
   .strict()
 
 export const WritingDraftRecordSchema = z.discriminatedUnion('schemaVersion', [
   WritingDraftRecordV1Schema,
-  WritingDraftRecordV2Schema
+  WritingDraftRecordV2Schema,
+  WritingDraftRecordV3Schema
 ])
 export type WritingDraftRecord = z.infer<typeof WritingDraftRecordSchema>
 
@@ -860,6 +1088,9 @@ export const WritingErrorCodeSchema = z.enum([
   'timed-out',
   'rate-limited',
   'provider-unavailable',
+  'required-skill-failed',
+  'skill-plan-changed',
+  'skill-error',
   'invalid-response',
   'unsupported-model',
   'secure-storage-unavailable',
@@ -918,7 +1149,12 @@ export const IPC_CHANNELS = {
   writingSaveDefaultProfile: 'studio:writing:save-default-profile',
   writingPreviewContext: 'studio:writing:preview-context',
   writingGenerateDraft: 'studio:writing:generate-draft',
-  writingListDrafts: 'studio:writing:list-drafts'
+  writingListDrafts: 'studio:writing:list-drafts',
+  skillsGetStatus: 'studio:skills:get-status',
+  skillsInstall: 'studio:skills:install',
+  skillsSetProjectEnabled: 'studio:skills:set-project-enabled',
+  skillsRemove: 'studio:skills:remove',
+  skillsPreviewPlan: 'studio:skills:preview-plan'
 } as const
 
 export interface StudioApi {
@@ -957,5 +1193,14 @@ export interface StudioApi {
     previewContext(input: WritingContextPreviewInput): Promise<WritingContextPreview>
     generateDraft(input: WritingDraftRequest): Promise<WritingDraftActionResult>
     listDrafts(projectId: string): Promise<WritingDraftRecord[]>
+  }
+  skills: {
+    getStatus(): Promise<ExternalSkillStatus>
+    install(): Promise<ExternalSkillActionResult>
+    setProjectEnabled(
+      input: ExternalSkillSetProjectEnabledInput
+    ): Promise<ExternalSkillActionResult>
+    remove(input: ExternalSkillRemoveInput): Promise<ExternalSkillActionResult>
+    previewPlan(input: ExternalSkillPlanPreviewInput): Promise<ExternalSkillPlanPreview>
   }
 }

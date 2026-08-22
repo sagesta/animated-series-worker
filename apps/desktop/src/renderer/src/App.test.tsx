@@ -288,6 +288,21 @@ beforeEach(() => {
       }),
       generateDraft: vi.fn(),
       listDrafts: vi.fn().mockResolvedValue([])
+    },
+    skills: {
+      getStatus: vi.fn().mockResolvedValue({ installed: [] }),
+      install: vi.fn().mockResolvedValue({ ok: true, status: { installed: [] } }),
+      setProjectEnabled: vi.fn().mockResolvedValue({ ok: true, status: { installed: [] } }),
+      remove: vi.fn().mockResolvedValue({ ok: true, status: { installed: [] } }),
+      previewPlan: vi.fn().mockImplementation(async (input) => ({
+        projectId: input.projectId,
+        taskKind: input.taskKind,
+        planSha256: 'c'.repeat(64),
+        required: [],
+        optional: [],
+        blockingIssues: [],
+        ready: true
+      }))
     }
   }
 

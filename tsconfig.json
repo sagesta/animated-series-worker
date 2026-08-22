@@ -27,6 +27,7 @@
       "@studio/provider-gemini": ["packages/provider-gemini/src/index.ts"],
       "@studio/provider-openai": ["packages/provider-openai/src/index.ts"],
       "@studio/provider-runpod": ["packages/provider-runpod/src/index.ts"],
+      "@studio/skill-runtime": ["packages/skill-runtime/src/index.ts"],
       "@studio/support-diagnostics": ["packages/support-diagnostics/src/index.ts"]
     },
     "types": ["node"]

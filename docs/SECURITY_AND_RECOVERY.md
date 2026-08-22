@@ -94,6 +94,8 @@ An upstream or model Git branch name such as `main` is not a production pin.
 
 ### External skill controls
 
+Version 0.8.0 implements the declarative-only subset. A selected JSON file is copied into a size-limited quarantine location, parsed under a strict no-extra-fields schema, hashed, and removed from quarantine without executing content. It is installed with no project grants. Same-version/different-content packages are rejected, updates revoke grants, only explicit project IDs can be enabled, unsupported permissions block required plans, and active removal preserves package evidence plus immutable proposal receipts. Publisher/source text and an `unverified` signature state are displayed as claims, not trust proof. Executable tools, MCP, arbitrary network/file access, and general custom schemas remain unavailable.
+
 - Installation first copies the candidate into a quarantine area, parses its manifest without execution, computes hashes, and displays source, publisher, signature/checksum status, task kinds, permissions, and compatibility.
 - Declarative instruction/schema skills are the default trust class and cannot execute code, read arbitrary files, access credentials, use the network, or cross projects.
 - Local tools, remote tools/MCP, executable extensions, and ComfyUI custom nodes are separate higher-risk classes. Each requires explicit permission, allowlisting, isolation, time/output limits, dependency review, and security/compatibility tests before enablement.

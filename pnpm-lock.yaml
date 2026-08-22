@@ -89,9 +89,13 @@ importers:
 
   packages/provider-anthropic: {}
 
+  packages/provider-gemini: {}
+
   packages/provider-openai: {}
 
   packages/provider-runpod: {}
+
+  packages/skill-runtime: {}
 
   packages/support-diagnostics: {}
 

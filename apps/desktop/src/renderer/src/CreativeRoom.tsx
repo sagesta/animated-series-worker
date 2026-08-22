@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type JSX } from 'react'
 import {
   WRITING_MODEL_CATALOG,
+  type ExternalSkillPlanPreview,
   type ProjectDetails,
   type WritingContextPreview,
   type WritingDraftRecord,
@@ -70,8 +71,30 @@ function DraftView({ draft }: { draft: WritingDraftRecord }): JSX.Element {
       )}
       <footer className="draft-provenance">
         <span>Saved locally with source and model lineage</span>
-        <span>External skills used: none (skill runtime is still locked)</span>
+        <span>
+          External skills used:{' '}
+          {draft.skillsUsed.filter((receipt) => receipt.status === 'succeeded').length === 0
+            ? 'none'
+            : draft.skillsUsed
+                .filter((receipt) => receipt.status === 'succeeded')
+                .map((receipt) => `${receipt.displayName} ${receipt.skillVersion}`)
+                .join(', ')}
+        </span>
       </footer>
+      {draft.skillsUsed.length > 0 && (
+        <details className="skill-details">
+          <summary>Review attached-skill receipts</summary>
+          <ul>
+            {draft.skillsUsed.map((receipt) => (
+              <li key={receipt.receiptId}>
+                {receipt.displayName} {receipt.skillVersion} — {receipt.status}. Receipt{' '}
+                {receipt.receiptId}; package {receipt.packageSha256.slice(0, 12)}…
+                {receipt.failureReason ? ` ${receipt.failureReason}` : ''}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </article>
   )
 }
@@ -136,6 +159,8 @@ export function CreativeRoom({
   })
   const [preview, setPreview] = useState<WritingContextPreview>()
   const [previewError, setPreviewError] = useState(false)
+  const [skillPlan, setSkillPlan] = useState<ExternalSkillPlanPreview>()
+  const [skillPlanError, setSkillPlanError] = useState(false)
   const [paidConfirmed, setPaidConfirmed] = useState(false)
   const [maxOutputTokens, setMaxOutputTokens] = useState(1600)
   const [generating, setGenerating] = useState(false)
@@ -160,6 +185,24 @@ export function CreativeRoom({
       cancelled = true
     }
   }, [context, project.manifest.id])
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.skills
+      .previewPlan({ projectId: project.manifest.id, taskKind })
+      .then((result) => {
+        if (!cancelled) {
+          setSkillPlan(result)
+          setSkillPlanError(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSkillPlanError(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [project.manifest.id, taskKind])
 
   useEffect(() => {
     let cancelled = false
@@ -192,6 +235,27 @@ export function CreativeRoom({
     }
     if (previewError) issues.push('Repair the context preview before sending anything.')
     else if (!preview) issues.push('Wait for the exact context preview to finish preparing.')
+    if (skillPlanError) issues.push('Repair the attached-skill plan before sending anything.')
+    else if (!skillPlan) issues.push('Wait for the attached-skill plan to finish preparing.')
+    else {
+      if (!skillPlan.ready) issues.push(...skillPlan.blockingIssues)
+      for (const item of [...skillPlan.required, ...skillPlan.optional].filter(
+        (planned) => planned.state === 'ready'
+      )) {
+        const missing = item.requiredContext.filter((requiredContext) => {
+          if (requiredContext === 'project-brief') return !context.includeProjectBrief
+          if (requiredContext === 'production-settings') {
+            return !context.includeProductionSettings
+          }
+          return !context.includeCreativeDirection || project.creativeDirection === null
+        })
+        if (missing.length > 0) {
+          issues.push(
+            `${item.displayName} needs ${missing.join(', ')} in the selected local context.`
+          )
+        }
+      }
+    }
     if (!paidConfirmed) issues.push('Tick the one-request paid-token approval box.')
     return issues
   }
@@ -199,7 +263,7 @@ export function CreativeRoom({
   const generate = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
     const issues = requestIssues()
-    if (issues.length > 0 || !provider || !model || !paidConfirmed) {
+    if (issues.length > 0 || !provider || !model || !paidConfirmed || !skillPlan) {
       setValidationMessages(issues)
       return
     }
@@ -216,6 +280,7 @@ export function CreativeRoom({
         model,
         profile,
         maxOutputTokens,
+        skillPlanSha256: skillPlan.planSha256,
         paidConfirmed: true
       })
       if (result.ok) {
@@ -287,7 +352,11 @@ export function CreativeRoom({
                 aria-label="Writing task"
                 required
                 value={taskKind}
-                onChange={(event) => setTaskKind(event.target.value as WritingTaskKind)}
+                onChange={(event) => {
+                  setTaskKind(event.target.value as WritingTaskKind)
+                  setSkillPlan(undefined)
+                  setSkillPlanError(false)
+                }}
               >
                 {taskOptions.map((task) => (
                   <option value={task.value} key={task.value}>
@@ -378,7 +447,57 @@ export function CreativeRoom({
         <section className="creative-form-card">
           <div className="subsection-heading">
             <div>
-              <h2>2. Check exactly what will be shared</h2>
+              <h2>2. Review attached creative skills</h2>
+              <p>
+                Only skills enabled for this production and matching this writing task are included.
+              </p>
+            </div>
+            <span>Exact plan</span>
+          </div>
+          <div className="skill-plan-card">
+            {skillPlanError ? (
+              <p>The attached-skill plan needs attention. No request can be sent.</p>
+            ) : !skillPlan ? (
+              <p>Preparing the exact attached-skill plan…</p>
+            ) : skillPlan.required.length + skillPlan.optional.length === 0 ? (
+              <p>
+                No external creative skill matches this task. Built-in studio guidance remains
+                active.
+              </p>
+            ) : (
+              [...skillPlan.required, ...skillPlan.optional].map((item) => (
+                <div className="skill-plan-item" key={`${item.skillId}-${item.version}`}>
+                  <div>
+                    <strong>
+                      {item.displayName} {item.version} · {item.required ? 'Required' : 'Optional'}
+                    </strong>
+                    <p>{item.reason}</p>
+                    {item.requiredContext.length > 0 && (
+                      <p>Needs: {item.requiredContext.join(', ')}.</p>
+                    )}
+                  </div>
+                  <span className={`skill-plan-state ${item.state === 'ready' ? '' : 'blocked'}`}>
+                    {item.state === 'ready' ? 'Ready' : 'Blocked'}
+                  </span>
+                </div>
+              ))
+            )}
+            {skillPlan && skillPlan.blockingIssues.length > 0 && (
+              <div className="safety-feedback error" role="status">
+                {skillPlan.blockingIssues.join(' ')}
+              </div>
+            )}
+          </div>
+          <p className="field-help">
+            The studio records the exact package fingerprints and verifies required output sections.
+            A skill is never marked used merely because it is installed.
+          </p>
+        </section>
+
+        <section className="creative-form-card">
+          <div className="subsection-heading">
+            <div>
+              <h2>3. Check exactly what will be shared</h2>
               <p>Untick anything you do not want sent with this request.</p>
             </div>
             <span>Prompt preview</span>
@@ -431,14 +550,14 @@ export function CreativeRoom({
           </pre>
           <p className="field-help">
             Your API provider also receives your instruction, the selected model settings, and the
-            studio’s proposal-format rules. No character files, media, API keys, or external skills
-            are attached in this slice.
+            studio’s proposal-format rules plus the exact skill instructions shown above. No
+            character files, media, API keys, executable extensions, or GPU tools are attached.
           </p>
         </section>
 
         <section className="creative-form-card paid-confirmation-card">
           <div>
-            <h2>3. Approve this text request</h2>
+            <h2>4. Approve this text request</h2>
             <p>
               This can use paid API tokens. It never starts a GPU. Exact dollar cost is not shown
               yet because model price profiles have not passed the planned benchmark.

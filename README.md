@@ -13,7 +13,7 @@ This repository now contains a working local desktop foundation, verified projec
 - Qwen-Image/Qwen-Image-Edit is the initial image family; Qwen3-TTS is the initial voice family.
 - RunPod is the first GPU provider. A provider interface prevents permanent lock-in.
 - OpenAI Responses, Anthropic Messages, and Gemini GenerateContent are the bring-your-own-key writing providers behind a neutral creative-writing interface; text API usage is billed separately from RunPod GPU usage.
-- Version 0.7.0 offers only its checked stable catalogue: GPT-5.6 Terra/Sol/Luna, Claude Sonnet 5/Opus 5/Haiku 4.5, and Gemini 3.7 Flash/3.5 Flash-Lite. Balanced is a starting tier, not a task benchmark winner.
+- Version 0.8.0 offers only its checked stable catalogue: GPT-5.6 Terra/Sol/Luna, Claude Sonnet 5/Opus 5/Haiku 4.5, and Gemini 3.7 Flash/3.5 Flash-Lite. Balanced is a starting tier, not a task benchmark winner.
 - Required inputs display an asterisk and live minimum/range guidance. Missing or invalid information opens a clear correction popup; it never silently leaves the primary action grey or starts a provider/GPU operation.
 - Every project has an immutable versioned Audience & Creative Direction profile. It guides later stages but never becomes canon, copies a comparable work, or answers YouTube's separate made-for-kids and disclosure attestations.
 - External creative skills are versioned and permissioned. The studio routes applicable enabled skills and records exact execution receipts, so an attached required skill cannot be silently ignored.
@@ -85,7 +85,7 @@ node scripts/check-docs.mjs
 | Series/film project storage | Create/list/open, immutable project-local creative-direction revisions, schema-2/backward-compatible schema-1 data, guided backed-up v1→v2 migration with rollback tests, verified full backup/non-overwriting restore, and single-writer protection implemented; archive/future migrations, incremental archives, and clean-machine recovery remain |
 | Diagnostics and support | Structured pre-write redaction and local-only support JSON implemented/tested; broader worker/skill coverage, retention, and packaged scan remain |
 | RunPod provider | API v2 account validation and price reads implemented; Pod/storage/template creation and termination not implemented |
-| Writing providers and external skills | Protected OpenAI/Anthropic/Gemini connections, controlled model catalogue, and proposal drafting implemented with mocked adapter tests; live benchmark/cost profiles and the external-skill runtime remain unimplemented |
+| Writing providers and external skills | Protected OpenAI/Anthropic/Gemini connections, controlled model catalogue, proposal drafting, and project-scoped declarative skill installation/planning/receipts are implemented with local mocked tests; live benchmark/cost profiles and higher-risk executable/MCP skill classes remain locked |
 | Remote GPU worker | Not implemented; no ComfyUI/model worker image exists yet |
 | In-app media review | Gallery/player/proxy architecture documented; not implemented |
 | Animatic, advanced controls, creative QC, foley, and optional adaptation | Fully specified and test-mapped; not implemented |

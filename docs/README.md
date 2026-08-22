@@ -2,7 +2,7 @@
 
 This folder is the authoritative build specification for Animated Series Studio. If code and documentation disagree, the change is incomplete until they are reconciled and tested.
 
-Current version 0.7.0 implements the local project/backup/migration foundation, shared required-field/length/range guidance with accessible correction popups, protected RunPod account checks, a project-local versioned Audience & Creative Direction profile, and a protected GPT/Claude/Gemini Creative Room with exact profile lineage and a controlled stable model catalogue. Media generation, external skills, canon promotion/version comparison, release packaging, and analytics remain planned.
+Current version 0.8.0 implements the local project/backup/migration foundation, shared required-field/length/range guidance with accessible correction popups, protected RunPod account checks, a project-local versioned Audience & Creative Direction profile, a protected GPT/Claude/Gemini Creative Room, and the first safe declarative external-skill slice. Skill files are quarantined and parsed without execution, enabled per project, included through an exact previewed plan, validated against declared proposal-section requirements, and recorded with package hashes and receipts. Executable/MCP skills, media generation, canon promotion/version comparison, release packaging, and analytics remain planned.
 
 ## Product and experience
 

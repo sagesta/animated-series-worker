@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
+  ExternalSkillManifest,
   ProjectDetails,
   WritingDraftRecord,
   WritingProvider,
@@ -12,6 +13,7 @@ import {
   CreativeWritingService,
   WritingSettingsStore,
   WritingSetupService,
+  type ExternalWritingSkillPlanner,
   type WritingCredentialVault
 } from './index'
 
@@ -89,7 +91,7 @@ const project: ProjectDetails = {
   }
 }
 
-function createFixture() {
+function createFixture(skillPlanner?: ExternalWritingSkillPlanner) {
   const root = mkdtempSync(join(tmpdir(), 'creative-writing-test-'))
   roots.push(root)
   const vaults: Record<WritingProvider, MemoryVault> = {
@@ -147,10 +149,81 @@ function createFixture() {
       },
       listWritingDrafts: () => saved
     },
+    skillPlanner,
     now: () => new Date('2026-08-21T14:00:00.000Z'),
-    createId: () => '01J00000000000000000000001'
+    createId: () => '01J00000000000000000000001',
+    createReceiptId: () => '01J00000000000000000000002'
   })
   return { setup, creative, vaults, openai, generateDraft, saved }
+}
+
+function skillFixture(required = true): {
+  manifest: ExternalSkillManifest
+  planner: ExternalWritingSkillPlanner
+} {
+  const manifest: ExternalSkillManifest = {
+    schemaVersion: 1,
+    skillId: 'story-emotion-map',
+    displayName: 'Story Emotion Map',
+    description: 'Checks that an outline contains a clear emotional turn and consequence.',
+    publisher: 'Studio fixture publisher',
+    version: '1.0.0',
+    source: 'local-fixture',
+    taskKinds: ['outline_episode'],
+    instructionsEntry: 'inline',
+    instructions:
+      'Add a proposal section named Emotional Turn that explains the cause, choice, and consequence.',
+    inputSchema: {
+      contract: 'studio-writing-context-v1',
+      requiredContext: ['project-brief']
+    },
+    outputSchema: {
+      contract: 'studio-creative-draft-v1',
+      minimumSections: 1,
+      requiredSectionHeadings: ['Emotional Turn']
+    },
+    requestedPermissions: ['read-project'],
+    executionClass: 'declarative',
+    required,
+    compatibility: { minStudioVersion: '0.8.0' },
+    packageSha256: 'd'.repeat(64),
+    signatureStatus: 'unverified',
+    installedAt: '2026-08-21T13:00:00.000Z'
+  }
+  const planItem = {
+    skillId: manifest.skillId,
+    displayName: manifest.displayName,
+    version: manifest.version,
+    publisher: manifest.publisher,
+    source: manifest.source,
+    packageSha256: manifest.packageSha256,
+    signatureStatus: manifest.signatureStatus,
+    executionClass: manifest.executionClass,
+    taskKind: 'outline_episode' as const,
+    required,
+    requestedPermissions: manifest.requestedPermissions,
+    requiredContext: manifest.inputSchema.requiredContext,
+    instructionsSha256: 'e'.repeat(64),
+    state: 'ready' as const,
+    reason: 'Matches episode or film outlines.'
+  }
+  return {
+    manifest,
+    planner: {
+      getPlan: async (projectId, taskKind) => ({
+        preview: {
+          projectId,
+          taskKind,
+          planSha256: 'f'.repeat(64),
+          required: required ? [{ ...planItem, taskKind }] : [],
+          optional: required ? [] : [{ ...planItem, taskKind }],
+          blockingIssues: [],
+          ready: true
+        },
+        readyManifests: manifest.taskKinds.includes(taskKind) ? [manifest] : []
+      })
+    }
+  }
 }
 
 afterEach(() => {
@@ -227,6 +300,7 @@ describe('protected creative writing workflow', () => {
       includeCreativeDirection: true
     }
     const preview = creative.previewContext({ projectId: project.manifest.id, context })
+    const skillPlan = await creative.previewSkillPlan(project.manifest.id, 'outline_episode')
 
     expect(preview.text).toContain('A shy apprentice protects a city')
     expect(preview.text).toContain('African folklore fantasy adventures')
@@ -243,6 +317,7 @@ describe('protected creative writing workflow', () => {
       model: 'gpt-5.6-terra',
       profile: 'balanced',
       maxOutputTokens: 1600,
+      skillPlanSha256: skillPlan.planSha256,
       paidConfirmed: true
     })
 
@@ -268,6 +343,7 @@ describe('protected creative writing workflow', () => {
   it('blocks a text request unless paid confirmation is explicit', async () => {
     const { setup, creative, generateDraft, saved } = createFixture()
     await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
+    const skillPlan = await creative.previewSkillPlan(project.manifest.id, 'draft_scene')
 
     await expect(
       creative.generateDraft({
@@ -283,9 +359,159 @@ describe('protected creative writing workflow', () => {
         model: 'gpt-5.6-terra',
         profile: 'balanced',
         maxOutputTokens: 800,
+        skillPlanSha256: skillPlan.planSha256,
         paidConfirmed: false
       })
     ).rejects.toThrow()
+    expect(generateDraft).not.toHaveBeenCalled()
+    expect(saved).toEqual([])
+  })
+
+  it('applies an enabled declarative skill to the provider request and records an exact receipt', async () => {
+    const skill = skillFixture()
+    const { setup, creative, generateDraft, saved } = createFixture(skill.planner)
+    await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
+    generateDraft.mockResolvedValue({
+      output: {
+        title: 'The First Dark Lantern',
+        summary: 'An episode outline proposal.',
+        sections: [
+          {
+            heading: 'Emotional Turn',
+            body: 'The apprentice chooses to restore a painful memory instead of hiding it.'
+          }
+        ],
+        continuityQuestions: [],
+        suggestedNextSteps: []
+      },
+      usage: { inputTokens: 120, outputTokens: 90, totalTokens: 210, cachedInputTokens: 0 },
+      requestId: 'provider-request-with-skill'
+    })
+    const plan = await creative.previewSkillPlan(project.manifest.id, 'outline_episode')
+
+    const result = await creative.generateDraft({
+      projectId: project.manifest.id,
+      taskKind: 'outline_episode',
+      instruction: 'Outline a pilot with a clear emotional turn and a lasting consequence.',
+      context: {
+        includeProjectBrief: true,
+        includeProductionSettings: true,
+        includeCreativeDirection: true
+      },
+      provider: 'openai',
+      model: 'gpt-5.6-terra',
+      profile: 'balanced',
+      maxOutputTokens: 1600,
+      skillPlanSha256: plan.planSha256,
+      paidConfirmed: true
+    })
+
+    expect(generateDraft).toHaveBeenCalledWith(
+      'sk-test-protected-key-123456789',
+      expect.objectContaining({
+        systemInstruction: expect.stringContaining(skill.manifest.instructions),
+        userPrompt: expect.stringContaining(plan.planSha256)
+      })
+    )
+    expect(saved).toHaveLength(1)
+    expect(result).toMatchObject({
+      schemaVersion: 3,
+      skillPlanSha256: plan.planSha256,
+      skillsPlanned: [{ skillId: skill.manifest.skillId, state: 'ready' }],
+      skillsUsed: [
+        {
+          receiptId: '01J00000000000000000000002',
+          skillId: skill.manifest.skillId,
+          skillVersion: '1.0.0',
+          status: 'succeeded',
+          applicationMode: 'provider-instructions'
+        }
+      ]
+    })
+  })
+
+  it('fails a required skill when the provider omits its declared output section', async () => {
+    const skill = skillFixture()
+    const { setup, creative, generateDraft, saved } = createFixture(skill.planner)
+    await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
+    const plan = await creative.previewSkillPlan(project.manifest.id, 'outline_episode')
+
+    await expect(
+      creative.generateDraft({
+        projectId: project.manifest.id,
+        taskKind: 'outline_episode',
+        instruction: 'Outline a pilot and make the emotional cause and consequence explicit.',
+        context: {
+          includeProjectBrief: true,
+          includeProductionSettings: true,
+          includeCreativeDirection: true
+        },
+        provider: 'openai',
+        model: 'gpt-5.6-terra',
+        profile: 'balanced',
+        maxOutputTokens: 1600,
+        skillPlanSha256: plan.planSha256,
+        paidConfirmed: true
+      })
+    ).rejects.toMatchObject({ code: 'required-skill-failed' })
+
+    expect(generateDraft).toHaveBeenCalledOnce()
+    expect(saved).toEqual([])
+  })
+
+  it('blocks a stale attached-skill preview before contacting the provider', async () => {
+    const skill = skillFixture()
+    const { setup, creative, generateDraft, saved } = createFixture(skill.planner)
+    await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
+
+    await expect(
+      creative.generateDraft({
+        projectId: project.manifest.id,
+        taskKind: 'outline_episode',
+        instruction: 'Outline a pilot with a clear emotional turn and final story question.',
+        context: {
+          includeProjectBrief: true,
+          includeProductionSettings: true,
+          includeCreativeDirection: true
+        },
+        provider: 'openai',
+        model: 'gpt-5.6-terra',
+        profile: 'balanced',
+        maxOutputTokens: 1600,
+        skillPlanSha256: '0'.repeat(64),
+        paidConfirmed: true
+      })
+    ).rejects.toMatchObject({ code: 'skill-plan-changed' })
+
+    expect(generateDraft).not.toHaveBeenCalled()
+    expect(saved).toEqual([])
+  })
+
+  it('blocks a required skill when its declared local context was not selected', async () => {
+    const skill = skillFixture()
+    const { setup, creative, generateDraft, saved } = createFixture(skill.planner)
+    await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
+    const plan = await creative.previewSkillPlan(project.manifest.id, 'outline_episode')
+
+    await expect(
+      creative.generateDraft({
+        projectId: project.manifest.id,
+        taskKind: 'outline_episode',
+        instruction: 'Outline a pilot with a clear emotional turn and final story question.',
+        context: {
+          includeProjectBrief: false,
+          includeProductionSettings: true,
+          includeCreativeDirection: true
+        },
+        provider: 'openai',
+        model: 'gpt-5.6-terra',
+        profile: 'balanced',
+        maxOutputTokens: 1600,
+        skillPlanSha256: plan.planSha256,
+        paidConfirmed: true
+      })
+    ).rejects.toMatchObject({ code: 'required-skill-failed' })
+
     expect(generateDraft).not.toHaveBeenCalled()
     expect(saved).toEqual([])
   })

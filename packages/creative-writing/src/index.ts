@@ -4,6 +4,7 @@ import { dirname } from 'node:path'
 import { z, ZodError } from 'zod'
 import {
   WRITING_MODEL_CATALOG,
+  ExternalSkillPlanPreviewSchema,
   WritingConnectInputSchema,
   WritingContextPreviewInputSchema,
   WritingContextPreviewSchema,
@@ -14,7 +15,12 @@ import {
   WritingProviderEnabledInputSchema,
   WritingProviderInputSchema,
   WritingSettingsStatusSchema,
+  type CreativeDraftContent,
+  type ExternalSkillManifest,
+  type ExternalSkillPlanPreview,
   type ProjectDetails,
+  type ExternalSkillExecutionReceipt,
+  type WritingTaskKind,
   type WritingContextPreview,
   type WritingContextPreviewInput,
   type WritingDraftActionResult,
@@ -78,6 +84,15 @@ export interface WritingProjectStore {
   openProject(projectId: string): ProjectDetails
   saveWritingDraft(draft: WritingDraftRecord): WritingDraftRecord
   listWritingDrafts(projectId: string): WritingDraftRecord[]
+}
+
+export interface ResolvedWritingSkillPlan {
+  preview: ExternalSkillPlanPreview
+  readyManifests: ExternalSkillManifest[]
+}
+
+export interface ExternalWritingSkillPlanner {
+  getPlan(projectId: string, taskKind: WritingTaskKind): Promise<ResolvedWritingSkillPlan>
 }
 
 export interface WritingSetupServiceOptions {
@@ -387,6 +402,91 @@ function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex')
 }
 
+function emptySkillPlan(projectId: string, taskKind: WritingTaskKind): ResolvedWritingSkillPlan {
+  const required: ExternalSkillPlanPreview['required'] = []
+  const optional: ExternalSkillPlanPreview['optional'] = []
+  return {
+    preview: ExternalSkillPlanPreviewSchema.parse({
+      projectId,
+      taskKind,
+      planSha256: hash(JSON.stringify({ projectId, taskKind, required, optional })),
+      required,
+      optional,
+      blockingIssues: [],
+      ready: true
+    }),
+    readyManifests: []
+  }
+}
+
+function normalizeHeading(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function validateSkillOutput(
+  manifest: ExternalSkillManifest,
+  output: CreativeDraftContent
+): string | null {
+  if (output.sections.length < manifest.outputSchema.minimumSections) {
+    return `Expected at least ${manifest.outputSchema.minimumSections} proposal sections.`
+  }
+  const headings = new Set(output.sections.map((section) => normalizeHeading(section.heading)))
+  const missing = manifest.outputSchema.requiredSectionHeadings.filter(
+    (heading) => !headings.has(normalizeHeading(heading))
+  )
+  return missing.length === 0 ? null : `Missing required section: ${missing.join(', ')}.`
+}
+
+function skillInstructions(manifests: ExternalSkillManifest[]): string {
+  if (manifests.length === 0) return 'No external creative skills are attached to this request.'
+  return manifests
+    .map((manifest, index) =>
+      [
+        `SKILL ${index + 1}: ${manifest.displayName} ${manifest.version}`,
+        `Skill ID: ${manifest.skillId}`,
+        `Package SHA-256: ${manifest.packageSha256}`,
+        `Instructions: ${manifest.instructions}`,
+        `Required proposal section headings: ${manifest.outputSchema.requiredSectionHeadings.join(', ') || 'none beyond the studio schema'}.`
+      ].join('\n')
+    )
+    .join('\n\n')
+}
+
+function toReceipt(
+  receiptId: string,
+  manifest: ExternalSkillManifest,
+  taskKind: WritingTaskKind,
+  inputSha256: string,
+  outputSha256: string,
+  providerRequestId: string,
+  startedAt: string,
+  completedAt: string,
+  failureReason: string | null
+): ExternalSkillExecutionReceipt {
+  return {
+    receiptId,
+    skillId: manifest.skillId,
+    displayName: manifest.displayName,
+    skillVersion: manifest.version,
+    packageSha256: manifest.packageSha256,
+    executionClass: manifest.executionClass,
+    taskKind,
+    status: failureReason === null ? 'succeeded' : 'failed',
+    startedAt,
+    completedAt,
+    durationMs: Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime()),
+    inputSha256,
+    outputSha256,
+    providerRequestId,
+    applicationMode: 'provider-instructions',
+    failureReason
+  }
+}
+
 function buildContext(project: ProjectDetails, selection: WritingContextPreviewInput['context']) {
   const manifest = project.manifest
   const sections: string[] = []
@@ -473,21 +573,48 @@ function buildContext(project: ProjectDetails, selection: WritingContextPreviewI
 export interface CreativeWritingServiceOptions {
   setup: WritingSetupService
   projectStore: WritingProjectStore
+  skillPlanner?: ExternalWritingSkillPlanner
   now?: () => Date
   createId?: () => string
+  createReceiptId?: () => string
 }
 
 export class CreativeWritingService {
   private readonly setup: WritingSetupService
   private readonly projectStore: WritingProjectStore
+  private readonly skillPlanner: ExternalWritingSkillPlanner
   private readonly now: () => Date
   private readonly createId: () => string
+  private readonly createReceiptId: () => string
 
   constructor(options: CreativeWritingServiceOptions) {
     this.setup = options.setup
     this.projectStore = options.projectStore
+    this.skillPlanner =
+      options.skillPlanner ??
+      ({
+        getPlan: async (projectId, taskKind) => emptySkillPlan(projectId, taskKind)
+      } satisfies ExternalWritingSkillPlanner)
     this.now = options.now ?? (() => new Date())
     this.createId = options.createId ?? (() => createUlid())
+    this.createReceiptId = options.createReceiptId ?? (() => createUlid())
+  }
+
+  async previewSkillPlan(
+    projectId: string,
+    taskKind: WritingTaskKind
+  ): Promise<ExternalSkillPlanPreview> {
+    this.projectStore.openProject(projectId)
+    try {
+      return (await this.skillPlanner.getPlan(projectId, taskKind)).preview
+    } catch (error) {
+      throw new WritingServiceError(
+        'skill-error',
+        error instanceof Error
+          ? error.message
+          : 'The local skill plan could not be prepared safely.'
+      )
+    }
   }
 
   previewContext(unknownInput: unknown): WritingContextPreview {
@@ -503,7 +630,47 @@ export class CreativeWritingService {
     const input = WritingDraftRequestSchema.parse(unknownInput)
     const project = this.projectStore.openProject(input.projectId)
     const context = buildContext(project, input.context)
+    let resolvedPlan: ResolvedWritingSkillPlan
+    try {
+      resolvedPlan = await this.skillPlanner.getPlan(input.projectId, input.taskKind)
+    } catch (error) {
+      throw new WritingServiceError(
+        'skill-error',
+        error instanceof Error ? error.message : 'The local skill plan could not be read safely.'
+      )
+    }
+    if (resolvedPlan.preview.planSha256 !== input.skillPlanSha256) {
+      throw new WritingServiceError(
+        'skill-plan-changed',
+        'The attached-skill plan changed after the preview. Review it again before approving this request.'
+      )
+    }
+    if (!resolvedPlan.preview.ready) {
+      throw new WritingServiceError(
+        'required-skill-failed',
+        resolvedPlan.preview.blockingIssues[0] ??
+          'A required attached skill is not ready for this task.'
+      )
+    }
+    for (const manifest of resolvedPlan.readyManifests) {
+      const missingContext = manifest.inputSchema.requiredContext.filter((requiredContext) => {
+        if (requiredContext === 'project-brief') return !input.context.includeProjectBrief
+        if (requiredContext === 'production-settings') {
+          return !input.context.includeProductionSettings
+        }
+        return !input.context.includeCreativeDirection || project.creativeDirection === null
+      })
+      if (missingContext.length > 0) {
+        throw new WritingServiceError(
+          manifest.required ? 'required-skill-failed' : 'skill-error',
+          `${manifest.displayName} needs ${missingContext.join(', ')} in the selected context. Select it or disable that skill for this project.`
+        )
+      }
+    }
+
+    const skillsPlanned = [...resolvedPlan.preview.required, ...resolvedPlan.preview.optional]
     const ready = await this.setup.getReadyProvider(input.provider, input.model)
+    const providerStartedAt = this.now().toISOString()
     const response = await ready.client.generateDraft(ready.apiKey, {
       model: input.model,
       maxOutputTokens: input.maxOutputTokens,
@@ -511,23 +678,62 @@ export class CreativeWritingService {
         'You are the creative writing assistant inside Animated Series Studio.',
         'Return a structured proposal, never an approved canon change.',
         'Respect the supplied project facts and clearly identify gaps as continuity questions.',
-        'Do not claim that any external skill, research source, image, voice, or GPU tool was used.',
+        'Apply every attached skill instruction exactly. Never claim an unattached skill, research source, image, voice, or GPU tool was used.',
         `Write primarily in ${project.manifest.language}.`,
         input.profile === 'best-draft'
           ? 'Prioritise depth, specificity, emotional logic, and production-ready detail.'
           : input.profile === 'balanced'
             ? 'Balance useful detail with concise, reviewable sections.'
-            : 'Follow the user instruction closely without assuming extra style preferences.'
-      ].join(' '),
+            : 'Follow the user instruction closely without assuming extra style preferences.',
+        skillInstructions(resolvedPlan.readyManifests)
+      ].join('\n\n'),
       userPrompt: [
         `TASK: ${taskLabels[input.taskKind]}`,
         `USER INSTRUCTION:\n${input.instruction}`,
-        `EXACT LOCAL CONTEXT SELECTED BY THE USER:\n${context.text}`
+        `EXACT LOCAL CONTEXT SELECTED BY THE USER:\n${context.text}`,
+        `EXACT ATTACHED-SKILL PLAN SHA-256: ${resolvedPlan.preview.planSha256}`
       ].join('\n\n')
     })
+    const providerCompletedAt = this.now().toISOString()
+    const outputSha256 = hash(JSON.stringify(response.output))
+    const skillsUsed = resolvedPlan.readyManifests.map((manifest) => {
+      const failureReason = validateSkillOutput(manifest, response.output)
+      return toReceipt(
+        this.createReceiptId(),
+        manifest,
+        input.taskKind,
+        hash(
+          JSON.stringify({
+            skillId: manifest.skillId,
+            version: manifest.version,
+            packageSha256: manifest.packageSha256,
+            instruction: input.instruction,
+            contextSha256: context.sha256,
+            planSha256: input.skillPlanSha256
+          })
+        ),
+        outputSha256,
+        response.requestId,
+        providerStartedAt,
+        providerCompletedAt,
+        failureReason
+      )
+    })
+    const failedRequired = skillsUsed.find(
+      (receipt) =>
+        receipt.status === 'failed' &&
+        resolvedPlan.readyManifests.find((manifest) => manifest.skillId === receipt.skillId)
+          ?.required
+    )
+    if (failedRequired) {
+      throw new WritingServiceError(
+        'required-skill-failed',
+        `${failedRequired.displayName} ${failedRequired.skillVersion} was included, but its required output was missing. No proposal was saved.`
+      )
+    }
 
     const draft = WritingDraftRecordSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       draftId: this.createId(),
       projectId: input.projectId,
       taskKind: input.taskKind,
@@ -549,8 +755,9 @@ export class CreativeWritingService {
         state: 'not-calculated'
       },
       providerRequestId: response.requestId,
-      skillsPlanned: [],
-      skillsUsed: []
+      skillPlanSha256: resolvedPlan.preview.planSha256,
+      skillsPlanned,
+      skillsUsed
     })
     return this.projectStore.saveWritingDraft(draft)
   }

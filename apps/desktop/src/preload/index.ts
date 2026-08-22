@@ -5,6 +5,12 @@ import {
   CloudConnectionStatusSchema,
   CloudGuardrailsSchema,
   CreateProjectInputSchema,
+  ExternalSkillActionResultSchema,
+  ExternalSkillPlanPreviewInputSchema,
+  ExternalSkillPlanPreviewSchema,
+  ExternalSkillRemoveInputSchema,
+  ExternalSkillSetProjectEnabledInputSchema,
+  ExternalSkillStatusSchema,
   IPC_CHANNELS,
   ProjectBackupSummarySchema,
   ProjectCreativeDirectionUpdateInputSchema,
@@ -178,6 +184,34 @@ const studioApi: StudioApi = {
       const safeProjectId = UlidSchema.parse(projectId)
       return WritingDraftRecordSchema.array().parse(
         await ipcRenderer.invoke(IPC_CHANNELS.writingListDrafts, safeProjectId)
+      )
+    }
+  },
+  skills: {
+    async getStatus() {
+      return ExternalSkillStatusSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.skillsGetStatus))
+    },
+    async install() {
+      return ExternalSkillActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.skillsInstall)
+      )
+    },
+    async setProjectEnabled(input) {
+      const safeInput = ExternalSkillSetProjectEnabledInputSchema.parse(input)
+      return ExternalSkillActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.skillsSetProjectEnabled, safeInput)
+      )
+    },
+    async remove(input) {
+      const safeInput = ExternalSkillRemoveInputSchema.parse(input)
+      return ExternalSkillActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.skillsRemove, safeInput)
+      )
+    },
+    async previewPlan(input) {
+      const safeInput = ExternalSkillPlanPreviewInputSchema.parse(input)
+      return ExternalSkillPlanPreviewSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.skillsPreviewPlan, safeInput)
       )
     }
   }

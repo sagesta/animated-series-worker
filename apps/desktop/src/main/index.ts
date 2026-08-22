@@ -11,6 +11,7 @@ import {
   net,
   protocol,
   safeStorage,
+  type OpenDialogOptions,
   type IpcMainInvokeEvent
 } from 'electron'
 import { ZodError } from 'zod'
@@ -20,6 +21,12 @@ import {
   CloudConnectionStatusSchema,
   CloudGuardrailsSchema,
   CreateProjectInputSchema,
+  ExternalSkillActionResultSchema,
+  ExternalSkillPlanPreviewInputSchema,
+  ExternalSkillPlanPreviewSchema,
+  ExternalSkillRemoveInputSchema,
+  ExternalSkillSetProjectEnabledInputSchema,
+  ExternalSkillStatusSchema,
   IPC_CHANNELS,
   ProjectBackupSummarySchema,
   ProjectCreativeDirectionUpdateInputSchema,
@@ -58,6 +65,7 @@ import { AnthropicClient } from '@studio/provider-anthropic'
 import { GeminiClient } from '@studio/provider-gemini'
 import { OpenAiClient } from '@studio/provider-openai'
 import { RunPodClient } from '@studio/provider-runpod'
+import { DeclarativeSkillRegistry, toExternalSkillActionError } from '@studio/skill-runtime'
 import { SafeDiagnostics, type DiagnosticEventInput } from '@studio/support-diagnostics'
 
 protocol.registerSchemesAsPrivileged([
@@ -82,6 +90,7 @@ let projectStore: ProjectStore | null = null
 let cloudSetupService: CloudSetupService | null = null
 let writingSetupService: WritingSetupService | null = null
 let creativeWritingService: CreativeWritingService | null = null
+let skillRegistry: DeclarativeSkillRegistry | null = null
 let diagnostics: SafeDiagnostics | null = null
 let storeClosed = false
 
@@ -174,6 +183,11 @@ function requireWritingSetup(): WritingSetupService {
 function requireCreativeWriting(): CreativeWritingService {
   if (!creativeWritingService) throw new Error('The creative writing service is not ready.')
   return creativeWritingService
+}
+
+function requireSkillRegistry(): DeclarativeSkillRegistry {
+  if (!skillRegistry) throw new Error('The local creative-skill library is not ready.')
+  return skillRegistry
 }
 
 function requireDiagnostics(): SafeDiagnostics {
@@ -703,7 +717,7 @@ function registerIpcHandlers(): void {
           model: draft.model,
           inputTokens: draft.usage.inputTokens,
           outputTokens: draft.usage.outputTokens,
-          skillsUsed: 0
+          skillsUsed: draft.skillsUsed.filter((receipt) => receipt.status === 'succeeded').length
         }
       })
       return result
@@ -728,6 +742,110 @@ function registerIpcHandlers(): void {
       return WritingDraftRecordSchema.array().parse(requireCreativeWriting().listDrafts(projectId))
     } catch {
       throw new Error('The saved writing proposals could not be read safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.skillsGetStatus, async (event) => {
+    assertTrustedSender(event)
+    return ExternalSkillStatusSchema.parse(await requireSkillRegistry().getStatus())
+  })
+
+  ipcMain.handle(IPC_CHANNELS.skillsInstall, async (event) => {
+    assertTrustedSender(event)
+    try {
+      const options: OpenDialogOptions = {
+        title: 'Choose a declarative creative-skill package',
+        buttonLabel: 'Review and install skill',
+        properties: ['openFile'],
+        filters: [{ name: 'Creative skill package', extensions: ['json'] }]
+      }
+      const selection = mainWindow
+        ? await dialog.showOpenDialog(mainWindow, options)
+        : await dialog.showOpenDialog(options)
+      if (selection.canceled || !selection.filePaths[0]) {
+        return ExternalSkillActionResultSchema.parse({
+          ok: false,
+          error: { code: 'cancelled', message: 'No skill package was selected.' }
+        })
+      }
+      const status = await requireSkillRegistry().installFromFile(selection.filePaths[0])
+      const installed = [...status.installed].sort((left, right) =>
+        right.manifest.installedAt.localeCompare(left.manifest.installedAt)
+      )[0]
+      recordDiagnostic({
+        level: 'info',
+        area: 'skill',
+        eventName: 'skill.installed',
+        message: 'A declarative creative skill was installed without executing package code.',
+        context: {
+          skillId: installed?.manifest.skillId ?? 'unknown',
+          version: installed?.manifest.version ?? 'unknown',
+          enabledProjects: 0
+        }
+      })
+      return ExternalSkillActionResultSchema.parse({ ok: true, status })
+    } catch (error) {
+      const result = ExternalSkillActionResultSchema.parse(toExternalSkillActionError(error))
+      recordDiagnostic({
+        level: 'warning',
+        area: 'skill',
+        eventName: 'skill.install.failed',
+        message: 'A creative-skill package was rejected or could not be stored safely.',
+        context: { errorCode: result.ok ? 'unknown' : result.error.code }
+      })
+      return result
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.skillsSetProjectEnabled, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = ExternalSkillSetProjectEnabledInputSchema.parse(unknownInput)
+      requireStore().openProject(input.projectId)
+      const status = await requireSkillRegistry().setProjectEnabled(input)
+      recordDiagnostic({
+        level: 'info',
+        area: 'skill',
+        eventName: input.enabled ? 'skill.project-enabled' : 'skill.project-disabled',
+        message: input.enabled
+          ? 'A creative skill was enabled for one project.'
+          : 'A creative skill was disabled for one project.',
+        context: { skillId: input.skillId, projectId: input.projectId }
+      })
+      return ExternalSkillActionResultSchema.parse({ ok: true, status })
+    } catch (error) {
+      return ExternalSkillActionResultSchema.parse(toExternalSkillActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.skillsRemove, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = ExternalSkillRemoveInputSchema.parse(unknownInput)
+      const status = await requireSkillRegistry().remove(input.skillId)
+      recordDiagnostic({
+        level: 'info',
+        area: 'skill',
+        eventName: 'skill.removed',
+        message:
+          'A creative skill was removed from the active registry. Historical receipts remain.',
+        context: { skillId: input.skillId }
+      })
+      return ExternalSkillActionResultSchema.parse({ ok: true, status })
+    } catch (error) {
+      return ExternalSkillActionResultSchema.parse(toExternalSkillActionError(error))
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.skillsPreviewPlan, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = ExternalSkillPlanPreviewInputSchema.parse(unknownInput)
+      return ExternalSkillPlanPreviewSchema.parse(
+        await requireCreativeWriting().previewSkillPlan(input.projectId, input.taskKind)
+      )
+    } catch {
+      throw new Error('The attached-skill plan could not be previewed safely.')
     }
   })
 }
@@ -832,9 +950,14 @@ void app
         join(userDataRoot, 'settings', 'creative-writing.json')
       )
     })
+    skillRegistry = new DeclarativeSkillRegistry({
+      rootPath: join(userDataRoot, 'skills'),
+      studioVersion: app.getVersion()
+    })
     creativeWritingService = new CreativeWritingService({
       setup: writingSetupService,
-      projectStore
+      projectStore,
+      skillPlanner: skillRegistry
     })
     recordDiagnostic({
       level: 'info',
