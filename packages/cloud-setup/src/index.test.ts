@@ -110,6 +110,46 @@ describe('cloud setup service', () => {
     expect(status.generationState).toBe('locked')
   })
 
+  it('reports ready only after connection, guardrails, models, worker, and shutdown are proven', async () => {
+    const settingsPath = await temporarySettingsPath()
+    const vault = new MemoryVault()
+    const provider: CloudProvider = {
+      validateAccount: vi.fn().mockResolvedValue({
+        totalPods: 0,
+        activePods: 0,
+        activeHourlyCostUsd: 0
+      }),
+      listGpuOptions: vi.fn().mockResolvedValue([gpuOption])
+    }
+    const service = new CloudSetupService({
+      vault,
+      provider,
+      settingsStore: new CloudSettingsStore(settingsPath),
+      productionReadiness: () => ({
+        modelStorageReady: true,
+        workerImageReady: true,
+        automaticShutdownTested: true
+      })
+    })
+
+    await service.saveGuardrails({
+      maxSessionCostUsd: 10,
+      maxRuntimeMinutes: 120,
+      idleTimeoutMinutes: 10,
+      maxConcurrentGpus: 1
+    })
+    const status = await service.connect({ apiKey: 'rpa_valid_secret_value_123456789' })
+
+    expect(status.generationState).toBe('ready')
+    expect(status.setupChecklist).toMatchObject({
+      accountConnected: true,
+      guardrailsSaved: true,
+      modelStorageReady: true,
+      workerImageReady: true,
+      automaticShutdownTested: true
+    })
+  })
+
   it('removes only the cloud credential and retains saved safety defaults', async () => {
     const settingsPath = await temporarySettingsPath()
     const vault = new MemoryVault()

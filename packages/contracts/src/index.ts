@@ -319,6 +319,10 @@ export const SupportEventSchema = z
       'cloud',
       'writing',
       'skill',
+      'production',
+      'worker',
+      'media',
+      'export',
       'security',
       'renderer'
     ]),
@@ -360,7 +364,7 @@ export const SystemStatusSchema = z
     indexedProjects: z.number().int().nonnegative(),
     catalogState: z.literal('ready'),
     cloudGpuState: z.enum(['not-configured', 'account-connected', 'attention']),
-    generationState: z.literal('locked'),
+    generationState: z.enum(['locked', 'ready']),
     generationReason: z.string()
   })
   .strict()
@@ -438,9 +442,9 @@ export const CloudSetupChecklistSchema = z
   .object({
     accountConnected: z.boolean(),
     guardrailsSaved: z.boolean(),
-    modelStorageReady: z.literal(false),
-    workerImageReady: z.literal(false),
-    automaticShutdownTested: z.literal(false)
+    modelStorageReady: z.boolean(),
+    workerImageReady: z.boolean(),
+    automaticShutdownTested: z.boolean()
   })
   .strict()
 
@@ -457,7 +461,7 @@ export const CloudConnectionStatusSchema = z
     catalogMessage: z.string().nullable(),
     validationCostUsd: z.literal(0),
     setupChecklist: CloudSetupChecklistSchema,
-    generationState: z.literal('locked'),
+    generationState: z.enum(['locked', 'ready']),
     generationReason: z.string()
   })
   .strict()
@@ -649,9 +653,11 @@ export const WritingTaskKindSchema = z.enum([
   'develop_character',
   'build_world',
   'outline_episode',
+  'plan_storyboard',
   'draft_scene',
   'rewrite_dialogue',
-  'check_continuity'
+  'check_continuity',
+  'plan_youtube_release'
 ])
 export type WritingTaskKind = z.infer<typeof WritingTaskKindSchema>
 
@@ -1123,6 +1129,1009 @@ export const WritingDraftActionResultSchema = z.discriminatedUnion('ok', [
 ])
 export type WritingDraftActionResult = z.infer<typeof WritingDraftActionResultSchema>
 
+export const CanonKindSchema = z.enum([
+  'series-bible',
+  'character',
+  'world',
+  'location',
+  'prop',
+  'visual-style',
+  'voice',
+  'episode-outline',
+  'script',
+  'storyboard',
+  'release-strategy'
+])
+export type CanonKind = z.infer<typeof CanonKindSchema>
+
+export const ApprovalDecisionSchema = z
+  .object({
+    decisionId: UlidSchema,
+    projectId: UlidSchema,
+    subjectType: z.enum(['canon', 'asset', 'take', 'timeline', 'release-package']),
+    subjectId: UlidSchema,
+    decision: z.enum(['approved', 'rejected', 'changes-requested']),
+    reason: z.string().trim().min(3).max(2_000),
+    confirmation: z.literal(true),
+    decidedAt: z.string().datetime({ offset: true }),
+    contentSha256: Sha256Schema
+  })
+  .strict()
+export type ApprovalDecision = z.infer<typeof ApprovalDecisionSchema>
+
+export const CanonRecordSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    canonId: UlidSchema,
+    projectId: UlidSchema,
+    kind: CanonKindSchema,
+    label: z.string().trim().min(2).max(200),
+    revision: z.number().int().positive(),
+    state: z.enum(['active', 'superseded']),
+    sourceDraftId: UlidSchema,
+    sourceDraftSha256: Sha256Schema,
+    creativeDirectionProfileId: UlidSchema.nullable(),
+    output: CreativeDraftContentSchema,
+    outputSha256: Sha256Schema,
+    approval: ApprovalDecisionSchema,
+    createdAt: z.string().datetime({ offset: true }),
+    supersededAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict()
+export type CanonRecord = z.infer<typeof CanonRecordSchema>
+
+export const PromoteWritingDraftInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    draftId: UlidSchema,
+    expectedDraftSha256: Sha256Schema,
+    kind: CanonKindSchema,
+    label: z.string().trim().min(2, 'Give this approved record a clear name.').max(200),
+    reason: z
+      .string()
+      .trim()
+      .min(10, 'Briefly explain why this proposal is ready to become canon.')
+      .max(2_000),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type PromoteWritingDraftInput = z.infer<typeof PromoteWritingDraftInputSchema>
+
+export const ContinuityDependencySchema = z
+  .object({
+    dependencyId: UlidSchema,
+    projectId: UlidSchema,
+    sourceCanonId: UlidSchema,
+    consumerType: z.enum([
+      'canon',
+      'storyboard',
+      'image',
+      'voice',
+      'video',
+      'timeline',
+      'thumbnail',
+      'release-package'
+    ]),
+    consumerId: UlidSchema,
+    sourceOutputSha256: Sha256Schema,
+    state: z.enum(['current', 'stale']),
+    createdAt: z.string().datetime({ offset: true }),
+    staleAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict()
+export type ContinuityDependency = z.infer<typeof ContinuityDependencySchema>
+
+export const CanonImpactSummarySchema = z
+  .object({
+    canonId: UlidSchema,
+    activeRevision: z.number().int().positive(),
+    dependentCount: z.number().int().nonnegative(),
+    staleDependentCount: z.number().int().nonnegative(),
+    affectedTypes: z.array(z.string().min(1).max(80)).max(20)
+  })
+  .strict()
+export type CanonImpactSummary = z.infer<typeof CanonImpactSummarySchema>
+
+export const MediaAssetKindSchema = z.enum([
+  'reference-image',
+  'character-board',
+  'style-board',
+  'environment-board',
+  'storyboard-frame',
+  'voice-line',
+  'ambience',
+  'effect',
+  'music',
+  'animatic',
+  'video-take',
+  'caption',
+  'thumbnail',
+  'master-video',
+  'document'
+])
+export type MediaAssetKind = z.infer<typeof MediaAssetKindSchema>
+
+export const MediaAssetSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    assetId: UlidSchema,
+    projectId: UlidSchema,
+    kind: MediaAssetKindSchema,
+    label: z.string().trim().min(1).max(240),
+    relativePath: z
+      .string()
+      .min(1)
+      .max(1_000)
+      .refine((value) => !value.includes('..') && !value.startsWith('/') && !value.includes('\\'), {
+        message: 'The asset path must stay inside its project.'
+      }),
+    mimeType: z.string().regex(/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i),
+    byteSize: z.number().int().nonnegative(),
+    sha256: Sha256Schema,
+    origin: z.enum(['imported', 'generated', 'assembled']),
+    jobId: UlidSchema.nullable(),
+    parentAssetIds: UlidSchema.array().max(2_500),
+    state: z.enum(['candidate', 'approved', 'rejected', 'superseded']),
+    width: z.number().int().positive().nullable(),
+    height: z.number().int().positive().nullable(),
+    durationMs: z.number().int().positive().nullable(),
+    createdAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type MediaAsset = z.infer<typeof MediaAssetSchema>
+
+export const MediaAssetViewSchema = MediaAssetSchema.extend({
+  mediaUrl: z.string().min(1).max(2_000)
+}).strict()
+export type MediaAssetView = z.infer<typeof MediaAssetViewSchema>
+
+export const RegisterMediaAssetInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    kind: MediaAssetKindSchema,
+    label: z.string().trim().min(1).max(240),
+    sourcePath: z.string().min(1).max(2_000),
+    origin: z.literal('imported'),
+    parentAssetIds: UlidSchema.array().max(2_500).default([])
+  })
+  .strict()
+export type RegisterMediaAssetInput = z.infer<typeof RegisterMediaAssetInputSchema>
+
+export const ChooseMediaAssetInputSchema = RegisterMediaAssetInputSchema.omit({
+  sourcePath: true,
+  origin: true
+}).strict()
+export type ChooseMediaAssetInput = z.infer<typeof ChooseMediaAssetInputSchema>
+
+export const ReviewMediaAssetInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    assetId: UlidSchema,
+    expectedSha256: Sha256Schema,
+    decision: z.enum(['approved', 'rejected', 'changes-requested']),
+    reason: z.string().trim().min(3).max(2_000),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type ReviewMediaAssetInput = z.infer<typeof ReviewMediaAssetInputSchema>
+
+export const ProductionJobKindSchema = z.enum([
+  'qwen-image',
+  'qwen-image-edit',
+  'qwen3-tts',
+  'animatic',
+  'ltx-video-draft',
+  'ltx-video-final',
+  'ltx-audio-to-video',
+  'lip-sync',
+  'creative-qc',
+  'foley',
+  'timeline-render',
+  'caption-export',
+  'thumbnail-render',
+  'release-package'
+])
+export type ProductionJobKind = z.infer<typeof ProductionJobKindSchema>
+
+export const ProductionJobStateSchema = z.enum([
+  'planned',
+  'estimated',
+  'approved',
+  'queued',
+  'provisioning',
+  'running',
+  'downloading',
+  'verifying',
+  'awaiting-review',
+  'succeeded',
+  'failed',
+  'cancel-requested',
+  'cancelled',
+  'terminated'
+])
+export type ProductionJobState = z.infer<typeof ProductionJobStateSchema>
+
+export const CostEstimateSchema = z
+  .object({
+    estimateId: UlidSchema,
+    currency: z.literal('USD'),
+    gpuCount: z.number().int().min(0).max(3),
+    hourlyRateUsdPerGpu: z.number().nonnegative(),
+    expectedRuntimeMinutes: z.number().int().nonnegative(),
+    maximumRuntimeMinutes: z.number().int().positive(),
+    expectedComputeUsd: z.number().nonnegative(),
+    maximumComputeUsd: z.number().nonnegative(),
+    storageUsd: z.number().nonnegative(),
+    providerExtrasUsd: z.number().nonnegative(),
+    expectedTotalUsd: z.number().nonnegative(),
+    maximumTotalUsd: z.number().nonnegative(),
+    explanation: z.array(z.string().min(1).max(300)).min(1).max(20),
+    priceSource: z.string().min(1).max(300),
+    pricedAt: z.string().datetime({ offset: true }),
+    expiresAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type CostEstimate = z.infer<typeof CostEstimateSchema>
+
+export const ProductionJobInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    kind: ProductionJobKindSchema,
+    label: z.string().trim().min(2).max(240),
+    workflowId: z.string().trim().min(1).max(200),
+    workflowVersion: z.string().trim().min(1).max(80),
+    inputAssetIds: UlidSchema.array().max(50),
+    canonIds: UlidSchema.array().max(50),
+    parameters: z.record(
+      z.string().min(1).max(100),
+      z.union([z.string().max(4_000), z.number().finite(), z.boolean(), z.null()])
+    ),
+    idempotencyKey: z.string().regex(/^[a-f0-9]{64}$/),
+    estimate: CostEstimateSchema
+  })
+  .strict()
+export type ProductionJobInput = z.infer<typeof ProductionJobInputSchema>
+
+export const ProductionJobApprovalInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    jobId: UlidSchema,
+    expectedEstimateId: UlidSchema,
+    acceptedMaximumUsd: z.number().positive(),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type ProductionJobApprovalInput = z.infer<typeof ProductionJobApprovalInputSchema>
+
+export const ProductionJobEventSchema = z
+  .object({
+    eventId: UlidSchema,
+    jobId: UlidSchema,
+    projectId: UlidSchema,
+    state: ProductionJobStateSchema,
+    message: z.string().min(1).max(500),
+    progressPercent: z.number().int().min(0).max(100).nullable(),
+    createdAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ProductionJobEvent = z.infer<typeof ProductionJobEventSchema>
+
+export const ProductionJobRecordSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    jobId: UlidSchema,
+    projectId: UlidSchema,
+    kind: ProductionJobKindSchema,
+    label: z.string().min(2).max(240),
+    state: ProductionJobStateSchema,
+    workflowId: z.string().min(1).max(200),
+    workflowVersion: z.string().min(1).max(80),
+    inputAssetIds: UlidSchema.array().max(50),
+    canonIds: UlidSchema.array().max(50),
+    parameters: ProductionJobInputSchema.shape.parameters,
+    idempotencyKey: z.string().regex(/^[a-f0-9]{64}$/),
+    estimate: CostEstimateSchema,
+    approvedMaximumUsd: z.number().nonnegative().nullable(),
+    actualCostUsd: z.number().nonnegative(),
+    elapsedCostEstimateUsd: z.number().nonnegative().default(0),
+    costState: z
+      .enum(['not-recorded', 'elapsed-estimate', 'provider-reconciled'])
+      .default('not-recorded'),
+    outputAssetIds: UlidSchema.array().max(100),
+    workerLeaseId: UlidSchema.nullable(),
+    workerPodId: z.string().min(1).max(191).nullable().default(null),
+    workerHardDeadline: z.string().datetime({ offset: true }).nullable().default(null),
+    workerClosedAt: z.string().datetime({ offset: true }).nullable().default(null),
+    recoverable: z.boolean(),
+    lastErrorCode: z.string().min(1).max(100).nullable(),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ProductionJobRecord = z.infer<typeof ProductionJobRecordSchema>
+
+export const ProductionJobDetailsSchema = z
+  .object({
+    job: ProductionJobRecordSchema,
+    events: ProductionJobEventSchema.array()
+  })
+  .strict()
+export type ProductionJobDetails = z.infer<typeof ProductionJobDetailsSchema>
+
+export const ProductionWorkflowSummarySchema = z
+  .object({
+    workflowId: z.string().min(1).max(100),
+    version: z.string().min(1).max(80),
+    label: z.string().min(2).max(160),
+    jobKind: ProductionJobKindSchema,
+    engine: z.enum(['comfyui', 'worker-python', 'local-ffmpeg', 'local-package']),
+    qualificationState: z.enum(['candidate', 'qualified', 'retired']),
+    minimumVramGb: z.number().int().nonnegative(),
+    expectedRuntimeMinutes: z.number().int().positive(),
+    maximumRuntimeMinutes: z.number().int().positive(),
+    outputKind: z.enum(['image', 'audio', 'video', 'document', 'package']),
+    requiresGpu: z.boolean(),
+    readyForPaidWork: z.boolean(),
+    blockers: z.array(z.string().min(1).max(300)).max(20),
+    notes: z.array(z.string().min(1).max(300)).max(20)
+  })
+  .strict()
+export type ProductionWorkflowSummary = z.infer<typeof ProductionWorkflowSummarySchema>
+
+export const ProductionWorkflowEstimateInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    workflowId: z.string().min(1).max(100),
+    workflowVersion: z.string().min(1).max(80),
+    gpuTypeId: z.string().min(1).max(191).nullable(),
+    priceTier: z.enum(['secure', 'community']).nullable(),
+    gpuCount: z.number().int().min(0).max(3)
+  })
+  .strict()
+export type ProductionWorkflowEstimateInput = z.infer<typeof ProductionWorkflowEstimateInputSchema>
+
+export const ProductionWorkflowEstimateResultSchema = z.discriminatedUnion('ok', [
+  z
+    .object({
+      ok: z.literal(true),
+      workflow: ProductionWorkflowSummarySchema,
+      estimate: CostEstimateSchema
+    })
+    .strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: z.enum([
+            'invalid-input',
+            'not-found',
+            'not-connected',
+            'price-unavailable',
+            'workflow-locked',
+            'budget-exceeded',
+            'unknown'
+          ]),
+          message: z.string().min(1).max(600)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type ProductionWorkflowEstimateResult = z.infer<
+  typeof ProductionWorkflowEstimateResultSchema
+>
+
+export const ProductionQueueJobInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    jobId: UlidSchema,
+    expectedEstimateId: UlidSchema,
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type ProductionQueueJobInput = z.infer<typeof ProductionQueueJobInputSchema>
+
+export const ProductionCancelJobInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    jobId: UlidSchema,
+    reason: z.string().trim().min(5).max(500),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type ProductionCancelJobInput = z.infer<typeof ProductionCancelJobInputSchema>
+
+export const TimelineClipSchema = z
+  .object({
+    clipId: UlidSchema,
+    assetId: UlidSchema,
+    order: z.number().int().nonnegative(),
+    durationMs: z.number().int().min(100).max(3_600_000),
+    trimInMs: z.number().int().nonnegative(),
+    transition: z.enum(['cut', 'crossfade', 'fade-through-black'])
+  })
+  .strict()
+export type TimelineClip = z.infer<typeof TimelineClipSchema>
+
+export const TimelineAudioCueSchema = z
+  .object({
+    cueId: UlidSchema,
+    assetId: UlidSchema,
+    layer: z.enum(['dialogue', 'ambience', 'effect', 'music']),
+    startMs: z.number().int().nonnegative(),
+    durationMs: z.number().int().positive(),
+    gainDb: z.number().min(-60).max(12)
+  })
+  .strict()
+export type TimelineAudioCue = z.infer<typeof TimelineAudioCueSchema>
+
+export const CaptionCueSchema = z
+  .object({
+    cueId: UlidSchema,
+    startMs: z.number().int().nonnegative(),
+    endMs: z.number().int().positive(),
+    text: z.string().trim().min(1).max(500)
+  })
+  .strict()
+  .refine((value) => value.endMs > value.startMs, {
+    message: 'A caption must end after it starts.'
+  })
+export type CaptionCue = z.infer<typeof CaptionCueSchema>
+
+export const ProductionTimelineSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    timelineId: UlidSchema,
+    projectId: UlidSchema,
+    revision: z.number().int().positive(),
+    state: z.enum(['draft', 'locked', 'superseded']),
+    label: z.string().trim().min(2).max(240),
+    clips: z.array(TimelineClipSchema).max(2_000),
+    audioCues: z.array(TimelineAudioCueSchema).max(10_000),
+    captions: z.array(CaptionCueSchema).max(20_000),
+    durationMs: z.number().int().nonnegative(),
+    masterAssetId: UlidSchema.nullable(),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true }),
+    lockedAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict()
+export type ProductionTimeline = z.infer<typeof ProductionTimelineSchema>
+
+export const SaveProductionTimelineInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    timelineId: UlidSchema.nullable(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }).nullable(),
+    label: z.string().trim().min(2).max(240),
+    clips: z.array(TimelineClipSchema).max(2_000),
+    audioCues: z.array(TimelineAudioCueSchema).max(10_000),
+    captions: z.array(CaptionCueSchema).max(20_000)
+  })
+  .strict()
+export type SaveProductionTimelineInput = z.infer<typeof SaveProductionTimelineInputSchema>
+
+export const LockProductionTimelineInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    timelineId: UlidSchema,
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type LockProductionTimelineInput = z.infer<typeof LockProductionTimelineInputSchema>
+
+export const ReleaseDetailsSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    releaseDetailsId: UlidSchema,
+    projectId: UlidSchema,
+    revision: z.number().int().positive(),
+    title: z.string().trim().min(1).max(100),
+    description: z.string().max(5_000),
+    language: z.string().trim().min(2).max(80),
+    category: z.string().trim().min(1).max(100),
+    playlist: z.string().trim().max(150),
+    tags: z.array(z.string().trim().min(1).max(100)).max(50),
+    hashtags: z.array(z.string().regex(/^#[\p{L}\p{N}_]+$/u)).max(15),
+    chapters: z
+      .array(
+        z
+          .object({
+            startMs: z.number().int().nonnegative(),
+            label: z.string().trim().min(1).max(100)
+          })
+          .strict()
+      )
+      .max(100),
+    credits: z.string().max(5_000),
+    endScreenNotes: z.string().max(1_000),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ReleaseDetails = z.infer<typeof ReleaseDetailsSchema>
+
+export const SaveReleaseDetailsInputSchema = ReleaseDetailsSchema.omit({
+  schemaVersion: true,
+  releaseDetailsId: true,
+  revision: true,
+  createdAt: true,
+  updatedAt: true
+})
+  .extend({
+    releaseDetailsId: UlidSchema.nullable(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict()
+export type SaveReleaseDetailsInput = z.infer<typeof SaveReleaseDetailsInputSchema>
+
+export const ReleaseAttestationsSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    attestationId: UlidSchema,
+    projectId: UlidSchema,
+    madeForKids: z.enum(['yes', 'no']),
+    syntheticDisclosure: z.enum(['yes', 'no']),
+    truthfulPackagingConfirmed: z.literal(true),
+    originalityReviewed: z.literal(true),
+    rightsAndCreditsReviewed: z.literal(true),
+    fullWatchCompleted: z.literal(true),
+    notes: z.string().trim().min(10).max(2_000),
+    attestedAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ReleaseAttestations = z.infer<typeof ReleaseAttestationsSchema>
+
+export const SaveReleaseAttestationsInputSchema = ReleaseAttestationsSchema.omit({
+  schemaVersion: true,
+  attestationId: true,
+  attestedAt: true
+}).strict()
+export type SaveReleaseAttestationsInput = z.infer<typeof SaveReleaseAttestationsInputSchema>
+
+export const ReleasePackageFileSchema = z
+  .object({
+    role: z.enum(['master', 'thumbnail', 'caption', 'details', 'attestations', 'manifest']),
+    fileName: z.string().min(1).max(240),
+    byteSize: z.number().int().nonnegative(),
+    sha256: Sha256Schema
+  })
+  .strict()
+export const ReleasePackageSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    releaseId: UlidSchema,
+    projectId: UlidSchema,
+    timelineId: UlidSchema,
+    releaseDetailsId: UlidSchema,
+    attestationId: UlidSchema,
+    masterAssetId: UlidSchema,
+    thumbnailAssetId: UlidSchema,
+    captionAssetIds: UlidSchema.array().max(20),
+    state: z.literal('locked'),
+    files: z.array(ReleasePackageFileSchema).min(5).max(30),
+    relativePath: z.string().regex(/^releases\//),
+    createdAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ReleasePackage = z.infer<typeof ReleasePackageSchema>
+
+export const CreateReleasePackageInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    timelineId: UlidSchema,
+    releaseDetailsId: UlidSchema,
+    attestationId: UlidSchema,
+    masterAssetId: UlidSchema,
+    thumbnailAssetId: UlidSchema,
+    captionAssetIds: UlidSchema.array().max(20),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type CreateReleasePackageInput = z.infer<typeof CreateReleasePackageInputSchema>
+
+export const FinishWorkspaceSchema = z
+  .object({
+    projectId: UlidSchema,
+    timelines: z.array(ProductionTimelineSchema),
+    releaseDetails: z.array(ReleaseDetailsSchema),
+    attestations: z.array(ReleaseAttestationsSchema),
+    releasePackages: z.array(ReleasePackageSchema),
+    blockers: z.array(z.string().min(1).max(300))
+  })
+  .strict()
+export type FinishWorkspace = z.infer<typeof FinishWorkspaceSchema>
+
+export const FinishActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), workspace: FinishWorkspaceSchema }).strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: z.enum([
+            'invalid-input',
+            'not-found',
+            'stale-data',
+            'approval-required',
+            'integrity-failed',
+            'unsafe-path',
+            'unknown'
+          ]),
+          message: z.string().min(1).max(600)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type FinishActionResult = z.infer<typeof FinishActionResultSchema>
+
+export const LocalMediaRuntimeStatusSchema = z
+  .object({
+    state: z.enum(['ready', 'missing']),
+    source: z.enum(['bundled', 'system', 'none']),
+    ffmpegAvailable: z.boolean(),
+    ffprobeAvailable: z.boolean(),
+    message: z.string().min(1).max(600)
+  })
+  .strict()
+export type LocalMediaRuntimeStatus = z.infer<typeof LocalMediaRuntimeStatusSchema>
+
+export const InstallLocalMediaToolsInputSchema = z
+  .object({ confirmation: z.literal(true) })
+  .strict()
+export type InstallLocalMediaToolsInput = z.infer<typeof InstallLocalMediaToolsInputSchema>
+
+export const LocalMediaInstallResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), status: LocalMediaRuntimeStatusSchema }).strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: z.enum([
+            'unsupported',
+            'installer-missing',
+            'install-failed',
+            'verification-failed'
+          ]),
+          message: z.string().min(1).max(600)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type LocalMediaInstallResult = z.infer<typeof LocalMediaInstallResultSchema>
+
+export const RenderTimelineInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    timelineId: UlidSchema,
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    label: z.string().trim().min(2).max(240),
+    width: z.number().int().min(1280).max(3840),
+    height: z.number().int().min(720).max(2160),
+    framesPerSecond: z.number().int().min(12).max(60),
+    burnCaptions: z.boolean(),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type RenderTimelineInput = z.infer<typeof RenderTimelineInputSchema>
+
+export const ExportCaptionsInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    timelineId: UlidSchema,
+    label: z.string().trim().min(2).max(240),
+    format: z.enum(['srt', 'vtt']),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type ExportCaptionsInput = z.infer<typeof ExportCaptionsInputSchema>
+
+export const RenderThumbnailInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    sourceAssetId: UlidSchema,
+    label: z.string().trim().min(2).max(240),
+    headline: z.string().trim().min(1).max(80),
+    textPosition: z.enum(['top', 'bottom']),
+    accent: z.enum(['gold', 'cyan', 'coral', 'white']),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type RenderThumbnailInput = z.infer<typeof RenderThumbnailInputSchema>
+
+export const LocalMediaActionResultSchema = z.discriminatedUnion('ok', [
+  z
+    .object({
+      ok: z.literal(true),
+      asset: MediaAssetViewSchema,
+      workspace: FinishWorkspaceSchema,
+      warnings: z.array(z.string().min(1).max(600)).max(100)
+    })
+    .strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: z.enum([
+            'invalid-input',
+            'not-found',
+            'stale-data',
+            'approval-required',
+            'runtime-missing',
+            'render-failed',
+            'integrity-failed',
+            'unsafe-path',
+            'unknown'
+          ]),
+          message: z.string().min(1).max(600)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type LocalMediaActionResult = z.infer<typeof LocalMediaActionResultSchema>
+
+export const PromotableDraftFingerprintSchema = z
+  .object({
+    draftId: UlidSchema,
+    sha256: Sha256Schema,
+    alreadyPromoted: z.boolean()
+  })
+  .strict()
+export type PromotableDraftFingerprint = z.infer<typeof PromotableDraftFingerprintSchema>
+
+export const ProductionWorkspaceSummarySchema = z
+  .object({
+    projectId: UlidSchema,
+    canon: CanonRecordSchema.array(),
+    media: MediaAssetViewSchema.array(),
+    jobs: ProductionJobRecordSchema.array(),
+    canonImpacts: CanonImpactSummarySchema.array().default([]),
+    draftFingerprints: PromotableDraftFingerprintSchema.array(),
+    staleDependencyCount: z.number().int().nonnegative(),
+    estimatedApprovedSpendUsd: z.number().nonnegative(),
+    actualSpendUsd: z.number().nonnegative(),
+    elapsedCloudUsageEstimateUsd: z.number().nonnegative().default(0)
+  })
+  .strict()
+export type ProductionWorkspaceSummary = z.infer<typeof ProductionWorkspaceSummarySchema>
+
+const ProductionActionErrorSchema = z
+  .object({
+    code: z.enum([
+      'invalid-input',
+      'not-found',
+      'stale-data',
+      'approval-required',
+      'budget-exceeded',
+      'invalid-state',
+      'unsafe-path',
+      'integrity-failed',
+      'project-error',
+      'unknown'
+    ]),
+    message: z.string().min(1).max(600)
+  })
+  .strict()
+
+export const CanonActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), canon: CanonRecordSchema }).strict(),
+  z.object({ ok: z.literal(false), error: ProductionActionErrorSchema }).strict()
+])
+export type CanonActionResult = z.infer<typeof CanonActionResultSchema>
+
+export const MediaActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), asset: MediaAssetViewSchema }).strict(),
+  z.object({ ok: z.literal(false), error: ProductionActionErrorSchema }).strict()
+])
+export type MediaActionResult = z.infer<typeof MediaActionResultSchema>
+
+export const ProductionJobActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), details: ProductionJobDetailsSchema }).strict(),
+  z.object({ ok: z.literal(false), error: ProductionActionErrorSchema }).strict()
+])
+export type ProductionJobActionResult = z.infer<typeof ProductionJobActionResultSchema>
+
+export const UpstreamFileRoleSchema = z.enum([
+  'outline',
+  'characters',
+  'art',
+  'script',
+  'storyboard'
+])
+export type UpstreamFileRole = z.infer<typeof UpstreamFileRoleSchema>
+
+export const UpstreamSourceFileSchema = z
+  .object({
+    role: UpstreamFileRoleSchema,
+    originalName: z.string().min(1).max(240),
+    relativePath: z.string().min(1).max(1_000),
+    sha256: Sha256Schema,
+    byteSize: z.number().int().positive(),
+    validationState: z.enum(['passed', 'failed', 'not-run']),
+    validatorOutput: z.string().max(8_000)
+  })
+  .strict()
+export type UpstreamSourceFile = z.infer<typeof UpstreamSourceFileSchema>
+
+export const NeutralShotSchema = z
+  .object({
+    shotId: z.string().regex(/^SHOT-[A-Z0-9-]{3,80}$/),
+    sourceAlias: z.string().min(1).max(120),
+    sourceSceneId: z.string().min(1).max(120),
+    narrativeJob: z.enum([
+      'establish',
+      'reveal',
+      'reaction',
+      'dialogue',
+      'movement',
+      'mood',
+      'transition'
+    ]),
+    targetDurationFrames: z.number().int().positive(),
+    frameRate: z.number().int().min(12).max(120),
+    composition: z.string().min(1).max(4_000),
+    cameraIntent: z.string().min(1).max(500),
+    characterAliases: z.array(z.string().min(1).max(120)).max(20),
+    propAliases: z.array(z.string().min(1).max(120)).max(20),
+    productionMethod: z.enum([
+      'held-image',
+      'parallax',
+      'loop',
+      'image-to-video',
+      'audio-to-video',
+      'manual'
+    ]),
+    fallbackMethod: z.enum([
+      'held-image',
+      'parallax',
+      'loop',
+      'image-to-video',
+      'audio-to-video',
+      'manual'
+    ]),
+    sourceH3Prompt: z.string().max(30_000).nullable(),
+    sourceH3ExecutionBlocked: z.literal(true),
+    approvalCriteria: z.array(z.string().min(1).max(500)).min(1).max(20)
+  })
+  .strict()
+export type NeutralShot = z.infer<typeof NeutralShotSchema>
+
+export const NormalizedSceneSchema = z
+  .object({
+    sceneId: z.string().regex(/^SCENE-[A-Z0-9-]{3,80}$/),
+    sourceAliases: z.array(z.string().min(1).max(120)).min(1).max(20),
+    label: z.string().min(1).max(240),
+    purpose: z.string().min(1).max(2_000),
+    targetSeconds: z.number().int().positive(),
+    shots: NeutralShotSchema.array().max(500)
+  })
+  .strict()
+export type NormalizedScene = z.infer<typeof NormalizedSceneSchema>
+
+export const NormalizedSequenceSchema = z
+  .object({
+    sequenceId: z.string().regex(/^SEQ-[A-Z0-9-]{3,80}$/),
+    label: z.string().min(1).max(240),
+    purpose: z.string().min(1).max(2_000),
+    targetSeconds: z.number().int().positive(),
+    scenes: NormalizedSceneSchema.array().min(1).max(200)
+  })
+  .strict()
+export type NormalizedSequence = z.infer<typeof NormalizedSequenceSchema>
+
+export const NormalizedActSchema = z
+  .object({
+    actNumber: z.number().int().positive().max(10),
+    label: z.string().min(1).max(120),
+    dramaticPurpose: z.string().min(1).max(1_000),
+    targetSeconds: z.number().int().positive(),
+    sequences: NormalizedSequenceSchema.array().min(1).max(100)
+  })
+  .strict()
+export type NormalizedAct = z.infer<typeof NormalizedActSchema>
+
+export const LongFormPlanSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    planId: UlidSchema,
+    importId: UlidSchema,
+    projectId: UlidSchema,
+    projectType: ProjectTypeSchema,
+    sourceCommit: z.string().regex(/^[a-f0-9]{40}$/),
+    sourceLanguage: z.string().min(2).max(40),
+    targetDurationSeconds: z.number().int().positive(),
+    frameRate: z.number().int().min(12).max(120),
+    acts: NormalizedActSchema.array().min(1).max(10),
+    characters: z
+      .array(
+        z
+          .object({
+            sourceAlias: z.string().min(1).max(120),
+            name: z.string().min(1).max(200),
+            tier: z.enum(['lead', 'support', 'functional']),
+            identitySummary: z.string().min(1).max(4_000)
+          })
+          .strict()
+      )
+      .max(100),
+    locations: z
+      .array(
+        z
+          .object({
+            sourceAlias: z.string().min(1).max(120),
+            name: z.string().min(1).max(200),
+            summary: z.string().min(1).max(4_000)
+          })
+          .strict()
+      )
+      .max(200),
+    warnings: z.array(z.string().min(1).max(1_000)).max(100),
+    normalizedSha256: Sha256Schema,
+    createdAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type LongFormPlan = z.infer<typeof LongFormPlanSchema>
+
+export const UpstreamImportRecordSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    importId: UlidSchema,
+    projectId: UlidSchema,
+    state: z.enum(['preview', 'accepted', 'validation-failed']),
+    sourceCommit: z.string().regex(/^[a-f0-9]{40}$/),
+    creativeDirectionProfileId: UlidSchema,
+    creativeDirectionSha256: Sha256Schema,
+    files: UpstreamSourceFileSchema.array().min(1).max(5),
+    normalized: LongFormPlanSchema.nullable(),
+    acceptedAt: z.string().datetime({ offset: true }).nullable(),
+    createdAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type UpstreamImportRecord = z.infer<typeof UpstreamImportRecordSchema>
+
+export const AcceptUpstreamImportInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    importId: UlidSchema,
+    expectedNormalizedSha256: Sha256Schema,
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type AcceptUpstreamImportInput = z.infer<typeof AcceptUpstreamImportInputSchema>
+
+export const UpstreamImportActionResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), record: UpstreamImportRecordSchema }).strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: z.enum([
+            'cancelled',
+            'invalid-source',
+            'lock-mismatch',
+            'validation-failed',
+            'timed-out',
+            'stale-data',
+            'project-error',
+            'storage-error',
+            'unknown'
+          ]),
+          message: z.string().min(1).max(600)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type UpstreamImportActionResult = z.infer<typeof UpstreamImportActionResultSchema>
+
 export const IPC_CHANNELS = {
   systemGetStatus: 'studio:system:get-status',
   projectsList: 'studio:projects:list',
@@ -1150,6 +2159,32 @@ export const IPC_CHANNELS = {
   writingPreviewContext: 'studio:writing:preview-context',
   writingGenerateDraft: 'studio:writing:generate-draft',
   writingListDrafts: 'studio:writing:list-drafts',
+  productionGetWorkspace: 'studio:production:get-workspace',
+  productionPromoteDraft: 'studio:production:promote-draft',
+  productionImportMedia: 'studio:production:import-media',
+  productionReviewMedia: 'studio:production:review-media',
+  productionPlanJob: 'studio:production:plan-job',
+  productionApproveJob: 'studio:production:approve-job',
+  productionGetJob: 'studio:production:get-job',
+  productionListWorkflows: 'studio:production:list-workflows',
+  productionEstimateWorkflow: 'studio:production:estimate-workflow',
+  productionQueueJob: 'studio:production:queue-job',
+  productionCancelJob: 'studio:production:cancel-job',
+  productionReconcileJob: 'studio:production:reconcile-job',
+  finishGetWorkspace: 'studio:finish:get-workspace',
+  finishSaveTimeline: 'studio:finish:save-timeline',
+  finishLockTimeline: 'studio:finish:lock-timeline',
+  finishSaveReleaseDetails: 'studio:finish:save-release-details',
+  finishSaveAttestations: 'studio:finish:save-attestations',
+  finishCreateReleasePackage: 'studio:finish:create-release-package',
+  finishGetLocalMediaStatus: 'studio:finish:get-local-media-status',
+  finishInstallLocalMediaTools: 'studio:finish:install-local-media-tools',
+  finishRenderTimeline: 'studio:finish:render-timeline',
+  finishExportCaptions: 'studio:finish:export-captions',
+  finishRenderThumbnail: 'studio:finish:render-thumbnail',
+  upstreamChooseImport: 'studio:upstream:choose-import',
+  upstreamListImports: 'studio:upstream:list-imports',
+  upstreamAcceptImport: 'studio:upstream:accept-import',
   skillsGetStatus: 'studio:skills:get-status',
   skillsInstall: 'studio:skills:install',
   skillsSetProjectEnabled: 'studio:skills:set-project-enabled',
@@ -1193,6 +2228,40 @@ export interface StudioApi {
     previewContext(input: WritingContextPreviewInput): Promise<WritingContextPreview>
     generateDraft(input: WritingDraftRequest): Promise<WritingDraftActionResult>
     listDrafts(projectId: string): Promise<WritingDraftRecord[]>
+  }
+  production: {
+    getWorkspace(projectId: string): Promise<ProductionWorkspaceSummary>
+    promoteDraft(input: PromoteWritingDraftInput): Promise<CanonActionResult>
+    importMedia(input: ChooseMediaAssetInput): Promise<MediaActionResult>
+    reviewMedia(input: ReviewMediaAssetInput): Promise<MediaActionResult>
+    planJob(input: ProductionJobInput): Promise<ProductionJobActionResult>
+    approveJob(input: ProductionJobApprovalInput): Promise<ProductionJobActionResult>
+    getJob(projectId: string, jobId: string): Promise<ProductionJobDetails>
+    listWorkflows(): Promise<ProductionWorkflowSummary[]>
+    estimateWorkflow(
+      input: ProductionWorkflowEstimateInput
+    ): Promise<ProductionWorkflowEstimateResult>
+    queueJob(input: ProductionQueueJobInput): Promise<ProductionJobActionResult>
+    cancelJob(input: ProductionCancelJobInput): Promise<ProductionJobActionResult>
+    reconcileJob(projectId: string, jobId: string): Promise<ProductionJobActionResult>
+  }
+  finish: {
+    getWorkspace(projectId: string): Promise<FinishWorkspace>
+    saveTimeline(input: SaveProductionTimelineInput): Promise<FinishActionResult>
+    lockTimeline(input: LockProductionTimelineInput): Promise<FinishActionResult>
+    saveReleaseDetails(input: SaveReleaseDetailsInput): Promise<FinishActionResult>
+    saveAttestations(input: SaveReleaseAttestationsInput): Promise<FinishActionResult>
+    createReleasePackage(input: CreateReleasePackageInput): Promise<FinishActionResult>
+    getLocalMediaStatus(): Promise<LocalMediaRuntimeStatus>
+    installLocalMediaTools(input: InstallLocalMediaToolsInput): Promise<LocalMediaInstallResult>
+    renderTimeline(input: RenderTimelineInput): Promise<LocalMediaActionResult>
+    exportCaptions(input: ExportCaptionsInput): Promise<LocalMediaActionResult>
+    renderThumbnail(input: RenderThumbnailInput): Promise<LocalMediaActionResult>
+  }
+  upstream: {
+    chooseImport(projectId: string): Promise<UpstreamImportActionResult>
+    listImports(projectId: string): Promise<UpstreamImportRecord[]>
+    acceptImport(input: AcceptUpstreamImportInput): Promise<UpstreamImportActionResult>
   }
   skills: {
     getStatus(): Promise<ExternalSkillStatus>

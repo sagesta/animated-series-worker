@@ -4,6 +4,27 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-22 (version 0.9 production control plane and qualification lock)
+
+- Added project-local canon, media, approval, dependency, production-job, timeline, release, attestation, and immutable package stores; Story proposals can now be promoted into versioned canon, while images/audio/video can be viewed and reviewed inside the app.
+- Added World & Cast, Storyboard, Generate, Review, Edit & Export, and Release rooms with required markers, input-order cautions, current workflow/GPU requirements, no-cost estimate, exact maximum-cost approval, and a separate paid worker-start confirmation.
+- Added official RunPod Pod list/get/create/start/stop/delete operations with lease reconciliation, idempotent uncertain-create recovery, current price checks, one GPU per job, up-to-three independent-job concurrency, cancellation, termination, provider/audit IDs, and `workerClosedAt` reconciliation.
+- Added a strict candidate/qualified workflow registry for Qwen-Image-2512, Qwen-Image-Edit-2511, Qwen3-TTS, LTX-2.5, isolated LatentSync 1.6 repair, technical QC, and local finishing/release operations. Candidate media workflows cannot spend GPU money.
+- Added the pinned remote worker: ComfyUI loopback-only, authenticated gateway, one-way lease-token hash, hard-deadline/idle watchdog, capability fingerprint, model/workflow/node/GPU/disk checks, sequential resumable 4 MiB transfers, input/output hashes, scoped Comfy staging, purge, Python TTS/QC/LatentSync runners, and process-group cancellation.
+- Added revision-pinned Hugging Face model bootstrap with safe destinations, qualification-mode license confirmation, production hash enforcement, and exact receipts. Added API-workflow import, no-cost qualification bundle, matching pack/manifest Docker build, and atomic evidence-only production promotion scripts.
+- Added local FFmpeg setup/check, deterministic timeline rendering, editable SRT/VTT captions, thumbnail rendering, master verification, explicit YouTube audience/disclosure/originality/rights/full-watch attestations, and a hash-checked manual upload package. Automatic publishing remains absent.
+- Restricted Electron packaging to compiled `out` files plus explicit resources. This prevents ignored prior release folders from being recursively embedded; the first 0.9 NSIS attempt exposed the issue by producing a roughly 7 GB intermediate and failing to memory-map it, while the corrected installer build succeeds at 105,030,036 bytes.
+- Corrected the LTX/lip baseline: LTX-2.5 remains the sole generative video engine; LTX-2.3 Dub-It is not mixed into the worker, and targeted repair uses isolated LatentSync pending animated/angle/multi-person qualification.
+- Added `docs/PRODUCTION_IMPLEMENTATION.md` and synchronized status, plan, backlog, traceability, decisions, source evidence, operations, security, cost, UX, media, release, and script documentation with the version-0.9 implementation and external proof boundary.
+
+User impact: the app now contains the complete supervised production path from creative development through local manual-upload packaging. A normal creator does not configure ComfyUI or reinstall a GPU worker for each episode. Paid generation remains visibly locked until a maintainer completes the exact one-time runtime/model/license/quality/security/shutdown qualification.
+
+Data/migration impact: application version advances to 0.9.0. Existing project manifests, creative-direction revisions, provider secrets, writing proposals, skill receipts, and vendored upstream state remain readable. New production data lives inside each project and new worker lease tokens live in the protected application vault. No production pack or readiness receipt was fabricated, no model was downloaded, and no GPU was rented in this implementation run.
+
+Documentation impact: the production implementation overlay is now the current source for component and qualification behavior. Older phase narratives remain design history only where the overlay/status says version 0.9 implements the component.
+
+Rollback: close the application and revert this change/return to the previous release. Keep a verified project backup first because version 0.8 cannot display new canon/media/job/timeline/release records. Terminate any active provider Pod and verify billing separately before rollback; reverting local code cannot stop an external worker. Candidate config and evidence files are inert and do not unlock spend.
+
 ### Added — 2026-08-22 (project-scoped declarative creative skills)
 
 - Added a strict declarative skill package contract plus `packages/skill-runtime`. Installation first copies a JSON candidate into a size-limited quarantine area, parses it without execution, computes SHA-256, rejects changed contents under the same version, and installs with no project access.

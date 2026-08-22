@@ -1,5 +1,7 @@
 # End-to-end production workflow
 
+Current implementation note (0.9.0): the creator-facing rooms and local records now implement proposal-to-canon, storyboard/media approval, governed generation preparation, review, local finishing, attestations, and manual upload packaging. Paid work remains locked until the exact worker passes external qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 ## 1. Production shape
 
 The studio uses the same core workflow for a recurring series and a one-off film:

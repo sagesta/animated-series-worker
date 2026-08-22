@@ -4,7 +4,15 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
-    ignores: ['vendor/**', 'node_modules/**', 'out/**', 'release/**', 'coverage/**']
+    ignores: [
+      'vendor/**',
+      'node_modules/**',
+      'out/**',
+      'release/**',
+      'release-smoke-*/**',
+      'qualification/**',
+      'coverage/**'
+    ]
   },
   ...tseslint.configs.recommended,
   {

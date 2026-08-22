@@ -22,6 +22,7 @@ dist/
 build/
 release/
 release-smoke-*/
+qualification/
 .venv/
 __pycache__/
 *.pyc

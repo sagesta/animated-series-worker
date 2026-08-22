@@ -1,5 +1,7 @@
 # Cost and capacity model
 
+Current implementation note (0.9.0): per-job current-catalogue estimates, expected/hard-maximum display, exact cost approval, separate start confirmation, elapsed estimate, provider-reconciled spend field, one-GPU-per-job concurrency, and session guardrails are implemented. Actual image/video/episode costs remain unknown until controlled live benchmarks; retained storage can cost money without an active GPU. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 ## 1. Honest cost statement
 
 The hourly GPU price is only one variable. Episode cost depends on how many seconds require generated motion, average clip length, attempts per approved take, runtime per attempt on the selected workflow/GPU, upscale/repair work, worker startup/idle time, and persistent storage.
@@ -132,7 +134,7 @@ Each batch has:
 - Maximum workers.
 - Stop threshold that leaves time to sync and terminate.
 
-Version 0.3.0 can read current RunPod catalogue rates for planning and report the aggregate current rate of already-active account Pods. These reads cost $0 and create nothing. They are not a generation quote: the future estimator must refresh compatibility, availability, the exact Pod rate, storage price, worker count, and reserve immediately before approval.
+Version 0.9.0 reads current RunPod catalogue rates and existing active-Pod rates at no cost, then creates a per-workflow estimate using one selected GPU, expected minutes, the tighter workflow/session hard limit, and current rate. Cost approval and worker-start confirmation are separate records. The app tracks elapsed estimates and a provider-reconciled actual field; it does not pretend an estimate is an invoice. Live benchmarks must replace candidate runtime assumptions before promotion, and persistent storage remains separately billable even without active compute.
 
 Budget state:
 

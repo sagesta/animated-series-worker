@@ -1,8 +1,14 @@
 # Product requirements document
 
-Version: 1.0 baseline
-Date: 2026-08-21
-Status: implementation baseline
+Product baseline: 1.0
+
+Current source implementation: 0.9.0
+
+Date: 2026-08-22
+
+Status: local control plane implemented; paid media generation qualification pending
+
+Implementation note: [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) and [STATUS.md](STATUS.md) describe which requirements now have code/local evidence and which still require real GPU, model-license, quality, shutdown, long-form, signing, or clean-machine proof. A requirement is not weakened merely because its external acceptance gate remains locked.
 
 ## 1. Product statement
 

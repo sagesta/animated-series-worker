@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "commit": "4cff5ae3a4a2d2b5d13161f5a2378c5910be7cad",
+  "scripts": {
+    "outline": {
+      "path": "skills/novel-outline/scripts/novel-outline.mjs",
+      "sha256": "33f1469123333b98b5e56f4b81cd64df80b58e1878e0cf7212b585f6e8ac8597"
+    },
+    "characters": {
+      "path": "skills/novel-characters/scripts/novel-characters.mjs",
+      "sha256": "146cef28dbbe21a2f800de61ca10052cf3d13f79375aaae57c25ce398e15b864"
+    },
+    "art": {
+      "path": "skills/novel-art/scripts/novel-art.mjs",
+      "sha256": "714a5d369c196f463e1e3db4c448b3ecbb69ca956f25094118fc8d5554552eae"
+    },
+    "script": {
+      "path": "skills/novel-script/scripts/novel-script.mjs",
+      "sha256": "833511f3dcc01373687f12065cb8c843e505958fb344d015535ffb4c928bc7bc"
+    },
+    "storyboard": {
+      "path": "skills/novel-storyboard/scripts/novel-storyboard.mjs",
+      "sha256": "4df0886f8235ab151a55e052ac1fa81ab59e9c9692fee5c6b2e52f2ce393403b"
+    }
+  }
+}

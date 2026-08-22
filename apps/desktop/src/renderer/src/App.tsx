@@ -13,7 +13,9 @@ import {
 import { CloudSetup } from './CloudSetup'
 import { CreativeDirectionPanel } from './CreativeDirectionPanel'
 import { CreativeRoom } from './CreativeRoom'
+import { FinishRoom } from './FinishRoom'
 import { ProjectWizard } from './ProjectWizard'
+import { GenerateRoom, MediaReviewRoom, StoryboardRoom, WorldCastRoom } from './ProductionRooms'
 import { SkillSetup } from './SkillSetup'
 import { WritingSetup } from './WritingSetup'
 
@@ -52,36 +54,36 @@ const pageCopy: Record<
     eyebrow: 'World and cast',
     title: 'Keep characters, voices, locations, and style consistent',
     description:
-      'This workspace will hold approved character boards, voice profiles, style bibles, props, and locations.',
-    next: 'Character and style-board tools will unlock after story foundations.'
+      'Approve versioned character, voice, style, prop, location, and reference records without overwriting history.',
+    next: 'The canon and media library is available now.'
   },
   storyboard: {
     eyebrow: 'Storyboard',
     title: 'Plan every shot before paying for video generation',
     description:
-      'Shots will connect story intent, dialogue, movement, framing, and approved references.',
-    next: 'Storyboard editing will arrive before any cloud generation.'
+      'Shots connect story intent, dialogue, movement, framing, timing, and approved references.',
+    next: 'Validated story-package import and storyboard planning are available now.'
   },
   generate: {
     eyebrow: 'Generation',
-    title: 'Paid generation is intentionally locked',
+    title: 'Prepare every paid job before one GPU starts',
     description:
-      'You can now connect RunPod safely in Settings. Creating GPUs, LTX workflows, TTS, and lip sync remain unavailable until the prepared worker and shutdown guards pass a controlled test.',
-    next: 'Connect the account and save safety defaults in Settings; this still rents no GPU.'
+      'Choose an allowlisted image, voice, motion, lip, or QC workflow; approve its maximum cost; then use a separate worker-start confirmation.',
+    next: 'Candidate workflows remain locked until the worker image, models, licenses, shutdown, and quality tests pass.'
   },
   review: {
     eyebrow: 'Review',
     title: 'Compare takes without losing earlier work',
     description:
-      'This area will make approvals, rejection notes, retakes, continuity checks, and costs visible.',
-    next: 'Review tools will activate with the first local media pipeline.'
+      'Play images, audio, and video in the studio; record approvals, rejection notes, retakes, continuity, and cost evidence.',
+    next: 'The local media review room is available now.'
   },
   edit: {
     eyebrow: 'Edit and export',
     title: 'Assemble only approved material',
     description:
-      'The final workspace will build timelines, sound, captions, quality checks, and YouTube-ready exports.',
-    next: 'Export stays locked until the media and review pipeline is verified.'
+      'Build locked timelines, local masters, captions, thumbnails, release details, attestations, and a verified manual YouTube package.',
+    next: 'The finishing room is available now; final packaging remains gated by its recorded approvals.'
   }
 }
 
@@ -174,8 +176,8 @@ function EmptyLibrary({ onCreate }: { onCreate(): void }): JSX.Element {
       <section className="getting-started">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">How it will grow</p>
-            <h2>One calm step at a time</h2>
+            <p className="eyebrow">Full production path</p>
+            <h2>One calm, recoverable step at a time</h2>
           </div>
           <span className="status-chip local">No GPU cost</span>
         </div>
@@ -184,19 +186,19 @@ function EmptyLibrary({ onCreate }: { onCreate(): void }): JSX.Element {
             <span className="stage-number">1</span>
             <h3>Create the production</h3>
             <p>Choose series or film, give it a name, and create a safe local checkpoint.</p>
-            <span className="stage-state ready">Ready now</span>
+            <span className="stage-state ready">Ready</span>
           </article>
           <article>
             <span className="stage-number">2</span>
             <h3>Lock the creative plan</h3>
             <p>Develop story, style, characters, voices, boards, and shot decisions.</p>
-            <span className="stage-state planned">Coming next</span>
+            <span className="stage-state ready">Ready</span>
           </article>
           <article>
             <span className="stage-number">3</span>
             <h3>Generate with approval</h3>
             <p>See time and cost estimates before temporary cloud workers can start.</p>
-            <span className="stage-state locked">Safety locked</span>
+            <span className="stage-state locked">Qualification gated</span>
           </article>
         </div>
       </section>
@@ -518,7 +520,9 @@ function ProjectOverview({
             <span>Cloud GPU</span>
             <strong>
               {cloudStatus?.connectionState === 'connected'
-                ? 'Account connected · generation locked'
+                ? cloudStatus.generationState === 'ready'
+                  ? 'Account connected · generation ready'
+                  : 'Account connected · generation locked'
                 : 'Not configured'}
             </strong>
             <small>
@@ -554,7 +558,7 @@ function ProjectOverview({
               <strong>World and cast</strong>
               <small>Lock visual style, character boards, voices, locations, and props.</small>
             </span>
-            <span className="roadmap-state">Planned</span>
+            <span className="roadmap-state current">Ready</span>
           </button>
           <button onClick={() => onNavigate('storyboard')}>
             <span className="roadmap-number">3</span>
@@ -562,15 +566,22 @@ function ProjectOverview({
               <strong>Storyboard and shots</strong>
               <small>Decide movement, framing, dialogue, and references shot by shot.</small>
             </span>
-            <span className="roadmap-state">Planned</span>
+            <span className="roadmap-state current">Ready</span>
           </button>
           <button onClick={() => onNavigate('generate')}>
             <span className="roadmap-number">4</span>
             <span>
               <strong>Generate, review, and finish</strong>
-              <small>Paid work remains locked until estimates and safety controls are ready.</small>
+              <small>
+                Local review and finishing are ready; paid work starts only after qualification,
+                estimate approval, and a separate start confirmation.
+              </small>
             </span>
-            <span className="roadmap-state locked">Locked</span>
+            <span
+              className={`roadmap-state ${cloudStatus?.generationState === 'ready' ? 'current' : 'locked'}`}
+            >
+              {cloudStatus?.generationState === 'ready' ? 'Ready' : 'Qualification gated'}
+            </span>
           </button>
         </div>
       </section>
@@ -1052,6 +1063,39 @@ export function App(): JSX.Element {
       )
     }
 
+    if (page === 'world') {
+      return <WorldCastRoom project={activeProject} onHome={() => setPage('home')} />
+    }
+
+    if (page === 'storyboard') {
+      return <StoryboardRoom project={activeProject} onHome={() => setPage('home')} />
+    }
+
+    if (page === 'review') {
+      return <MediaReviewRoom project={activeProject} onHome={() => setPage('home')} />
+    }
+
+    if (page === 'generate') {
+      return (
+        <GenerateRoom
+          project={activeProject}
+          cloudStatus={cloudStatus}
+          onHome={() => setPage('home')}
+          onSettings={() => setPage('settings')}
+        />
+      )
+    }
+
+    if (page === 'edit') {
+      return (
+        <FinishRoom
+          project={activeProject}
+          onHome={() => setPage('home')}
+          onReview={() => setPage('review')}
+        />
+      )
+    }
+
     return (
       <WorkspacePlaceholder page={page} project={activeProject} onHome={() => setPage('home')} />
     )
@@ -1108,7 +1152,9 @@ export function App(): JSX.Element {
               >
                 <span className="nav-icon">{item.icon}</span>
                 {item.label}
-                {item.id === 'generate' && <span className="mini-lock">◇</span>}
+                {item.id === 'generate' && cloudStatus?.generationState !== 'ready' && (
+                  <span className="mini-lock">◇</span>
+                )}
               </button>
             )
           })}
@@ -1129,7 +1175,7 @@ export function App(): JSX.Element {
           </p>
           <span>
             {cloudConnected
-              ? `${formatCurrencyForSidebar(reportedHourlyCost)}/hr reported · generation locked`
+              ? `${formatCurrencyForSidebar(reportedHourlyCost)}/hr reported · ${cloudStatus?.generationState === 'ready' ? 'generation ready' : 'generation locked'}`
               : '$0 current spend'}
           </span>
         </div>
@@ -1144,7 +1190,7 @@ export function App(): JSX.Element {
           </div>
           <div className="topbar-safety">
             {reportedActivePods > 0
-              ? 'Existing RunPod activity found · generation locked'
+              ? `Existing RunPod activity found · ${cloudStatus?.generationState === 'ready' ? 'worker controls active' : 'generation locked'}`
               : 'GPU off · text calls require approval'}
           </div>
         </header>

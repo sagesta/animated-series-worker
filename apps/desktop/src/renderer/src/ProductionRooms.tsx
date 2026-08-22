@@ -1,0 +1,1647 @@
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type JSX } from 'react'
+import {
+  type CanonRecord,
+  type CloudConnectionStatus,
+  type CostEstimate,
+  type MediaAssetKind,
+  type MediaAssetView,
+  type ProductionJobRecord,
+  type ProductionWorkflowSummary,
+  type ProductionWorkspaceSummary,
+  type ProjectDetails,
+  type UpstreamImportRecord
+} from '@studio/contracts'
+import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
+
+const assetKindOptions: Array<{ value: MediaAssetKind; label: string }> = [
+  { value: 'reference-image', label: 'Character or visual reference' },
+  { value: 'character-board', label: 'Character board' },
+  { value: 'style-board', label: 'Style board' },
+  { value: 'environment-board', label: 'Environment board' },
+  { value: 'storyboard-frame', label: 'Storyboard frame' },
+  { value: 'voice-line', label: 'Voice line' },
+  { value: 'ambience', label: 'Ambience' },
+  { value: 'effect', label: 'Sound effect' },
+  { value: 'music', label: 'Music' },
+  { value: 'animatic', label: 'Animatic' },
+  { value: 'video-take', label: 'Video take' },
+  { value: 'caption', label: 'Caption file' },
+  { value: 'thumbnail', label: 'Thumbnail' },
+  { value: 'master-video', label: 'Master video' },
+  { value: 'document', label: 'Production document' }
+]
+
+const canonKindLabels: Record<CanonRecord['kind'], string> = {
+  'series-bible': 'Series or film bible',
+  character: 'Character',
+  world: 'World',
+  location: 'Location',
+  prop: 'Prop',
+  'visual-style': 'Visual style',
+  voice: 'Voice',
+  'episode-outline': 'Episode or film outline',
+  script: 'Script',
+  storyboard: 'Storyboard plan',
+  'release-strategy': 'YouTube release strategy'
+}
+
+function MediaPreview({ asset }: { asset: MediaAssetView }): JSX.Element {
+  if (asset.mimeType.startsWith('image/')) {
+    return <img src={asset.mediaUrl} alt={asset.label} loading="lazy" />
+  }
+  if (asset.mimeType.startsWith('audio/')) {
+    return <audio src={asset.mediaUrl} controls preload="metadata" aria-label={asset.label} />
+  }
+  if (asset.mimeType.startsWith('video/')) {
+    return <video src={asset.mediaUrl} controls preload="metadata" aria-label={asset.label} />
+  }
+  return (
+    <div className="document-preview" aria-label={`${asset.label} document`}>
+      DOC
+    </div>
+  )
+}
+
+function WorkspaceState({
+  projectId,
+  children
+}: {
+  projectId: string
+  children(
+    workspace: ProductionWorkspaceSummary,
+    refresh: () => Promise<void>,
+    setNotice: (message: string) => void
+  ): JSX.Element
+}): JSX.Element {
+  const [workspace, setWorkspace] = useState<ProductionWorkspaceSummary>()
+  const [message, setMessage] = useState<string>()
+
+  const refresh = useCallback(async (): Promise<void> => {
+    try {
+      setWorkspace(await window.studio.production.getWorkspace(projectId))
+    } catch {
+      setMessage('This production workspace could not be read safely. No file was changed.')
+    }
+  }, [projectId])
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.production
+      .getWorkspace(projectId)
+      .then((result) => {
+        if (!cancelled) setWorkspace(result)
+      })
+      .catch(() => {
+        if (!cancelled) setMessage('This production workspace could not be read safely.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
+
+  if (!workspace) {
+    return (
+      <div className="settings-card backup-empty">
+        {message ?? 'Opening the local production records…'}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {message && (
+        <div className="safety-feedback" role="status">
+          {message}
+        </div>
+      )}
+      {children(workspace, refresh, setMessage)}
+    </>
+  )
+}
+
+function MediaImport({
+  projectId,
+  onImported,
+  onNotice
+}: {
+  projectId: string
+  onImported(): Promise<void>
+  onNotice(message: string): void
+}): JSX.Element {
+  const [kind, setKind] = useState<MediaAssetKind>('reference-image')
+  const [label, setLabel] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [issues, setIssues] = useState<string[]>([])
+
+  const importMedia = async (event: FormEvent): Promise<void> => {
+    event.preventDefault()
+    const nextIssues =
+      label.trim().length < 2 ? ['Enter a clear media name containing at least 2 characters.'] : []
+    if (nextIssues.length > 0) {
+      setIssues(nextIssues)
+      return
+    }
+    setIssues([])
+    setImporting(true)
+    try {
+      const result = await window.studio.production.importMedia({
+        projectId,
+        kind,
+        label,
+        parentAssetIds: []
+      })
+      if (result.ok) {
+        onNotice('A verified copy was stored inside this production. Review it before approval.')
+        setLabel('')
+        await onImported()
+      } else {
+        onNotice(result.error.message)
+      }
+    } catch {
+      onNotice('The file could not be imported safely. Existing media was not changed.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <>
+      <form className="media-import-card" noValidate onSubmit={(event) => void importMedia(event)}>
+        <div>
+          <h2>Add an existing reference or production file</h2>
+          <p>
+            The studio checks the file type, calculates a fingerprint, and stores a separate copy in
+            this project. The original remains untouched.
+          </p>
+        </div>
+        <label>
+          <span>
+            What is it? <RequiredMark />
+          </span>
+          <select value={kind} onChange={(event) => setKind(event.target.value as MediaAssetKind)}>
+            {assetKindOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>
+            Media name <RequiredMark />
+          </span>
+          <input
+            value={label}
+            minLength={2}
+            maxLength={240}
+            aria-invalid={label.trim().length < 2}
+            aria-describedby="media-label-requirement"
+            placeholder="Example: Ayo front-view identity reference"
+            onChange={(event) => setLabel(event.target.value)}
+          />
+          <TextRequirement id="media-label-requirement" value={label} minimum={2} maximum={240} />
+        </label>
+        <button className="button button-primary" disabled={importing}>
+          {importing ? 'Checking and copying…' : 'Choose file to import'}
+        </button>
+      </form>
+      <ValidationAlert
+        title="Media import needs attention"
+        messages={issues}
+        onClose={() => setIssues([])}
+      />
+    </>
+  )
+}
+
+function CanonGrid({ canon }: { canon: CanonRecord[] }): JSX.Element {
+  const active = canon.filter((record) => record.state === 'active')
+  if (active.length === 0) {
+    return (
+      <div className="settings-card backup-empty">
+        No canon has been approved yet. Review a writing proposal in the Story room first.
+      </div>
+    )
+  }
+  return (
+    <div className="canon-grid">
+      {active.map((record) => (
+        <article key={record.canonId}>
+          <div className="canon-card-heading">
+            <span>{canonKindLabels[record.kind]}</span>
+            <strong>Revision {record.revision}</strong>
+          </div>
+          <h3>{record.label}</h3>
+          <p>{record.output.summary}</p>
+          <details>
+            <summary>Review locked details</summary>
+            {record.output.sections.map((section) => (
+              <section key={section.heading}>
+                <h4>{section.heading}</h4>
+                <p>{section.body}</p>
+              </section>
+            ))}
+          </details>
+          <small>Approved {new Date(record.approval.decidedAt).toLocaleString()}</small>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+export function WorldCastRoom({
+  project,
+  onHome
+}: {
+  project: ProjectDetails
+  onHome(): void
+}): JSX.Element {
+  return (
+    <div className="production-room">
+      <button className="text-button back-link" onClick={onHome}>
+        ← Production overview
+      </button>
+      <header className="page-heading">
+        <p className="eyebrow">World and cast · {project.manifest.code}</p>
+        <h1>One approved source for every recurring detail.</h1>
+        <p>
+          Canon records are versioned; references are project-isolated; imported files stay
+          candidates until you approve them.
+        </p>
+      </header>
+      <WorkspaceState projectId={project.manifest.id}>
+        {(workspace, refresh, setNotice) => (
+          <>
+            <section>
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Approved creative truth</p>
+                  <h2>Canon library</h2>
+                </div>
+                <span className="status-chip local">
+                  {workspace.canon.filter((item) => item.state === 'active').length} active
+                </span>
+              </div>
+              <CanonGrid canon={workspace.canon} />
+            </section>
+            <section>
+              <MediaImport
+                projectId={project.manifest.id}
+                onImported={refresh}
+                onNotice={setNotice}
+              />
+            </section>
+            <section>
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Project media</p>
+                  <h2>References and boards</h2>
+                </div>
+                <span className="status-chip development">{workspace.media.length} stored</span>
+              </div>
+              <MediaGrid media={workspace.media} />
+            </section>
+          </>
+        )}
+      </WorkspaceState>
+    </div>
+  )
+}
+
+function MediaGrid({ media }: { media: MediaAssetView[] }): JSX.Element {
+  if (media.length === 0) {
+    return (
+      <div className="settings-card backup-empty">
+        No media has been added to this production yet.
+      </div>
+    )
+  }
+  return (
+    <div className="media-grid">
+      {media.map((asset) => (
+        <article key={asset.assetId}>
+          <div className="media-preview">
+            <MediaPreview asset={asset} />
+          </div>
+          <div className="media-card-copy">
+            <span className={`media-state ${asset.state}`}>{asset.state.replace('-', ' ')}</span>
+            <h3>{asset.label}</h3>
+            <p>
+              {asset.kind.replaceAll('-', ' ')} · {(asset.byteSize / 1024).toFixed(1)} KB
+            </p>
+            <small>Fingerprint {asset.sha256.slice(0, 12)}…</small>
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function ReviewCard({
+  asset,
+  onReviewed,
+  onNotice
+}: {
+  asset: MediaAssetView
+  onReviewed(): Promise<void>
+  onNotice(message: string): void
+}): JSX.Element {
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [issues, setIssues] = useState<string[]>([])
+
+  const decide = async (decision: 'approved' | 'rejected'): Promise<void> => {
+    if (reason.trim().length < 3) {
+      setIssues(['Enter a review note containing at least 3 characters.'])
+      return
+    }
+    setSaving(true)
+    setIssues([])
+    try {
+      const result = await window.studio.production.reviewMedia({
+        projectId: asset.projectId,
+        assetId: asset.assetId,
+        expectedSha256: asset.sha256,
+        decision,
+        reason,
+        confirmation: true
+      })
+      if (result.ok) {
+        onNotice(
+          `${asset.label} was ${decision}. The original stored candidate was not overwritten.`
+        )
+        await onReviewed()
+      } else {
+        onNotice(result.error.message)
+      }
+    } catch {
+      onNotice('The review decision could not be saved safely.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <article className="review-card">
+      <div className="media-preview">
+        <MediaPreview asset={asset} />
+      </div>
+      <div>
+        <span className="media-state candidate">Awaiting decision</span>
+        <h2>{asset.label}</h2>
+        <p>Inspect identity, style, defects, continuity, and whether this is safe to reuse.</p>
+        <label>
+          <span>
+            Review note <RequiredMark />
+          </span>
+          <textarea
+            value={reason}
+            minLength={3}
+            maxLength={2_000}
+            aria-invalid={reason.trim().length < 3}
+            onChange={(event) => setReason(event.target.value)}
+          />
+        </label>
+        <div className="review-actions">
+          <button
+            className="button button-primary"
+            disabled={saving}
+            onClick={() => void decide('approved')}
+          >
+            Approve candidate
+          </button>
+          <button
+            className="button button-secondary"
+            disabled={saving}
+            onClick={() => void decide('rejected')}
+          >
+            Reject and keep history
+          </button>
+        </div>
+      </div>
+      <ValidationAlert
+        title="Review decision needs attention"
+        messages={issues}
+        onClose={() => setIssues([])}
+      />
+    </article>
+  )
+}
+
+export function MediaReviewRoom({
+  project,
+  onHome
+}: {
+  project: ProjectDetails
+  onHome(): void
+}): JSX.Element {
+  return (
+    <div className="production-room">
+      <button className="text-button back-link" onClick={onHome}>
+        ← Production overview
+      </button>
+      <header className="page-heading">
+        <p className="eyebrow">Review · {project.manifest.code}</p>
+        <h1>Approve the exact take you inspected.</h1>
+        <p>
+          Images, audio, and video play inside the studio. Decisions are recorded and earlier files
+          remain available for recovery.
+        </p>
+      </header>
+      <WorkspaceState projectId={project.manifest.id}>
+        {(workspace, refresh, setNotice) => {
+          const candidates = workspace.media.filter((asset) => asset.state === 'candidate')
+          return (
+            <>
+              <section className="review-summary">
+                <article>
+                  <strong>{candidates.length}</strong>
+                  <span>Awaiting review</span>
+                </article>
+                <article>
+                  <strong>
+                    {workspace.media.filter((asset) => asset.state === 'approved').length}
+                  </strong>
+                  <span>Approved</span>
+                </article>
+                <article>
+                  <strong>
+                    {workspace.media.filter((asset) => asset.state === 'rejected').length}
+                  </strong>
+                  <span>Rejected</span>
+                </article>
+              </section>
+              {candidates.length === 0 ? (
+                <div className="settings-card backup-empty">
+                  No media candidate is waiting for a decision.
+                </div>
+              ) : (
+                <div className="review-list">
+                  {candidates.map((asset) => (
+                    <ReviewCard
+                      key={asset.assetId}
+                      asset={asset}
+                      onReviewed={refresh}
+                      onNotice={setNotice}
+                    />
+                  ))}
+                </div>
+              )}
+              <section>
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">Decision history</p>
+                    <h2>All project media</h2>
+                  </div>
+                </div>
+                <MediaGrid media={workspace.media} />
+              </section>
+            </>
+          )
+        }}
+      </WorkspaceState>
+    </div>
+  )
+}
+
+function ImportPreviewCard({
+  record,
+  onAccepted,
+  onNotice
+}: {
+  record: UpstreamImportRecord
+  onAccepted(): Promise<void>
+  onNotice(message: string): void
+}): JSX.Element {
+  const [confirmed, setConfirmed] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [issues, setIssues] = useState<string[]>([])
+  const plan = record.normalized
+  const sceneCount =
+    plan?.acts.reduce(
+      (total, act) =>
+        total +
+        act.sequences.reduce(
+          (sequenceTotal, sequence) => sequenceTotal + sequence.scenes.length,
+          0
+        ),
+      0
+    ) ?? 0
+  const shotCount =
+    plan?.acts.reduce(
+      (total, act) =>
+        total +
+        act.sequences.reduce(
+          (sequenceTotal, sequence) =>
+            sequenceTotal +
+            sequence.scenes.reduce((sceneTotal, scene) => sceneTotal + scene.shots.length, 0),
+          0
+        ),
+      0
+    ) ?? 0
+
+  const accept = async (): Promise<void> => {
+    if (!confirmed || !plan) {
+      setIssues([
+        plan
+          ? 'Confirm that you reviewed the duration, warnings, acts, scenes, and source mapping.'
+          : 'Only a validated normalization preview can be accepted.'
+      ])
+      return
+    }
+    setSaving(true)
+    setIssues([])
+    try {
+      const result = await window.studio.upstream.acceptImport({
+        projectId: record.projectId,
+        importId: record.importId,
+        expectedNormalizedSha256: plan.normalizedSha256,
+        confirmation: true
+      })
+      if (result.ok) {
+        onNotice(
+          'The reviewed long-form plan is now stored in this production. No GPU was started.'
+        )
+        await onAccepted()
+      } else {
+        onNotice(result.error.message)
+      }
+    } catch {
+      onNotice('The plan could not be accepted safely. The preview remains unchanged.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <article className="import-preview-card">
+      <header>
+        <div>
+          <span
+            className={`media-state ${record.state === 'accepted' ? 'approved' : record.state === 'validation-failed' ? 'rejected' : 'candidate'}`}
+          >
+            {record.state.replace('-', ' ')}
+          </span>
+          <h2>Story package · {new Date(record.createdAt).toLocaleString()}</h2>
+          <p>Pinned source {record.sourceCommit.slice(0, 12)}…</p>
+        </div>
+        {plan && (
+          <div className="import-kpis">
+            <span>
+              <strong>{Math.round(plan.targetDurationSeconds / 60)}</strong> minutes
+            </span>
+            <span>
+              <strong>{plan.acts.length}</strong> acts
+            </span>
+            <span>
+              <strong>{sceneCount}</strong> scenes
+            </span>
+            <span>
+              <strong>{shotCount}</strong> shot intents
+            </span>
+          </div>
+        )}
+      </header>
+      <div className="source-validation-list">
+        {record.files.map((file) => (
+          <div key={file.role}>
+            <span>{file.role}</span>
+            <strong
+              className={file.validationState === 'passed' ? 'positive-status' : 'negative-status'}
+            >
+              {file.validationState}
+            </strong>
+            <small title={file.sha256}>
+              {file.originalName} · {file.sha256.slice(0, 10)}…
+            </small>
+          </div>
+        ))}
+      </div>
+      {record.state === 'validation-failed' && (
+        <div className="safety-feedback error">
+          At least one pinned validator refused this package. The copied source remains available
+          for diagnosis, but no production plan was created.
+        </div>
+      )}
+      {plan && (
+        <>
+          <section className="normalization-warnings">
+            <h3>Important normalization warnings</h3>
+            <ul>
+              {plan.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </section>
+          <div className="act-preview-grid">
+            {plan.acts.map((act) => (
+              <article key={act.actNumber}>
+                <span>
+                  Act {act.actNumber} · {Math.round(act.targetSeconds / 60)} min
+                </span>
+                <h3>{act.label}</h3>
+                <p>{act.dramaticPurpose}</p>
+                <ul>
+                  {act.sequences.map((sequence) => (
+                    <li key={sequence.sequenceId}>
+                      <strong>{sequence.label}</strong> · {sequence.scenes.length} scenes ·{' '}
+                      {Math.round(sequence.targetSeconds / 60)} min
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+      {record.state === 'preview' && plan && (
+        <div className="import-acceptance">
+          <label>
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(event) => setConfirmed(event.target.checked)}
+            />
+            <span>
+              I reviewed the long-form changes and accept this plan as a project source.{' '}
+              <RequiredMark />
+            </span>
+          </label>
+          <button className="button button-primary" disabled={saving} onClick={() => void accept()}>
+            {saving ? 'Saving accepted plan…' : 'Accept long-form plan'}
+          </button>
+        </div>
+      )}
+      <ValidationAlert
+        title="Plan acceptance needs attention"
+        messages={issues}
+        onClose={() => setIssues([])}
+      />
+    </article>
+  )
+}
+
+export function StoryboardRoom({
+  project,
+  onHome
+}: {
+  project: ProjectDetails
+  onHome(): void
+}): JSX.Element {
+  const [imports, setImports] = useState<UpstreamImportRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [importing, setImporting] = useState(false)
+  const [message, setMessage] = useState<string>()
+
+  const refresh = useCallback(async (): Promise<void> => {
+    try {
+      setImports(await window.studio.upstream.listImports(project.manifest.id))
+    } catch {
+      setMessage('The story-package history could not be read safely.')
+    }
+  }, [project.manifest.id])
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.upstream
+      .listImports(project.manifest.id)
+      .then((items) => {
+        if (!cancelled) setImports(items)
+      })
+      .catch(() => {
+        if (!cancelled) setMessage('The story-package history could not be read safely.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [project.manifest.id])
+
+  const chooseImport = async (): Promise<void> => {
+    setImporting(true)
+    setMessage('Checking the pinned source files and creating a long-form preview…')
+    try {
+      const result = await window.studio.upstream.chooseImport(project.manifest.id)
+      if (result.ok) {
+        setMessage(
+          result.record.state === 'validation-failed'
+            ? 'The package was copied safely, but validation failed. Review the failed file below.'
+            : 'Validation passed. Review the long-form changes before accepting the plan.'
+        )
+        await refresh()
+      } else {
+        setMessage(result.error.message)
+      }
+    } catch {
+      setMessage('The story package could not be checked safely. No active plan was changed.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div className="production-room">
+      <button className="text-button back-link" onClick={onHome}>
+        ← Production overview
+      </button>
+      <header className="page-heading storyboard-heading">
+        <div>
+          <p className="eyebrow">Storyboard and long-form plan · {project.manifest.code}</p>
+          <h1>Turn validated story files into a production-shaped plan.</h1>
+          <p>
+            Choose one folder containing outline and script JSON files. Character, art, and
+            storyboard JSON files are optional. The pinned validators run locally; H3 prompts are
+            preserved but cannot execute in LTX or ComfyUI.
+          </p>
+        </div>
+        <button
+          className="button button-primary button-large"
+          disabled={importing}
+          onClick={() => void chooseImport()}
+        >
+          {importing ? 'Checking story package…' : 'Import story-package folder'}
+        </button>
+      </header>
+      {message && (
+        <div className="safety-feedback" role="status">
+          {message}
+        </div>
+      )}
+      {loading ? (
+        <div className="settings-card backup-empty">Checking local story-package history…</div>
+      ) : imports.length === 0 ? (
+        <div className="settings-card backup-empty">
+          No upstream story package has been imported. You can still build the story manually in the
+          Story room.
+        </div>
+      ) : (
+        <div className="import-preview-list">
+          {imports.map((record) => (
+            <ImportPreviewCard
+              key={record.importId}
+              record={record}
+              onAccepted={refresh}
+              onNotice={setMessage}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function ProductionReadinessStrip({
+  workspace
+}: {
+  workspace: ProductionWorkspaceSummary
+}): JSX.Element {
+  const activeCanon = useMemo(
+    () => workspace.canon.filter((item) => item.state === 'active'),
+    [workspace.canon]
+  )
+  return (
+    <div className="readiness-strip">
+      <span>{activeCanon.length} active canon records</span>
+      <span>
+        {workspace.media.filter((item) => item.state === 'approved').length} approved media items
+      </span>
+      <span>{workspace.staleDependencyCount} stale dependencies</span>
+      <span>${workspace.elapsedCloudUsageEstimateUsd.toFixed(2)} elapsed cloud estimate</span>
+      <span>${workspace.actualSpendUsd.toFixed(2)} provider-reconciled spend</span>
+    </div>
+  )
+}
+
+function workflowStage(workflow: ProductionWorkflowSummary): string {
+  if (workflow.jobKind.startsWith('qwen-image'))
+    return 'Character, style, world, and storyboard images'
+  if (workflow.jobKind === 'qwen3-tts') return 'Recurring voices and line book'
+  if (workflow.jobKind === 'animatic') return 'Timed animatic'
+  if (workflow.jobKind.startsWith('ltx') || workflow.jobKind === 'lip-sync')
+    return 'LTX motion and LatentSync lip repair'
+  if (workflow.jobKind === 'creative-qc') return 'Assistive creative checks'
+  if (['timeline-render', 'caption-export', 'foley'].includes(workflow.jobKind))
+    return 'Edit, sound, and captions'
+  return 'Thumbnail and YouTube release package'
+}
+
+function workflowParameters(
+  workflow: ProductionWorkflowSummary,
+  instruction: string,
+  referenceText: string,
+  seed: number,
+  gpuTypeId: string | null,
+  priceTier: 'secure' | 'community' | null
+): Record<string, string | number | boolean | null> {
+  const shared: Record<string, string | number | boolean | null> = {
+    studioGpuTypeId: gpuTypeId,
+    studioPriceTier: priceTier,
+    studioContainerDiskInGb: 100,
+    studioVolumeInGb: 150,
+    studioOutputKind:
+      workflow.outputKind === 'audio'
+        ? 'voice-line'
+        : workflow.outputKind === 'video'
+          ? 'video-take'
+          : workflow.outputKind === 'document'
+            ? 'document'
+            : workflow.jobKind === 'thumbnail-render'
+              ? 'thumbnail'
+              : 'character-board'
+  }
+  if (workflow.workflowId === 'qwen-image-character-board') {
+    return { ...shared, prompt: instruction, negativePrompt: '', seed, width: 1536, height: 1024 }
+  }
+  if (workflow.workflowId === 'qwen-image-targeted-edit') {
+    return { ...shared, instruction, seed, strength: 0.35 }
+  }
+  if (workflow.workflowId === 'qwen3-tts-voice-design') {
+    return {
+      ...shared,
+      text: 'Every light has a story, and tonight we listen.',
+      language: 'English',
+      voiceDescription: instruction,
+      seed
+    }
+  }
+  if (workflow.workflowId === 'qwen3-tts-line-book') {
+    return {
+      ...shared,
+      lineBookJson: JSON.stringify(
+        instruction
+          .split('\n')
+          .map((text) => text.trim())
+          .filter(Boolean)
+          .map((text, index) => ({ id: `line-${index + 1}`, text }))
+      ),
+      language: 'English',
+      referenceText,
+      seed
+    }
+  }
+  if (workflow.workflowId.includes('lip-repair')) {
+    return {
+      ...shared,
+      inferenceSteps: 20,
+      guidanceScale: 1.5,
+      seed,
+      preserveApprovedAudio: true
+    }
+  }
+  if (workflow.workflowId.includes('audio-driven')) {
+    return { ...shared, motionPrompt: instruction, preserveApprovedAudio: true, seed }
+  }
+  if (workflow.workflowId.startsWith('ltx2-')) {
+    return { ...shared, motionPrompt: instruction, durationSeconds: 5, seed, framesPerSecond: 24 }
+  }
+  if (workflow.jobKind === 'creative-qc') {
+    return { ...shared, checks: instruction, expectedDialogue: '' }
+  }
+  if (workflow.jobKind === 'thumbnail-render') {
+    return { ...shared, layoutJson: instruction, headline: instruction.slice(0, 120) }
+  }
+  if (workflow.jobKind === 'release-package') {
+    return { ...shared, releaseManifestJson: instruction }
+  }
+  if (workflow.jobKind === 'caption-export') {
+    return { ...shared, cuesJson: instruction, format: 'srt' }
+  }
+  if (workflow.jobKind === 'animatic') {
+    return { ...shared, timelineJson: instruction, resolution: '1280x720' }
+  }
+  return { ...shared, timelineJson: instruction, profile: 'youtube-1080p' }
+}
+
+async function makeIdempotencyKey(value: unknown): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify(value))
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('')
+}
+
+function formatUsd(value: number): string {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value)
+}
+
+function JobCard({
+  job,
+  onChanged,
+  onNotice
+}: {
+  job: ProductionJobRecord
+  onChanged(): Promise<void>
+  onNotice(message: string): void
+}): JSX.Element {
+  const [busy, setBusy] = useState(false)
+
+  const reconcile = async (): Promise<void> => {
+    setBusy(true)
+    try {
+      const result = await window.studio.production.reconcileJob(job.projectId, job.jobId)
+      onNotice(
+        result.ok
+          ? (result.details.events.at(-1)?.message ?? 'Worker status refreshed.')
+          : result.error.message
+      )
+      await onChanged()
+    } catch {
+      onNotice('The worker status could not be refreshed safely. No retry was started.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const cancel = async (): Promise<void> => {
+    if (!window.confirm('Stop this job and terminate its rented worker if one exists?')) return
+    setBusy(true)
+    try {
+      const result = await window.studio.production.cancelJob({
+        projectId: job.projectId,
+        jobId: job.jobId,
+        reason: 'The creator explicitly stopped this production job from the Generate room.',
+        confirmation: true
+      })
+      onNotice(
+        result.ok ? 'Cancellation and worker shutdown were reconciled.' : result.error.message
+      )
+      await onChanged()
+    } catch {
+      onNotice('Shutdown could not be confirmed. Check RunPod before starting another worker.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const canCancel = !['succeeded', 'failed', 'cancelled', 'terminated'].includes(job.state)
+  const canReconcile =
+    Boolean(job.workerLeaseId) &&
+    !job.workerClosedAt &&
+    !['succeeded', 'failed', 'cancelled', 'terminated'].includes(job.state)
+  return (
+    <article className="job-card">
+      <div>
+        <span className={`stage-state ${job.state}`}>{job.state.replaceAll('-', ' ')}</span>
+        <h3>{job.label}</h3>
+        <p>
+          {job.workflowId} · maximum approved {formatUsd(job.approvedMaximumUsd ?? 0)}
+        </p>
+        <small>Elapsed cloud estimate: {formatUsd(job.elapsedCostEstimateUsd)}</small>
+        <small>Provider-reconciled spend: {formatUsd(job.actualCostUsd)}</small>
+        {job.lastErrorCode && (
+          <div className="field-warning">Needs attention: {job.lastErrorCode}</div>
+        )}
+      </div>
+      <div className="job-actions">
+        {canReconcile && (
+          <button
+            className="button button-secondary"
+            disabled={busy}
+            onClick={() => void reconcile()}
+          >
+            Refresh worker
+          </button>
+        )}
+        {canCancel && (
+          <button className="button button-danger" disabled={busy} onClick={() => void cancel()}>
+            Stop and shut down
+          </button>
+        )}
+      </div>
+    </article>
+  )
+}
+
+export function GenerateRoom({
+  project,
+  cloudStatus,
+  onHome,
+  onSettings
+}: {
+  project: ProjectDetails
+  cloudStatus?: CloudConnectionStatus
+  onHome(): void
+  onSettings(): void
+}): JSX.Element {
+  const [workflows, setWorkflows] = useState<ProductionWorkflowSummary[]>([])
+  const [workspace, setWorkspace] = useState<ProductionWorkspaceSummary>()
+  const [selectedId, setSelectedId] = useState('')
+  const [gpuTypeId, setGpuTypeId] = useState('')
+  const [priceTier, setPriceTier] = useState<'secure' | 'community'>('secure')
+  const [label, setLabel] = useState('')
+  const [instruction, setInstruction] = useState('')
+  const [referenceText, setReferenceText] = useState('')
+  const [seed, setSeed] = useState(12345)
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([])
+  const [estimate, setEstimate] = useState<CostEstimate>()
+  const [plannedJob, setPlannedJob] = useState<ProductionJobRecord>()
+  const [costConfirmed, setCostConfirmed] = useState(false)
+  const [startConfirmed, setStartConfirmed] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string>()
+
+  const refresh = useCallback(async (): Promise<void> => {
+    const [catalog, production] = await Promise.all([
+      window.studio.production.listWorkflows(),
+      window.studio.production.getWorkspace(project.manifest.id)
+    ])
+    setWorkflows(catalog)
+    setWorkspace(production)
+    setSelectedId(
+      (current) => current || catalog.find((workflow) => workflow.requiresGpu)?.workflowId || ''
+    )
+  }, [project.manifest.id])
+
+  useEffect(() => {
+    let cancelled = false
+    void Promise.all([
+      window.studio.production.listWorkflows(),
+      window.studio.production.getWorkspace(project.manifest.id)
+    ])
+      .then(([catalog, production]) => {
+        if (cancelled) return
+        setWorkflows(catalog)
+        setWorkspace(production)
+        const initial = catalog.find((workflow) => workflow.requiresGpu)
+        setSelectedId(initial?.workflowId ?? '')
+        const compatible = cloudStatus?.gpuOptions.find(
+          (gpu) => gpu.memoryGb >= (initial?.minimumVramGb ?? Number.POSITIVE_INFINITY)
+        )
+        setGpuTypeId(compatible?.id ?? '')
+      })
+      .catch(() => {
+        if (!cancelled) setMessage('The production workflow catalogue could not be opened safely.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [project.manifest.id, cloudStatus?.gpuOptions])
+
+  const selected = workflows.find((workflow) => workflow.workflowId === selectedId)
+  const selectWorkflow = (workflowId: string): void => {
+    const next = workflows.find((workflow) => workflow.workflowId === workflowId)
+    setSelectedId(workflowId)
+    setEstimate(undefined)
+    setPlannedJob(undefined)
+    setCostConfirmed(false)
+    setStartConfirmed(false)
+    setSelectedAssets([])
+    if (!next?.requiresGpu) {
+      setGpuTypeId('')
+      return
+    }
+    const compatible = cloudStatus?.gpuOptions.find((gpu) => gpu.memoryGb >= next.minimumVramGb)
+    setGpuTypeId(compatible?.id ?? '')
+  }
+
+  const estimateWork = async (event: FormEvent): Promise<void> => {
+    event.preventDefault()
+    if (!selected) return
+    if (label.trim().length < 3 || instruction.trim().length < 10) {
+      setMessage(
+        'Complete every required field. The production direction needs at least 10 characters.'
+      )
+      return
+    }
+    if (selected.requiresGpu && !gpuTypeId) {
+      setMessage('Choose a compatible GPU. Connect or refresh RunPod in Settings if none is shown.')
+      return
+    }
+    const selectedMedia = selectedAssets
+      .map((assetId) => workspace?.media.find((asset) => asset.assetId === assetId))
+      .filter((asset): asset is MediaAssetView => Boolean(asset))
+    if (
+      selected.workflowId === 'qwen3-tts-line-book' &&
+      (selectedMedia.length !== 1 || !selectedMedia[0]?.mimeType.startsWith('audio/'))
+    ) {
+      setMessage('Choose exactly one approved audio reference for the recurring voice line book.')
+      return
+    }
+    if (selected.workflowId === 'qwen3-tts-line-book' && !referenceText.trim()) {
+      setMessage('Enter the exact words spoken in the approved voice reference.')
+      return
+    }
+    if (
+      selected.workflowId === 'qwen-image-targeted-edit' &&
+      (selectedMedia.length !== 1 || !selectedMedia[0]?.mimeType.startsWith('image/'))
+    ) {
+      setMessage(
+        'Choose exactly one approved image to correct. The original will remain unchanged.'
+      )
+      return
+    }
+    if (
+      ['ltx2-image-to-video-draft', 'ltx2-image-to-video-final'].includes(selected.workflowId) &&
+      (selectedMedia.length !== 1 || !selectedMedia[0]?.mimeType.startsWith('image/'))
+    ) {
+      setMessage('Choose exactly one approved starting image for this LTX motion take.')
+      return
+    }
+    if (
+      selected.workflowId === 'ltx2-audio-driven-dialogue' &&
+      (selectedMedia.length !== 2 ||
+        !(
+          selectedMedia[0]?.mimeType.startsWith('image/') ||
+          selectedMedia[0]?.mimeType.startsWith('video/')
+        ) ||
+        !selectedMedia[1]?.mimeType.startsWith('audio/'))
+    ) {
+      setMessage(
+        'For dialogue motion, select the approved visual first and approved dialogue audio second.'
+      )
+      return
+    }
+    if (
+      selected.workflowId === 'latentsync-lip-repair' &&
+      (selectedMedia.length !== 2 ||
+        !selectedMedia[0]?.mimeType.startsWith('video/') ||
+        !selectedMedia[1]?.mimeType.startsWith('audio/'))
+    ) {
+      setMessage(
+        'For lip repair, select the approved video first and its approved dialogue audio second.'
+      )
+      return
+    }
+    setBusy(true)
+    try {
+      const result = await window.studio.production.estimateWorkflow({
+        projectId: project.manifest.id,
+        workflowId: selected.workflowId,
+        workflowVersion: selected.version,
+        gpuTypeId: selected.requiresGpu ? gpuTypeId : null,
+        priceTier: selected.requiresGpu ? priceTier : null,
+        gpuCount: selected.requiresGpu ? 1 : 0
+      })
+      if (!result.ok) {
+        setMessage(result.error.message)
+        return
+      }
+      setEstimate(result.estimate)
+      setPlannedJob(undefined)
+      setCostConfirmed(false)
+      setMessage('Estimate ready. Nothing has been rented or queued.')
+    } catch {
+      setMessage('The estimate could not be prepared. No GPU was started.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const plan = async (): Promise<void> => {
+    if (!selected || !estimate) return
+    if (!costConfirmed) {
+      setMessage('Tick the maximum-cost confirmation before creating the approved job record.')
+      return
+    }
+    setBusy(true)
+    try {
+      const parameters = workflowParameters(
+        selected,
+        instruction.trim(),
+        referenceText.trim(),
+        seed,
+        selected.requiresGpu ? gpuTypeId : null,
+        selected.requiresGpu ? priceTier : null
+      )
+      const canonIds =
+        workspace?.canon
+          .filter((canon) => canon.state === 'active')
+          .map((canon) => canon.canonId) ?? []
+      const identity = {
+        projectId: project.manifest.id,
+        workflowId: selected.workflowId,
+        workflowVersion: selected.version,
+        label: label.trim(),
+        parameters,
+        selectedAssets,
+        canonIds,
+        estimateId: estimate.estimateId
+      }
+      const result = await window.studio.production.planJob({
+        projectId: project.manifest.id,
+        kind: selected.jobKind,
+        label: label.trim(),
+        workflowId: selected.workflowId,
+        workflowVersion: selected.version,
+        inputAssetIds: selectedAssets,
+        canonIds,
+        parameters,
+        idempotencyKey: await makeIdempotencyKey(identity),
+        estimate
+      })
+      if (!result.ok) {
+        setMessage(result.error.message)
+        return
+      }
+      const approval = await window.studio.production.approveJob({
+        projectId: project.manifest.id,
+        jobId: result.details.job.jobId,
+        expectedEstimateId: estimate.estimateId,
+        acceptedMaximumUsd: estimate.maximumTotalUsd,
+        confirmation: true
+      })
+      if (!approval.ok) {
+        setMessage(approval.error.message)
+        return
+      }
+      setPlannedJob(approval.details.job)
+      setMessage(
+        'The exact maximum cost is approved. No GPU has started; use the separate start confirmation.'
+      )
+      await refresh()
+    } catch {
+      setMessage('The job approval could not be saved safely. No GPU was started.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const start = async (): Promise<void> => {
+    if (!plannedJob || !estimate || !startConfirmed) {
+      setMessage('Tick the separate worker-start confirmation first.')
+      return
+    }
+    if (
+      !window.confirm(
+        `Start one rented GPU with a hard maximum of ${formatUsd(estimate.maximumTotalUsd)}?`
+      )
+    )
+      return
+    setBusy(true)
+    try {
+      const result = await window.studio.production.queueJob({
+        projectId: project.manifest.id,
+        jobId: plannedJob.jobId,
+        expectedEstimateId: estimate.estimateId,
+        confirmation: true
+      })
+      setMessage(
+        result.ok
+          ? (result.details.events.at(-1)?.message ?? 'Worker lease queued.')
+          : result.error.message
+      )
+      await refresh()
+    } catch {
+      setMessage('The worker start could not be confirmed. No automatic retry was made.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const approvedMedia = workspace?.media.filter((asset) => asset.state === 'approved') ?? []
+  const selectedGpu = cloudStatus?.gpuOptions.find((gpu) => gpu.id === gpuTypeId)
+
+  return (
+    <div className="production-room generate-room">
+      <button className="text-button back-link" onClick={onHome}>
+        ← Production overview
+      </button>
+      <header className="page-heading">
+        <div>
+          <p className="eyebrow">Prepared generation · {project.manifest.code}</p>
+          <h1>See every stage, input, limit, and lock before spending.</h1>
+          <p>
+            One job uses one GPU. Two or three GPUs mean separate compatible jobs running at the
+            same time under the saved combined limit.
+          </p>
+        </div>
+        {cloudStatus?.connectionState !== 'connected' && (
+          <button className="button button-primary" onClick={onSettings}>
+            Connect RunPod
+          </button>
+        )}
+      </header>
+
+      {message && (
+        <div className="safety-feedback" role="status">
+          {message}
+        </div>
+      )}
+
+      <section className="workflow-stage-grid" aria-label="Full production stages">
+        {[...new Set(workflows.map(workflowStage))].map((stage) => {
+          const stageWorkflows = workflows.filter((workflow) => workflowStage(workflow) === stage)
+          const ready = stageWorkflows.filter((workflow) => workflow.readyForPaidWork).length
+          return (
+            <article key={stage}>
+              <span
+                className={`stage-state ${ready === stageWorkflows.length ? 'ready' : 'locked'}`}
+              >
+                {ready}/{stageWorkflows.length} qualified
+              </span>
+              <h3>{stage}</h3>
+              <p>{stageWorkflows.map((workflow) => workflow.label).join(' · ')}</p>
+            </article>
+          )
+        })}
+      </section>
+
+      <form className="generation-form" onSubmit={(event) => void estimateWork(event)}>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Prepare one job</p>
+            <h2>Choose the production operation</h2>
+          </div>
+          <span className="status-chip local">Estimate first</span>
+        </div>
+        <label>
+          Workflow <RequiredMark />
+          <select
+            value={selectedId}
+            onChange={(event) => selectWorkflow(event.target.value)}
+            required
+          >
+            {workflows
+              .filter((workflow) => workflow.requiresGpu)
+              .map((workflow) => (
+                <option
+                  key={`${workflow.workflowId}-${workflow.version}`}
+                  value={workflow.workflowId}
+                >
+                  {workflow.label} · {workflow.readyForPaidWork ? 'qualified' : 'locked candidate'}
+                </option>
+              ))}
+          </select>
+          <small>
+            Local timelines, captions, thumbnails, and release packages are completed in Edit &amp;
+            Export without renting a GPU.
+          </small>
+        </label>
+        {selected && (
+          <div
+            className={`workflow-lock-summary ${selected.readyForPaidWork ? 'ready' : 'locked'}`}
+          >
+            <strong>
+              {selected.readyForPaidWork ? 'Production qualified' : 'Paid start remains locked'}
+            </strong>
+            <span>
+              {selected.engine} · needs {selected.minimumVramGb} GB VRAM · expected{' '}
+              {selected.expectedRuntimeMinutes} minutes
+            </span>
+            {selected.blockers.map((blocker) => (
+              <small key={blocker}>• {blocker}</small>
+            ))}
+          </div>
+        )}
+        <label>
+          Job name <RequiredMark />
+          <input
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+            minLength={3}
+            maxLength={240}
+            required
+            placeholder="Ayo expression board — scene 4"
+          />
+          <TextRequirement
+            id="generation-job-name-guidance"
+            value={label}
+            minimum={3}
+            maximum={240}
+          />
+        </label>
+        <label>
+          {selected?.workflowId === 'qwen3-tts-line-book'
+            ? 'Dialogue lines — one line per row'
+            : 'Creative direction or production data'}{' '}
+          <RequiredMark />
+          <textarea
+            value={instruction}
+            onChange={(event) => setInstruction(event.target.value)}
+            minLength={10}
+            maxLength={4000}
+            required
+            rows={5}
+            placeholder={
+              selected?.workflowId === 'qwen3-tts-line-book'
+                ? 'The eastern lantern is awake.\nTell the harbour master we are ready.'
+                : 'Describe the exact identity, voice, movement, correction, timing, or package decision for this job.'
+            }
+          />
+          <TextRequirement
+            id="generation-direction-guidance"
+            value={instruction}
+            minimum={10}
+            maximum={4000}
+          />
+        </label>
+        {selected?.workflowId === 'qwen3-tts-line-book' && (
+          <label>
+            Exact words in the approved voice reference <RequiredMark />
+            <textarea
+              value={referenceText}
+              onChange={(event) => setReferenceText(event.target.value)}
+              minLength={1}
+              maxLength={1200}
+              required
+              rows={3}
+              placeholder="Type exactly what the speaker says in the selected reference audio."
+            />
+            <TextRequirement
+              id="generation-reference-text-guidance"
+              value={referenceText}
+              minimum={1}
+              maximum={1200}
+            />
+          </label>
+        )}
+        {selected?.requiresGpu && (
+          <div className="form-grid two-column">
+            <label>
+              GPU <RequiredMark />
+              <select
+                value={gpuTypeId}
+                onChange={(event) => setGpuTypeId(event.target.value)}
+                required
+              >
+                <option value="">Choose a compatible GPU</option>
+                {cloudStatus?.gpuOptions
+                  .filter((gpu) => gpu.memoryGb >= (selected?.minimumVramGb ?? 0))
+                  .map((gpu) => (
+                    <option key={gpu.id} value={gpu.id}>
+                      {gpu.name} · {gpu.memoryGb} GB
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label>
+              Price tier <RequiredMark />
+              <select
+                value={priceTier}
+                onChange={(event) => setPriceTier(event.target.value as 'secure' | 'community')}
+              >
+                <option value="secure">
+                  Secure cloud ·{' '}
+                  {selectedGpu?.secureHourlyUsd == null
+                    ? 'unavailable'
+                    : `${formatUsd(selectedGpu.secureHourlyUsd)}/hr`}
+                </option>
+                <option value="community">
+                  Community cloud ·{' '}
+                  {selectedGpu?.communityHourlyUsd == null
+                    ? 'unavailable'
+                    : `${formatUsd(selectedGpu.communityHourlyUsd)}/hr`}
+                </option>
+              </select>
+            </label>
+          </div>
+        )}
+        {selected?.requiresGpu && (
+          <label>
+            Repeatable seed <RequiredMark />
+            <input
+              type="number"
+              min={0}
+              max={2147483647}
+              value={seed}
+              onChange={(event) => setSeed(Number(event.target.value))}
+              required
+            />
+          </label>
+        )}
+        <fieldset className="asset-selector">
+          <legend>Approved source media</legend>
+          {selected?.workflowId === 'qwen3-tts-line-book' && (
+            <p>Select exactly one rights-cleared approved voice reference.</p>
+          )}
+          {selected?.workflowId === 'qwen-image-targeted-edit' && (
+            <p>Select exactly one approved image. The correction will become a new child asset.</p>
+          )}
+          {['ltx2-image-to-video-draft', 'ltx2-image-to-video-final'].includes(
+            selected?.workflowId ?? ''
+          ) && <p>Select exactly one approved starting image for the shot.</p>}
+          {selected?.workflowId === 'ltx2-audio-driven-dialogue' && (
+            <p>
+              Select exactly two items in this order: 1) approved visual, 2) approved dialogue
+              audio.
+            </p>
+          )}
+          {selected?.workflowId === 'latentsync-lip-repair' && (
+            <p>
+              Select exactly two items in this order: 1) approved video, 2) approved dialogue audio.
+              The selection numbers below show the order.
+            </p>
+          )}
+          {approvedMedia.length === 0 ? (
+            <p>No approved media yet. Prompt-only workflows can still be estimated.</p>
+          ) : (
+            approvedMedia.map((asset) => (
+              <label key={asset.assetId} className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={selectedAssets.includes(asset.assetId)}
+                  onChange={(event) =>
+                    setSelectedAssets((current) =>
+                      event.target.checked
+                        ? [...current, asset.assetId]
+                        : current.filter((id) => id !== asset.assetId)
+                    )
+                  }
+                />
+                <span>
+                  {selectedAssets.includes(asset.assetId)
+                    ? `${selectedAssets.indexOf(asset.assetId) + 1}. `
+                    : ''}
+                  {asset.label}
+                  <small>{asset.kind}</small>
+                </span>
+              </label>
+            ))
+          )}
+        </fieldset>
+        <button
+          className="button button-primary button-large"
+          disabled={busy || !selected}
+          type="submit"
+        >
+          {busy ? 'Checking…' : 'Calculate time and maximum cost'}
+        </button>
+      </form>
+
+      {estimate && selected && (
+        <section className="cost-approval-card">
+          <div>
+            <p className="eyebrow">No GPU started</p>
+            <h2>
+              {formatUsd(estimate.expectedTotalUsd)} expected ·{' '}
+              {formatUsd(estimate.maximumTotalUsd)} hard maximum
+            </h2>
+            <p>
+              {estimate.expectedRuntimeMinutes} minutes expected; automatic worker deadline after{' '}
+              {estimate.maximumRuntimeMinutes} minutes.
+            </p>
+            <ul>
+              {estimate.explanation.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+          <label className="checkbox-row strong-confirmation">
+            <input
+              type="checkbox"
+              checked={costConfirmed}
+              onChange={(event) => setCostConfirmed(event.target.checked)}
+            />
+            <span>
+              I approve this exact maximum cost. <RequiredMark />
+            </span>
+          </label>
+          <button className="button button-secondary" disabled={busy} onClick={() => void plan()}>
+            Save cost approval — still do not start
+          </button>
+          {plannedJob && (
+            <div className="start-worker-gate">
+              <div
+                className={`field-warning ${selected.readyForPaidWork ? '' : 'danger'}`}
+                role="status"
+              >
+                {selected.readyForPaidWork
+                  ? 'This next action can rent one GPU. The hard deadline and idle protection will be sent with the worker.'
+                  : (selected.blockers[0] ??
+                    'This workflow has not passed production qualification.')}
+              </div>
+              <label className="checkbox-row strong-confirmation">
+                <input
+                  type="checkbox"
+                  checked={startConfirmed}
+                  onChange={(event) => setStartConfirmed(event.target.checked)}
+                />
+                <span>
+                  I understand the next action may start paid GPU time. <RequiredMark />
+                </span>
+              </label>
+              <button
+                className="button button-primary button-large"
+                disabled={busy || !selected.readyForPaidWork}
+                onClick={() => void start()}
+              >
+                Start approved worker
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      <section className="job-list-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Recoverable queue</p>
+            <h2>Every planned and running job</h2>
+          </div>
+        </div>
+        {workspace?.jobs.length ? (
+          workspace.jobs.map((job) => (
+            <JobCard key={job.jobId} job={job} onChanged={refresh} onNotice={setMessage} />
+          ))
+        ) : (
+          <div className="settings-card backup-empty">No production jobs have been prepared.</div>
+        )}
+      </section>
+    </div>
+  )
+}

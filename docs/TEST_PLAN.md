@@ -1,5 +1,7 @@
 # Test and acceptance plan
 
+Current implementation note (0.9.0): local configuration/syntax/type/unit/renderer and production-safety suites cover the implemented control plane. `gpu-qualification-evidence.template.json` and the guarded promotion tool now make external image/voice/video/lip/security/recovery/shutdown/cost evidence executable as a release gate; those live results do not yet exist. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 ## 1. Test philosophy
 
 Tests protect four scarce things: creative continuity, user data, user trust, and paid GPU time. A happy-path render is insufficient. The system must prove failure recovery, bounded spend, exact lineage, and understandable user behavior.

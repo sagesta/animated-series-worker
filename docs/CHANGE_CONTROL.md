@@ -1,5 +1,7 @@
 # Change control and documentation governance
 
+Version-0.9 rule: `docs/PRODUCTION_IMPLEMENTATION.md` is the implementation overlay and `docs/STATUS.md` is the evidence boundary. Every runtime/model/workflow/provider/security/release fix must update those documents plus the affected detailed specification, backlog, traceability, sources, tests, and changelog in the same change. A candidate change invalidates its old fingerprint and cannot edit a production pack in place.
+
 ## 1. Outcome
 
 Future features and fixes must not make this documentation stale. Documentation, contracts, migrations, tests, and operational behavior are one change—not separate cleanup work.

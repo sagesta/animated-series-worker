@@ -1,5 +1,7 @@
 # Image, voice, video, audio, and delivery pipeline
 
+Current implementation note (0.9.0): governed candidate definitions and runners now cover Qwen image/edit, Qwen3-TTS, LTX-2.5, LatentSync lip repair, technical QC, verified local media review, deterministic timeline/captions/thumbnail/master/package operations. Remote creative engines still require exact workflow/model/license/quality qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 ## 1. Pipeline policy
 
 Creative facts and approvals are canonical. The exact Audience & Creative Direction revision is a versioned compiler input, while model prompts and workflow graphs are disposable compiled outputs. This prevents a niche field or model-specific string from becoming the only record of what a production or shot was supposed to achieve.

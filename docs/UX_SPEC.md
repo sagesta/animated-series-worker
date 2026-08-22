@@ -1,14 +1,16 @@
 # Non-technical user experience specification
 
+Current implementation note (0.9.0): Home, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, and Settings are wired to local production services. Media is viewed inside the app; ComfyUI is headless. Paid start remains visibly locked until qualification, with exact input, estimate, approval, and separate start guidance. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 ## 1. Experience goal
 
 The creator should feel that they are operating a production studio, not administering AI infrastructure. Normal screens use story language—character, scene, voice, shot, take, approve, cost—not model nodes, ports, containers, or command lines.
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.8.0
+### Current implementation — version 0.9.0
 
-The production library, six-step series/film wizard, project overview, navigation, backup/recovery/migration, RunPod setup, local support flow, and first declarative creative-skill workflow are implemented. The wizard collects an Audience & Creative Direction profile; the overview shows its active revision and can append a revised local version without overwriting the earlier one. Required fields show a visible asterisk and live minimum/range guidance. Project setup, direction revision, RunPod and writing-provider keys, spending defaults, and the paid Creative Room request use an accessible correction popup instead of an unexplained grey action. Settings provides separate masked OpenAI, Anthropic, and Gemini cards plus a Creative Skills area that installs strict JSON packages without executing code and requires explicit per-project enablement. Story is a working Creative Room for character, world, outline, scene, dialogue, and continuity proposals: it shows the exact selected project context, previews required/optional skill matches and blockers, requires a checkbox for one potentially paid text request, and labels the locally saved result “proposal, not canon” with model/token/source/skill receipts. No model is presented as a task benchmark winner. World & Cast, Storyboard, Generate, Review, Edit & Export, Release, canon promotion/version comparison, exact text-dollar quotes, executable/local/remote/MCP skills, and GPU generation remain planned/locked.
+The production library, guided series/film wizard, overview, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, Settings, backup/recovery, protected providers, and declarative skills are wired to production services. Proposals remain separate from canon; generated/imported media remains separate from approval. Generate shows input order, compatible memory, expected/hard maximum, cost confirmation, and a separate start confirmation. Exact remote candidates remain visibly locked until the worker qualification receipt exists. The creator reviews media and finishes locally without opening ComfyUI or a terminal. Higher-risk executable/MCP skills, advanced controls, generated foley, adaptation, analytics, and automatic publishing remain absent.
 
 ### Shared field and warning behavior
 

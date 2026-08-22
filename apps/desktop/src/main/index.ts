@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -16,10 +17,13 @@ import {
 } from 'electron'
 import { ZodError } from 'zod'
 import {
+  AcceptUpstreamImportInputSchema,
   CloudActionResultSchema,
   CloudConnectInputSchema,
   CloudConnectionStatusSchema,
   CloudGuardrailsSchema,
+  CanonActionResultSchema,
+  ChooseMediaAssetInputSchema,
   CreateProjectInputSchema,
   ExternalSkillActionResultSchema,
   ExternalSkillPlanPreviewInputSchema,
@@ -27,7 +31,28 @@ import {
   ExternalSkillRemoveInputSchema,
   ExternalSkillSetProjectEnabledInputSchema,
   ExternalSkillStatusSchema,
+  FinishActionResultSchema,
+  FinishWorkspaceSchema,
+  ExportCaptionsInputSchema,
+  InstallLocalMediaToolsInputSchema,
   IPC_CHANNELS,
+  MediaActionResultSchema,
+  CreateReleasePackageInputSchema,
+  LockProductionTimelineInputSchema,
+  LocalMediaActionResultSchema,
+  LocalMediaInstallResultSchema,
+  LocalMediaRuntimeStatusSchema,
+  ProductionJobActionResultSchema,
+  ProductionJobApprovalInputSchema,
+  ProductionJobDetailsSchema,
+  ProductionJobInputSchema,
+  ProductionCancelJobInputSchema,
+  ProductionQueueJobInputSchema,
+  ProductionWorkflowEstimateInputSchema,
+  ProductionWorkflowEstimateResultSchema,
+  ProductionWorkflowSummarySchema,
+  ProductionWorkspaceSummarySchema,
+  PromoteWritingDraftInputSchema,
   ProjectBackupSummarySchema,
   ProjectCreativeDirectionUpdateInputSchema,
   ProjectDetailsSchema,
@@ -37,9 +62,17 @@ import {
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
   RendererErrorInputSchema,
+  ReviewMediaAssetInputSchema,
+  RenderThumbnailInputSchema,
+  RenderTimelineInputSchema,
+  SaveProductionTimelineInputSchema,
+  SaveReleaseAttestationsInputSchema,
+  SaveReleaseDetailsInputSchema,
   SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema,
+  UpstreamImportActionResultSchema,
+  UpstreamImportRecordSchema,
   WritingConnectInputSchema,
   WritingContextPreviewInputSchema,
   WritingContextPreviewSchema,
@@ -59,14 +92,25 @@ import {
   WritingSetupService,
   toWritingActionError
 } from '@studio/creative-writing'
-import { EncryptedCredentialVault } from '@studio/credential-vault'
+import { EncryptedCredentialVault, EncryptedSecretMapVault } from '@studio/credential-vault'
 import { ProjectStore } from '@studio/project-store'
 import { AnthropicClient } from '@studio/provider-anthropic'
 import { GeminiClient } from '@studio/provider-gemini'
 import { OpenAiClient } from '@studio/provider-openai'
 import { RunPodClient } from '@studio/provider-runpod'
+import { ProductionOrchestrator } from '@studio/production-orchestrator'
+import { verifyProductionReadiness } from '@studio/production-readiness'
+import { LocalProductionService } from '@studio/local-production'
+import { ReleaseStore } from '@studio/release-store'
+import {
+  ProductionStore,
+  buildMediaImportInput,
+  toProductionActionError
+} from '@studio/production-store'
 import { DeclarativeSkillRegistry, toExternalSkillActionError } from '@studio/skill-runtime'
 import { SafeDiagnostics, type DiagnosticEventInput } from '@studio/support-diagnostics'
+import { UpstreamAdapter, toUpstreamActionError } from '@studio/upstream-adapter'
+import { WorkflowRegistry } from '@studio/workflow-registry'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -75,6 +119,15 @@ protocol.registerSchemesAsPrivileged([
       standard: true,
       secure: true,
       supportFetchAPI: true
+    }
+  },
+  {
+    scheme: 'studio-media',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true
     }
   }
 ])
@@ -90,9 +143,16 @@ let projectStore: ProjectStore | null = null
 let cloudSetupService: CloudSetupService | null = null
 let writingSetupService: WritingSetupService | null = null
 let creativeWritingService: CreativeWritingService | null = null
+let productionStore: ProductionStore | null = null
+let productionOrchestrator: ProductionOrchestrator | null = null
+let releaseStore: ReleaseStore | null = null
+let localProductionService: LocalProductionService | null = null
+let upstreamAdapter: UpstreamAdapter | null = null
 let skillRegistry: DeclarativeSkillRegistry | null = null
 let diagnostics: SafeDiagnostics | null = null
 let storeClosed = false
+let recoveryTimer: NodeJS.Timeout | null = null
+let recoveryRunning = false
 
 app.on('second-instance', () => {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -125,6 +185,24 @@ function registerStudioProtocol(): void {
     }
 
     return net.fetch(pathToFileURL(filePath).toString())
+  })
+
+  protocol.handle('studio-media', (request) => {
+    try {
+      const requestUrl = new URL(request.url)
+      const pathParts = requestUrl.pathname.split('/').filter(Boolean)
+      if (requestUrl.host !== 'asset' || pathParts.length !== 2) {
+        return new Response('Not found', { status: 404 })
+      }
+      const projectId = UlidSchema.parse(pathParts[0])
+      const assetId = UlidSchema.parse(pathParts[1])
+      const media = requireProductionStore().resolveMediaPath(projectId, assetId)
+      return net.fetch(pathToFileURL(media.path).toString(), {
+        headers: request.headers
+      })
+    } catch {
+      return new Response('Not found', { status: 404 })
+    }
   })
 }
 
@@ -185,6 +263,31 @@ function requireCreativeWriting(): CreativeWritingService {
   return creativeWritingService
 }
 
+function requireProductionStore(): ProductionStore {
+  if (!productionStore) throw new Error('The local production workspace is not ready.')
+  return productionStore
+}
+
+function requireProductionOrchestrator(): ProductionOrchestrator {
+  if (!productionOrchestrator) throw new Error('The production workflow engine is not ready.')
+  return productionOrchestrator
+}
+
+function requireReleaseStore(): ReleaseStore {
+  if (!releaseStore) throw new Error('The edit and release workspace is not ready.')
+  return releaseStore
+}
+
+function requireLocalProduction(): LocalProductionService {
+  if (!localProductionService) throw new Error('The local render engine is not ready.')
+  return localProductionService
+}
+
+function requireUpstreamAdapter(): UpstreamAdapter {
+  if (!upstreamAdapter) throw new Error('The pinned upstream story importer is not ready.')
+  return upstreamAdapter
+}
+
 function requireSkillRegistry(): DeclarativeSkillRegistry {
   if (!skillRegistry) throw new Error('The local creative-skill library is not ready.')
   return skillRegistry
@@ -204,6 +307,62 @@ function recordDiagnostic(input: DiagnosticEventInput): void {
   })
 }
 
+async function reconcileActiveProductionJobs(): Promise<void> {
+  if (
+    recoveryRunning ||
+    !projectStore ||
+    !productionStore ||
+    !productionOrchestrator ||
+    !cloudSetupService
+  ) {
+    return
+  }
+  recoveryRunning = true
+  try {
+    const cloud = await cloudSetupService.getStatus()
+    if (!cloud.credentialStored) return
+    const recoverableStates = new Set([
+      'queued',
+      'provisioning',
+      'running',
+      'downloading',
+      'verifying',
+      'awaiting-review',
+      'cancel-requested',
+      'failed',
+      'cancelled',
+      'succeeded'
+    ])
+    for (const project of projectStore.listProjects()) {
+      const jobs = productionStore
+        .getWorkspace(project.id)
+        .jobs.filter(
+          (job) => job.workerLeaseId && !job.workerClosedAt && recoverableStates.has(job.state)
+        )
+      for (const job of jobs) {
+        const result = await productionOrchestrator.reconcileJob(project.id, job.jobId)
+        if (!result.ok && result.error.code !== 'not-found') {
+          recordDiagnostic({
+            level: 'warning',
+            area: 'production',
+            eventName: 'production.worker.reconcile-attention',
+            message: 'A protected worker session needs attention; no replacement was created.',
+            context: {
+              projectId: project.id,
+              jobId: job.jobId,
+              errorCode: result.error.code
+            }
+          })
+        }
+      }
+    }
+  } catch {
+    // A recovery check must never crash the app or create a replacement worker.
+  } finally {
+    recoveryRunning = false
+  }
+}
+
 function safeInputMessage(error: unknown): string {
   if (error instanceof ZodError) {
     return error.issues[0]?.message ?? 'Check the project details and try again.'
@@ -218,6 +377,8 @@ function registerIpcHandlers(): void {
     const store = requireStore()
     const indexedProjects = store.listProjects().length
     let cloudGpuState: 'not-configured' | 'account-connected' | 'attention' = 'attention'
+    let generationState: 'locked' | 'ready' = 'locked'
+    let generationReason = 'Production readiness could not be checked safely.'
 
     try {
       const cloudStatus = await requireCloudSetup().getStatus()
@@ -225,6 +386,8 @@ function registerIpcHandlers(): void {
         cloudStatus.connectionState === 'connected'
           ? 'account-connected'
           : cloudStatus.connectionState
+      generationState = cloudStatus.generationState
+      generationReason = cloudStatus.generationReason
     } catch {
       cloudGpuState = 'attention'
     }
@@ -237,9 +400,8 @@ function registerIpcHandlers(): void {
       indexedProjects,
       catalogState: 'ready',
       cloudGpuState,
-      generationState: 'locked',
-      generationReason:
-        'Paid generation stays locked until the worker image, model storage, and independent shutdown guards pass a controlled test.'
+      generationState,
+      generationReason
     })
   })
 
@@ -452,8 +614,11 @@ function registerIpcHandlers(): void {
     assertTrustedSender(event)
     try {
       let cloudConnectionState = 'attention'
+      let generationState: 'locked' | 'ready' = 'locked'
       try {
-        cloudConnectionState = (await requireCloudSetup().getStatus()).connectionState
+        const cloudStatus = await requireCloudSetup().getStatus()
+        cloudConnectionState = cloudStatus.connectionState
+        generationState = cloudStatus.generationState
       } catch {
         // The support snapshot records attention without copying a provider error or payload.
       }
@@ -474,7 +639,7 @@ function registerIpcHandlers(): void {
           projectCount: requireStore().listProjects().length,
           catalogState: 'ready',
           cloudConnectionState,
-          generationState: 'locked'
+          generationState
         })
       )
     } catch {
@@ -745,6 +910,530 @@ function registerIpcHandlers(): void {
     }
   })
 
+  ipcMain.handle(IPC_CHANNELS.productionGetWorkspace, (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const projectId = UlidSchema.parse(unknownProjectId)
+      return ProductionWorkspaceSummarySchema.parse(
+        requireProductionStore().getWorkspace(projectId)
+      )
+    } catch {
+      throw new Error('The production workspace could not be read safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionPromoteDraft, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = PromoteWritingDraftInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return CanonActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the approval details.'
+        }
+      })
+    }
+    const result = requireProductionStore().promoteWritingDraft(input.data)
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'production',
+      eventName: result.ok ? 'production.canon.approved' : 'production.canon.failed',
+      message: result.ok
+        ? 'A reviewed writing proposal became a versioned canon record.'
+        : 'A canon approval was refused without changing the project.',
+      context: {
+        projectId: input.data.projectId,
+        draftId: input.data.draftId,
+        result: result.ok ? 'approved' : result.error.code
+      }
+    })
+    return CanonActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionImportMedia, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ChooseMediaAssetInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return MediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the media details.'
+        }
+      })
+    }
+    requireStore().openProject(input.data.projectId)
+    const options: OpenDialogOptions = {
+      title: 'Choose media for this production',
+      buttonLabel: 'Import safe local copy',
+      properties: ['openFile'],
+      filters: [
+        {
+          name: 'Supported production media',
+          extensions: [
+            'png',
+            'jpg',
+            'jpeg',
+            'webp',
+            'wav',
+            'mp3',
+            'mp4',
+            'webm',
+            'srt',
+            'vtt',
+            'json',
+            'pdf'
+          ]
+        }
+      ]
+    }
+    const selection = mainWindow
+      ? await dialog.showOpenDialog(mainWindow, options)
+      : await dialog.showOpenDialog(options)
+    if (selection.canceled || !selection.filePaths[0]) {
+      return MediaActionResultSchema.parse({
+        ok: false,
+        error: { code: 'invalid-input', message: 'No media file was selected.' }
+      })
+    }
+    const result = await requireProductionStore().importMedia(
+      buildMediaImportInput(input.data, selection.filePaths[0])
+    )
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'production',
+      eventName: result.ok ? 'production.media.imported' : 'production.media.import-failed',
+      message: result.ok
+        ? 'A verified local copy of a media file was added to one production.'
+        : 'A media import was refused without changing an existing asset.',
+      context: {
+        projectId: input.data.projectId,
+        result: result.ok ? 'candidate' : result.error.code
+      }
+    })
+    return MediaActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionReviewMedia, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ReviewMediaAssetInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return MediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the review details.'
+        }
+      })
+    }
+    return MediaActionResultSchema.parse(requireProductionStore().reviewMedia(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionPlanJob, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = ProductionJobInputSchema.parse(unknownInput)
+      return ProductionJobActionResultSchema.parse(requireProductionStore().planJob(input))
+    } catch (error) {
+      return ProductionJobActionResultSchema.parse({
+        ok: false,
+        error: toProductionActionError(error)
+      })
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionApproveJob, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = ProductionJobApprovalInputSchema.parse(unknownInput)
+      return ProductionJobActionResultSchema.parse(requireProductionStore().approveJob(input))
+    } catch (error) {
+      return ProductionJobActionResultSchema.parse({
+        ok: false,
+        error: toProductionActionError(error)
+      })
+    }
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.productionGetJob,
+    (event, unknownProjectId: unknown, unknownJobId: unknown) => {
+      assertTrustedSender(event)
+      try {
+        return ProductionJobDetailsSchema.parse(
+          requireProductionStore().getProjectJob(
+            UlidSchema.parse(unknownProjectId),
+            UlidSchema.parse(unknownJobId)
+          )
+        )
+      } catch {
+        throw new Error('That production job could not be read safely.')
+      }
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.productionListWorkflows, (event) => {
+    assertTrustedSender(event)
+    return ProductionWorkflowSummarySchema.array().parse(
+      requireProductionOrchestrator().listWorkflows()
+    )
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionEstimateWorkflow, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ProductionWorkflowEstimateInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return ProductionWorkflowEstimateResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the workflow estimate details.'
+        }
+      })
+    }
+    return ProductionWorkflowEstimateResultSchema.parse(
+      await requireProductionOrchestrator().estimateWorkflow(input.data)
+    )
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionQueueJob, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ProductionQueueJobInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return ProductionJobActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the start confirmation.'
+        }
+      })
+    }
+    const result = await requireProductionOrchestrator().queueApprovedJob(input.data)
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'worker',
+      eventName: result.ok ? 'worker.lease.queued' : 'worker.lease.refused',
+      message: result.ok
+        ? 'A cost-approved worker lease entered provider reconciliation.'
+        : 'A worker start was refused before an unsafe or unapproved action.',
+      context: {
+        projectId: input.data.projectId,
+        jobId: input.data.jobId,
+        result: result.ok ? result.details.job.state : result.error.code
+      }
+    })
+    return ProductionJobActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionCancelJob, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ProductionCancelJobInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return ProductionJobActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the cancellation reason.'
+        }
+      })
+    }
+    return ProductionJobActionResultSchema.parse(
+      await requireProductionOrchestrator().cancelJob(input.data)
+    )
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.productionReconcileJob,
+    async (event, unknownProjectId: unknown, unknownJobId: unknown) => {
+      assertTrustedSender(event)
+      try {
+        return ProductionJobActionResultSchema.parse(
+          await requireProductionOrchestrator().reconcileJob(
+            UlidSchema.parse(unknownProjectId),
+            UlidSchema.parse(unknownJobId)
+          )
+        )
+      } catch {
+        return ProductionJobActionResultSchema.parse({
+          ok: false,
+          error: {
+            code: 'unknown',
+            message: 'The worker could not be reconciled safely. No retry was started.'
+          }
+        })
+      }
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.finishGetWorkspace, (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    return FinishWorkspaceSchema.parse(
+      requireReleaseStore().getWorkspace(UlidSchema.parse(unknownProjectId))
+    )
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSaveTimeline, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SaveProductionTimelineInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the timeline details.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().saveTimeline(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishLockTimeline, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = LockProductionTimelineInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the timeline lock confirmation.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().lockTimeline(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSaveReleaseDetails, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SaveReleaseDetailsInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the YouTube release details.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().saveReleaseDetails(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSaveAttestations, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SaveReleaseAttestationsInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Complete every human release decision.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().saveAttestations(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishCreateReleasePackage, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = CreateReleasePackageInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the final package selection.'
+        }
+      })
+    }
+    const result = requireReleaseStore().createReleasePackage(input.data)
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'export',
+      eventName: result.ok ? 'release.package.locked' : 'release.package.refused',
+      message: result.ok
+        ? 'A hash-inventoried manual-upload package was locked locally.'
+        : 'Release packaging was refused without changing a prior package.',
+      context: {
+        projectId: input.data.projectId,
+        result: result.ok ? 'locked' : result.error.code
+      }
+    })
+    return FinishActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishGetLocalMediaStatus, (event) => {
+    assertTrustedSender(event)
+    return LocalMediaRuntimeStatusSchema.parse(requireLocalProduction().getStatus())
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.finishInstallLocalMediaTools,
+    async (event, unknownInput: unknown) => {
+      assertTrustedSender(event)
+      const input = InstallLocalMediaToolsInputSchema.parse(unknownInput)
+      const result = await requireLocalProduction().installRuntime(input)
+      recordDiagnostic({
+        level: result.ok ? 'info' : 'warning',
+        area: 'export',
+        eventName: result.ok ? 'local-media.install.completed' : 'local-media.install.failed',
+        message: result.ok
+          ? 'The free local media tools passed their feature check.'
+          : 'The free local media-tool setup did not pass verification.',
+        context: { result: result.ok ? 'ready' : result.error.code }
+      })
+      return LocalMediaInstallResultSchema.parse(result)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.finishRenderTimeline, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = RenderTimelineInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return LocalMediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the master render settings.'
+        }
+      })
+    }
+    const result = await requireLocalProduction().renderTimeline(input.data)
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'export',
+      eventName: result.ok ? 'timeline.render.completed' : 'timeline.render.refused',
+      message: result.ok
+        ? 'A deterministic local master candidate was created.'
+        : 'The local master render stopped without replacing earlier media.',
+      context: {
+        projectId: input.data.projectId,
+        result: result.ok ? 'candidate' : result.error.code
+      }
+    })
+    return LocalMediaActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishExportCaptions, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ExportCaptionsInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return LocalMediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the caption export settings.'
+        }
+      })
+    }
+    return LocalMediaActionResultSchema.parse(
+      await requireLocalProduction().exportCaptions(input.data)
+    )
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishRenderThumbnail, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = RenderThumbnailInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return LocalMediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the thumbnail settings.'
+        }
+      })
+    }
+    return LocalMediaActionResultSchema.parse(
+      await requireLocalProduction().renderThumbnail(input.data)
+    )
+  })
+
+  ipcMain.handle(IPC_CHANNELS.upstreamChooseImport, async (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const projectId = UlidSchema.parse(unknownProjectId)
+      requireStore().openProject(projectId)
+      const options: OpenDialogOptions = {
+        title: 'Choose the upstream story-package folder',
+        buttonLabel: 'Check story package',
+        properties: ['openDirectory']
+      }
+      const selection = mainWindow
+        ? await dialog.showOpenDialog(mainWindow, options)
+        : await dialog.showOpenDialog(options)
+      if (selection.canceled || !selection.filePaths[0]) {
+        return UpstreamImportActionResultSchema.parse({
+          ok: false,
+          error: { code: 'cancelled', message: 'No story-package folder was selected.' }
+        })
+      }
+      const result = await requireUpstreamAdapter().importFromFolder(
+        projectId,
+        selection.filePaths[0]
+      )
+      recordDiagnostic({
+        level: result.ok && result.record.state !== 'validation-failed' ? 'info' : 'warning',
+        area: 'production',
+        eventName:
+          result.ok && result.record.state !== 'validation-failed'
+            ? 'production.upstream.previewed'
+            : 'production.upstream.refused',
+        message:
+          result.ok && result.record.state !== 'validation-failed'
+            ? 'A pinned upstream package was validated and normalized for review.'
+            : 'An upstream package did not advance to an accepted production plan.',
+        context: {
+          projectId,
+          result: result.ok ? result.record.state : result.error.code
+        }
+      })
+      return UpstreamImportActionResultSchema.parse(result)
+    } catch (error) {
+      return UpstreamImportActionResultSchema.parse({
+        ok: false,
+        error: toUpstreamActionError(error)
+      })
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.upstreamListImports, (event, unknownProjectId: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const projectId = UlidSchema.parse(unknownProjectId)
+      return UpstreamImportRecordSchema.array().parse(
+        requireUpstreamAdapter().listImports(projectId)
+      )
+    } catch {
+      throw new Error('The upstream import history could not be read safely.')
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.upstreamAcceptImport, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    try {
+      const input = AcceptUpstreamImportInputSchema.parse(unknownInput)
+      const result = requireUpstreamAdapter().acceptImport(input)
+      recordDiagnostic({
+        level: result.ok ? 'info' : 'warning',
+        area: 'production',
+        eventName: result.ok ? 'production.upstream.accepted' : 'production.upstream.accept-failed',
+        message: result.ok
+          ? 'A reviewed long-form normalization was accepted into the project.'
+          : 'An upstream normalization acceptance was refused without changing the active plan.',
+        context: {
+          projectId: input.projectId,
+          importId: input.importId,
+          result: result.ok ? result.record.state : result.error.code
+        }
+      })
+      return UpstreamImportActionResultSchema.parse(result)
+    } catch (error) {
+      return UpstreamImportActionResultSchema.parse({
+        ok: false,
+        error: toUpstreamActionError(error)
+      })
+    }
+  })
+
   ipcMain.handle(IPC_CHANNELS.skillsGetStatus, async (event) => {
     assertTrustedSender(event)
     return ExternalSkillStatusSchema.parse(await requireSkillRegistry().getStatus())
@@ -908,24 +1597,84 @@ void app
       backupRoot: join(userDataRoot, 'backups'),
       studioVersion: app.getVersion()
     })
-    const credentialVault = new EncryptedCredentialVault({
-      filePath: join(userDataRoot, 'secure', 'runpod-api-key.bin'),
-      protector: {
-        isEncryptionAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
-        encryptString: (value) => safeStorage.encryptStringAsync(value),
-        decryptString: (value) => safeStorage.decryptStringAsync(value)
-      }
+    productionStore = new ProductionStore({ projectStore })
+    releaseStore = new ReleaseStore({ projectStore, productionStore })
+    localProductionService = new LocalProductionService({
+      productionStore,
+      releaseStore,
+      bundledRuntimeRoot: app.isPackaged
+        ? join(process.resourcesPath, 'media-tools')
+        : join(process.cwd(), 'tools', 'media-tools')
     })
-    cloudSetupService = new CloudSetupService({
-      vault: credentialVault,
-      provider: new RunPodClient(),
-      settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json'))
-    })
+    try {
+      const upstreamRoot = app.isPackaged
+        ? join(process.resourcesPath, 'upstream')
+        : join(process.cwd(), 'vendor', 'shuohao-skills')
+      const runtimeManifestPath = app.isPackaged
+        ? join(process.resourcesPath, 'upstream.runtime.json')
+        : join(process.cwd(), 'config', 'upstream.runtime.json')
+      upstreamAdapter = new UpstreamAdapter({
+        projectStore,
+        upstreamRoot,
+        runtimeManifestPath,
+        nodeExecutable: process.execPath,
+        nodeEnvironment: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+      })
+    } catch (error) {
+      upstreamAdapter = null
+      recordDiagnostic({
+        level: 'error',
+        area: 'production',
+        eventName: 'production.upstream.unavailable',
+        message: 'The pinned upstream runtime failed its startup integrity check.',
+        context: { errorCode: toUpstreamActionError(error).code }
+      })
+    }
     const secretProtector = {
       isEncryptionAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
       encryptString: (value: string) => safeStorage.encryptStringAsync(value),
       decryptString: (value: Buffer) => safeStorage.decryptStringAsync(value)
     }
+    const developmentProductionPack = join(process.cwd(), 'config', 'workflow-pack.production.json')
+    const packagedProductionPack = join(process.resourcesPath, 'workflow-pack.production.json')
+    const workflowPackPath = app.isPackaged
+      ? existsSync(packagedProductionPack)
+        ? packagedProductionPack
+        : join(process.resourcesPath, 'workflow-pack.candidate.json')
+      : existsSync(developmentProductionPack)
+        ? developmentProductionPack
+        : join(process.cwd(), 'config', 'workflow-pack.candidate.json')
+    const readinessReceiptPath = app.isPackaged
+      ? join(process.resourcesPath, 'production-readiness.json')
+      : join(process.cwd(), 'config', 'production-readiness.json')
+    const productionReadiness = verifyProductionReadiness(workflowPackPath, readinessReceiptPath)
+    const credentialVault = new EncryptedCredentialVault({
+      filePath: join(userDataRoot, 'secure', 'runpod-api-key.bin'),
+      protector: secretProtector
+    })
+    const runPodClient = new RunPodClient()
+    cloudSetupService = new CloudSetupService({
+      vault: credentialVault,
+      provider: runPodClient,
+      settingsStore: new CloudSettingsStore(join(userDataRoot, 'settings', 'cloud-setup.json')),
+      productionReadiness: () => ({
+        modelStorageReady: productionReadiness.modelStorageReady,
+        workerImageReady: productionReadiness.workerImageReady,
+        automaticShutdownTested: productionReadiness.automaticShutdownTested
+      })
+    })
+    productionOrchestrator = new ProductionOrchestrator({
+      workflowRegistry: new WorkflowRegistry(workflowPackPath),
+      productionStore,
+      cloud: cloudSetupService,
+      runPodCredential: credentialVault,
+      leaseTokenVault: new EncryptedSecretMapVault({
+        filePath: join(userDataRoot, 'secure', 'worker-session-tokens.bin'),
+        protector: secretProtector,
+        maximumEntries: 12
+      }),
+      runPod: runPodClient
+    })
     writingSetupService = new WritingSetupService({
       vaults: {
         openai: new EncryptedCredentialVault({
@@ -970,6 +1719,9 @@ void app
     registerStudioProtocol()
     registerIpcHandlers()
     createWindow()
+    void reconcileActiveProductionJobs()
+    recoveryTimer = setInterval(() => void reconcileActiveProductionJobs(), 15_000)
+    recoveryTimer.unref()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -993,6 +1745,10 @@ void app
   })
 
 app.on('before-quit', () => {
+  if (recoveryTimer) {
+    clearInterval(recoveryTimer)
+    recoveryTimer = null
+  }
   if (!storeClosed) {
     projectStore?.close()
     storeClosed = true

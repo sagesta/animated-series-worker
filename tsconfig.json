@@ -22,13 +22,22 @@
       "@studio/cloud-setup": ["packages/cloud-setup/src/index.ts"],
       "@studio/credential-vault": ["packages/credential-vault/src/index.ts"],
       "@studio/domain": ["packages/domain/src/index.ts"],
+      "@studio/local-media": ["packages/local-media/src/index.ts"],
+      "@studio/local-production": ["packages/local-production/src/index.ts"],
       "@studio/project-store": ["packages/project-store/src/index.ts"],
       "@studio/provider-anthropic": ["packages/provider-anthropic/src/index.ts"],
       "@studio/provider-gemini": ["packages/provider-gemini/src/index.ts"],
       "@studio/provider-openai": ["packages/provider-openai/src/index.ts"],
       "@studio/provider-runpod": ["packages/provider-runpod/src/index.ts"],
+      "@studio/release-store": ["packages/release-store/src/index.ts"],
+      "@studio/production-store": ["packages/production-store/src/index.ts"],
+      "@studio/production-orchestrator": ["packages/production-orchestrator/src/index.ts"],
+      "@studio/production-readiness": ["packages/production-readiness/src/index.ts"],
       "@studio/skill-runtime": ["packages/skill-runtime/src/index.ts"],
-      "@studio/support-diagnostics": ["packages/support-diagnostics/src/index.ts"]
+      "@studio/support-diagnostics": ["packages/support-diagnostics/src/index.ts"],
+      "@studio/upstream-adapter": ["packages/upstream-adapter/src/index.ts"],
+      "@studio/worker-client": ["packages/worker-client/src/index.ts"],
+      "@studio/workflow-registry": ["packages/workflow-registry/src/index.ts"]
     },
     "types": ["node"]
   },

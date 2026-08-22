@@ -83,17 +83,17 @@ try {
         }
     }
 
-    $studioCompatibilityScript = Join-Path $projectRoot "packages\upstream-adapter\scripts\compatibility.mjs"
+    $studioCompatibilityTest = Join-Path $projectRoot "packages\upstream-adapter\src\index.test.ts"
     $studioTestCount = 0
-    if (Test-Path -LiteralPath $studioCompatibilityScript) {
+    if (Test-Path -LiteralPath $studioCompatibilityTest) {
         Write-Output "Running studio upstream compatibility tests..."
-        & node $studioCompatibilityScript
+        & pnpm vitest run packages/upstream-adapter/src/index.test.ts --pool=forks --maxWorkers=1
         if ($LASTEXITCODE -ne 0) {
             throw "Studio upstream compatibility tests failed."
         }
         $studioTestCount = 1
     } else {
-        Write-Warning "Studio adapter compatibility tests are not implemented yet. This candidate cannot be promoted to production until Phase 2 adds them."
+        Write-Warning "Studio adapter compatibility tests are missing. This candidate cannot be promoted."
     }
 
     $lock.commit = $candidateCommit

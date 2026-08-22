@@ -1,5 +1,7 @@
 # API and adapter contracts
 
+Current implementation note (0.9.0): typed desktop/preload production methods, RunPod lifecycle, worker authentication/capability/jobs/chunk transfers, local media, timeline, release, and readiness contracts are implemented. Candidate workflows remain non-billable until production qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle, immutable Audience & Creative Direction versions, verified backup/restore, no-cost cloud-account setup, protected writing-provider setup, exact context preview, and local structured proposals. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
 
 ## 1. Contract rules
@@ -98,7 +100,7 @@ interface GPUProvider {
 
 `createLease` must tag the provider resource with project, studio session, idempotency key, hard deadline, and worker-image version. A timeout is reconciled by tag before retry.
 
-Version 0.8.0 retains only the non-mutating beginning of this interface: RunPod API v2 `GET /pods` for account/key validation and aggregate existing-Pod status, plus `GET /catalog/gpus` for current catalogue rates. It has no create, start, stop, terminate, template, network-volume, upload, or job method. A read-only check is not evidence that future write permissions or worker compatibility are ready.
+Version 0.9.0 implements account/catalogue reads plus Pod list/get/create/start/stop/delete through `provider-runpod`; unique lease reconciliation prevents blind duplicate creation after uncertain responses. `production-orchestrator` owns estimates, exact cost approval, separate start confirmation, one-worker leases, capability checks, uploads, job polling, verified downloads, cancellation, purge/termination and audit closure. Candidate packs and absent readiness evidence still block every mutating paid path.
 
 ## 4. Media-engine interfaces
 

@@ -1,9 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import {
+  AcceptUpstreamImportInputSchema,
   CloudActionResultSchema,
   CloudConnectInputSchema,
   CloudConnectionStatusSchema,
   CloudGuardrailsSchema,
+  CanonActionResultSchema,
+  ChooseMediaAssetInputSchema,
   CreateProjectInputSchema,
   ExternalSkillActionResultSchema,
   ExternalSkillPlanPreviewInputSchema,
@@ -11,7 +14,28 @@ import {
   ExternalSkillRemoveInputSchema,
   ExternalSkillSetProjectEnabledInputSchema,
   ExternalSkillStatusSchema,
+  FinishActionResultSchema,
+  FinishWorkspaceSchema,
+  ExportCaptionsInputSchema,
+  InstallLocalMediaToolsInputSchema,
   IPC_CHANNELS,
+  MediaActionResultSchema,
+  CreateReleasePackageInputSchema,
+  LockProductionTimelineInputSchema,
+  LocalMediaActionResultSchema,
+  LocalMediaInstallResultSchema,
+  LocalMediaRuntimeStatusSchema,
+  ProductionJobActionResultSchema,
+  ProductionJobApprovalInputSchema,
+  ProductionJobDetailsSchema,
+  ProductionJobInputSchema,
+  ProductionCancelJobInputSchema,
+  ProductionQueueJobInputSchema,
+  ProductionWorkflowEstimateInputSchema,
+  ProductionWorkflowEstimateResultSchema,
+  ProductionWorkflowSummarySchema,
+  ProductionWorkspaceSummarySchema,
+  PromoteWritingDraftInputSchema,
   ProjectBackupSummarySchema,
   ProjectCreativeDirectionUpdateInputSchema,
   ProjectDetailsSchema,
@@ -21,9 +45,17 @@ import {
   ProjectRestoreResultSchema,
   ProjectSummarySchema,
   RendererErrorInputSchema,
+  ReviewMediaAssetInputSchema,
+  RenderThumbnailInputSchema,
+  RenderTimelineInputSchema,
+  SaveProductionTimelineInputSchema,
+  SaveReleaseAttestationsInputSchema,
+  SaveReleaseDetailsInputSchema,
   SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema,
+  UpstreamImportActionResultSchema,
+  UpstreamImportRecordSchema,
   WritingConnectInputSchema,
   WritingContextPreviewInputSchema,
   WritingContextPreviewSchema,
@@ -184,6 +216,168 @@ const studioApi: StudioApi = {
       const safeProjectId = UlidSchema.parse(projectId)
       return WritingDraftRecordSchema.array().parse(
         await ipcRenderer.invoke(IPC_CHANNELS.writingListDrafts, safeProjectId)
+      )
+    }
+  },
+  production: {
+    async getWorkspace(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return ProductionWorkspaceSummarySchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionGetWorkspace, safeProjectId)
+      )
+    },
+    async promoteDraft(input) {
+      const safeInput = PromoteWritingDraftInputSchema.parse(input)
+      return CanonActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionPromoteDraft, safeInput)
+      )
+    },
+    async importMedia(input) {
+      const safeInput = ChooseMediaAssetInputSchema.parse(input)
+      return MediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionImportMedia, safeInput)
+      )
+    },
+    async reviewMedia(input) {
+      const safeInput = ReviewMediaAssetInputSchema.parse(input)
+      return MediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionReviewMedia, safeInput)
+      )
+    },
+    async planJob(input) {
+      const safeInput = ProductionJobInputSchema.parse(input)
+      return ProductionJobActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionPlanJob, safeInput)
+      )
+    },
+    async approveJob(input) {
+      const safeInput = ProductionJobApprovalInputSchema.parse(input)
+      return ProductionJobActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionApproveJob, safeInput)
+      )
+    },
+    async getJob(projectId, jobId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      const safeJobId = UlidSchema.parse(jobId)
+      return ProductionJobDetailsSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionGetJob, safeProjectId, safeJobId)
+      )
+    },
+    async listWorkflows() {
+      return ProductionWorkflowSummarySchema.array().parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionListWorkflows)
+      )
+    },
+    async estimateWorkflow(input) {
+      const safeInput = ProductionWorkflowEstimateInputSchema.parse(input)
+      return ProductionWorkflowEstimateResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionEstimateWorkflow, safeInput)
+      )
+    },
+    async queueJob(input) {
+      const safeInput = ProductionQueueJobInputSchema.parse(input)
+      return ProductionJobActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionQueueJob, safeInput)
+      )
+    },
+    async cancelJob(input) {
+      const safeInput = ProductionCancelJobInputSchema.parse(input)
+      return ProductionJobActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionCancelJob, safeInput)
+      )
+    },
+    async reconcileJob(projectId, jobId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      const safeJobId = UlidSchema.parse(jobId)
+      return ProductionJobActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionReconcileJob, safeProjectId, safeJobId)
+      )
+    }
+  },
+  finish: {
+    async getWorkspace(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return FinishWorkspaceSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishGetWorkspace, safeProjectId)
+      )
+    },
+    async saveTimeline(input) {
+      const safeInput = SaveProductionTimelineInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSaveTimeline, safeInput)
+      )
+    },
+    async lockTimeline(input) {
+      const safeInput = LockProductionTimelineInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishLockTimeline, safeInput)
+      )
+    },
+    async saveReleaseDetails(input) {
+      const safeInput = SaveReleaseDetailsInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSaveReleaseDetails, safeInput)
+      )
+    },
+    async saveAttestations(input) {
+      const safeInput = SaveReleaseAttestationsInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSaveAttestations, safeInput)
+      )
+    },
+    async createReleasePackage(input) {
+      const safeInput = CreateReleasePackageInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishCreateReleasePackage, safeInput)
+      )
+    },
+    async getLocalMediaStatus() {
+      return LocalMediaRuntimeStatusSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishGetLocalMediaStatus)
+      )
+    },
+    async installLocalMediaTools(input) {
+      const safeInput = InstallLocalMediaToolsInputSchema.parse(input)
+      return LocalMediaInstallResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishInstallLocalMediaTools, safeInput)
+      )
+    },
+    async renderTimeline(input) {
+      const safeInput = RenderTimelineInputSchema.parse(input)
+      return LocalMediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishRenderTimeline, safeInput)
+      )
+    },
+    async exportCaptions(input) {
+      const safeInput = ExportCaptionsInputSchema.parse(input)
+      return LocalMediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishExportCaptions, safeInput)
+      )
+    },
+    async renderThumbnail(input) {
+      const safeInput = RenderThumbnailInputSchema.parse(input)
+      return LocalMediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishRenderThumbnail, safeInput)
+      )
+    }
+  },
+  upstream: {
+    async chooseImport(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return UpstreamImportActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.upstreamChooseImport, safeProjectId)
+      )
+    },
+    async listImports(projectId) {
+      const safeProjectId = UlidSchema.parse(projectId)
+      return UpstreamImportRecordSchema.array().parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.upstreamListImports, safeProjectId)
+      )
+    },
+    async acceptImport(input) {
+      const safeInput = AcceptUpstreamImportInputSchema.parse(input)
+      return UpstreamImportActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.upstreamAcceptImport, safeInput)
       )
     }
   },

@@ -200,7 +200,7 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 
 A creative writing job proposes a new local version; it never edits a locked version or treats a provider conversation as canonical.
 
-Current version 0.8.0 persists provider-neutral `WritingDraftRecord` versions as no-overwrite JSON files under `provenance/writing`. Schema 3 includes the project manifest plus the exact selected creative-direction ID/revision/timestamp/hash when enabled, exact context selection/hash, OpenAI/Anthropic/Gemini provider and approved model/profile, request ID, token usage, uncalculated dollar-cost state, validated proposal sections, skill-plan SHA-256, exact planned-skill identities/states, and provider-linked skill receipts containing package/input/output hashes. Schema-1 and schema-2 proposal files remain readable with their historical empty skill arrays. Removing or updating a skill never rewrites those proposal files. Promotion of selected proposal content into separate versioned canon is still planned.
+Version 0.9.0 preserves the provider-neutral schema-3 `WritingDraftRecord` behavior and adds separate versioned canon promotion. A creator chooses the accepted proposal, label, and canon kind; the production store appends a new canon record and supersedes the earlier active revision of the same logical kind/label without rewriting it. Storyboard plans and release strategies are supported canon kinds. Removing/updating a skill or changing a provider never rewrites an earlier proposal or canon record.
 
 | Field | Meaning |
 | --- | --- |
@@ -402,7 +402,7 @@ projects/
 
 Media filenames are friendly, but identity comes from manifest IDs and hashes. No code relies on user-visible names being unique.
 
-The current source creates this directory skeleton, `project.json`, `project.sqlite`, and revision 1 of the creative-direction sidecar for a new project. It can append/read later direction revisions and leaves old projects without a profile readable. Other creative entity/version records and media lineage remain planned; their folders are intentionally empty until those phases implement the corresponding contracts.
+The current source creates this directory skeleton, `project.json`, `project.sqlite`, revision 1 of the creative-direction sidecar, and production storage on demand. It appends/reads direction, writing, canon, media, jobs/events, timelines, releases and package inventory without overwriting historical records. Media identities come from ULIDs and SHA-256 rather than friendly names; parent/dependency links and active/superseded/approved/rejected states remain project-scoped.
 
 Verified full backups live outside individual project folders under the application backup root:
 

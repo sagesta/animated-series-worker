@@ -2,7 +2,7 @@
 
 This folder is the authoritative build specification for Animated Series Studio. If code and documentation disagree, the change is incomplete until they are reconciled and tested.
 
-Current version 0.8.0 implements the local project/backup/migration foundation, shared required-field/length/range guidance with accessible correction popups, protected RunPod account checks, a project-local versioned Audience & Creative Direction profile, a protected GPT/Claude/Gemini Creative Room, and the first safe declarative external-skill slice. Skill files are quarantined and parsed without execution, enabled per project, included through an exact previewed plan, validated against declared proposal-section requirements, and recorded with package hashes and receipts. Executable/MCP skills, media generation, canon promotion/version comparison, release packaging, and analytics remain planned.
+Current version 0.9.0 implements the local production control plane, canon/media review, governed GPU orchestration, authenticated worker, deterministic local finishing, and manual YouTube package. The paid generation path is implemented behind a strict external qualification lock; it cannot run until exact workflow/model/image/license/benchmark/shutdown evidence creates a production pack and readiness receipt. [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) is the current implementation overlay; [STATUS.md](STATUS.md) separates implemented code from live external proof.
 
 ## Product and experience
 
@@ -14,6 +14,7 @@ Current version 0.8.0 implements the local project/backup/migration foundation, 
 | [Production workflow](PRODUCTION_WORKFLOW.md) | How does an idea become an approved YouTube episode or one-off film? |
 | [YouTube release workflow](YOUTUBE_RELEASE_WORKFLOW.md) | Which thumbnail, release-details, research, policy, packaging, and learning features were adopted after the reference-repository review? |
 | [Status](STATUS.md) | What exists now, what is being built, and what is not yet safe to claim? |
+| [Production implementation](PRODUCTION_IMPLEMENTATION.md) | How does the implemented version-0.9 application, worker, qualification gate, recovery, finishing, and release flow operate? |
 | [Glossary](GLOSSARY.md) | What do the specialist terms mean in plain language? |
 
 ## Engineering

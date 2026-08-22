@@ -1,6 +1,6 @@
 {
   "name": "animated-series-studio",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Local-first animated-series production studio with temporary cloud GPU workers",
   "main": "./out/main/index.js",
@@ -56,5 +56,70 @@
       "electron",
       "esbuild"
     ]
+  },
+  "build": {
+    "appId": "com.animatedseries.studio",
+    "productName": "Animated Series Studio",
+    "asar": true,
+    "files": [
+      "out/**/*",
+      "package.json",
+      "!out/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "config",
+        "to": ".",
+        "filter": [
+          "workflow-pack*.json",
+          "workflows/**/*",
+          "runtime-pins*.json",
+          "production-readiness.json"
+        ]
+      },
+      {
+        "from": "config/upstream.runtime.json",
+        "to": "upstream.runtime.json"
+      },
+      {
+        "from": "vendor/shuohao-skills/skills/novel-outline/scripts/novel-outline.mjs",
+        "to": "upstream/skills/novel-outline/scripts/novel-outline.mjs"
+      },
+      {
+        "from": "vendor/shuohao-skills/skills/novel-characters/scripts/novel-characters.mjs",
+        "to": "upstream/skills/novel-characters/scripts/novel-characters.mjs"
+      },
+      {
+        "from": "vendor/shuohao-skills/skills/novel-art/scripts/novel-art.mjs",
+        "to": "upstream/skills/novel-art/scripts/novel-art.mjs"
+      },
+      {
+        "from": "vendor/shuohao-skills/skills/novel-script/scripts/novel-script.mjs",
+        "to": "upstream/skills/novel-script/scripts/novel-script.mjs"
+      },
+      {
+        "from": "vendor/shuohao-skills/skills/novel-storyboard/scripts/novel-storyboard.mjs",
+        "to": "upstream/skills/novel-storyboard/scripts/novel-storyboard.mjs"
+      },
+      {
+        "from": "vendor/shuohao-skills/LICENSE",
+        "to": "upstream/LICENSE"
+      },
+      {
+        "from": "vendor/shuohao-skills/NOTICE",
+        "to": "upstream/NOTICE"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Animated-Series-Studio-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    }
   }
 }

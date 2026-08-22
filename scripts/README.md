@@ -1,5 +1,26 @@
 # Maintenance scripts
 
+## GPU worker release — one-time maintainer flow
+
+These commands prepare and qualify a worker release. They are not repeated by an ordinary creator for every episode, and none should be represented as qualified until the real evidence exists.
+
+```powershell
+.\scripts\New-GpuQualificationBundle.ps1
+.\scripts\Build-GpuWorker.ps1 -ImageName registry.example/studio-worker:0.9.0-candidate.1 -AllowCandidate
+node scripts\Import-ComfyWorkflow.mjs --workflow-id <workflow-id> --input <api-workflow.json>
+node scripts\Promote-GpuWorker.mjs --model-receipt <model-receipt.json> --capability-report <capability.json> --evidence <qualification-evidence.json>
+```
+
+The bundle command is no-cost. The build command needs Docker but does not rent a GPU. The controlled RunPod qualification described in the bundle is paid and requires a deliberate provider action. Promotion refuses missing license, model, workflow, runtime, quality, security, recovery, cost, or shutdown evidence and will not overwrite an earlier production release.
+
+## Local finishing tools
+
+```powershell
+.\scripts\Install-LocalMediaTools.ps1
+```
+
+This uses Windows Package Manager to install/check FFmpeg for local timelines, captions, thumbnails, and technical verification. It does not rent a GPU.
+
 ## Documentation checks
 
 ```powershell

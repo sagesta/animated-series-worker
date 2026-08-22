@@ -2,6 +2,20 @@
 
 This matrix prevents requirements from becoming disconnected from architecture, implementation, tests, and user documentation. The documentation checker requires every `FR` and `NFR` defined in `PRD.md` to appear here.
 
+## Version 0.9 implementation overlay
+
+| Requirement slice | Current implementation | Remaining acceptance boundary |
+| --- | --- | --- |
+| FR-001–FR-010, FR-043–FR-048, FR-067–FR-068 | Projects, backup/migration, direction, protected writing providers, declarative skills, upstream import, proposals and canon are implemented | Live provider/long-form/representative-user evidence; higher-risk skill classes remain locked |
+| FR-011–FR-023, FR-049–FR-051 | Media store, identity/edit/voice/video job contracts, approved-input lineage, local media protocol, viewing and approval are implemented | Exact remote workflow/model qualification and season-scale continuity |
+| FR-024–FR-034 | RunPod lifecycle, lease/idempotency/cost gates, worker gateway, preflight/watchdog, transfers, review and local finishing are implemented | Real Pod, model, Comfy, shutdown, recovery, concurrency, and long-form proof |
+| FR-035–FR-042 | Multi-project local control, deterministic timeline, captions, technical checks and release packaging are implemented | Clean-machine full-production acceptance and signed installer |
+| FR-052–FR-058 | Timed local storyboard/timeline and technical QC slice are implemented; advanced control packs, parallax, generated foley and adaptation remain planned | AT-042–AT-049 applicable live fixtures and future feature implementations |
+| FR-059–FR-066 | Release details, thumbnail render, human attestations and immutable manual package are implemented; analytics/learning remains planned | Real master-package proof and future separately authorized analytics |
+| NFR-001–NFR-022 | Local boundaries, schemas, vaults, isolation, async jobs, documentation, qualification locks and human authority are implemented where applicable | Named external security, provider, quality, accessibility, signing, and clean-machine evidence |
+
+Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md), [STATUS.md](STATUS.md), and [BUILD_BACKLOG.md](BUILD_BACKLOG.md). The original design matrix below remains the requirement-to-acceptance map; “planned components” names the intended boundary even where version 0.9 now implements it.
+
 ## Functional requirements
 
 | Requirements | Primary design | Planned components | Acceptance evidence |
@@ -70,7 +84,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-021 | `YOUTUBE_RELEASE_WORKFLOW.md`, `DOMAIN_MODEL.md`, `API_CONTRACTS.md` | performance snapshot and learning registry | AT-056, AT-057, isolation suite |
 | NFR-022 | `UX_SPEC.md`, `ARCHITECTURE.md` | renderer form guidance, accessibility tests | AT-060, AT-035 |
 
-## Current implementation evidence — version 0.8.0
+## Historical implementation evidence — version 0.8.0
 
 | Requirement slice | State | Implemented components/evidence | Remaining acceptance boundary |
 | --- | --- | --- | --- |

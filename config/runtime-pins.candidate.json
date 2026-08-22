@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "candidateCreatedAt": "2026-08-22T12:00:00.000Z",
+  "qualificationState": "candidate",
+  "components": {
+    "comfyUi": {
+      "repository": "https://github.com/Comfy-Org/ComfyUI.git",
+      "commit": "783545f689a0af730065994b46b382ae24844c99"
+    },
+    "comfyUiLtxVideo": {
+      "repository": "https://github.com/Lightricks/ComfyUI-LTXVideo.git",
+      "commit": "15d09abb5a187a8dcaea2fc31fe51ee96e6c9d0d"
+    },
+    "qwen3Tts": {
+      "repository": "https://github.com/QwenLM/Qwen3-TTS.git",
+      "commit": "022e286b98fbec7e1e916cb940cdf532cd9f488e"
+    },
+    "qwenImage": {
+      "repository": "https://github.com/QwenLM/Qwen-Image.git",
+      "commit": "6b5e1f5cec987d404be5ac6657db3b9aacb56a89"
+    },
+    "latentSync": {
+      "repository": "https://github.com/bytedance/LatentSync.git",
+      "commit": "a229c3948406bc2cf6eaf4873e662e70c6a04746"
+    }
+  },
+  "requiredBeforeQualification": [
+    "Build the worker image and record its immutable sha256 digest.",
+    "Review every model license and record every downloaded model-file hash.",
+    "Export API-format ComfyUI workflows and record their exact hashes.",
+    "Run the one-GPU smoke, security, recovery, runtime, VRAM, quality, and cost benchmark pack.",
+    "Promote only the passing candidate into config/workflow-pack.production.json."
+  ]
+}

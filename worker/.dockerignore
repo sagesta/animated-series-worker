@@ -1,0 +1,9 @@
+**/node_modules
+**/out
+**/release
+**/.git
+vendor
+docs
+apps
+packages
+*.log

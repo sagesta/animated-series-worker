@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type JSX } from 'react'
 import {
   WRITING_MODEL_CATALOG,
+  type CanonKind,
   type ExternalSkillPlanPreview,
+  type PromotableDraftFingerprint,
   type ProjectDetails,
   type WritingContextPreview,
   type WritingDraftRecord,
@@ -15,9 +17,11 @@ const taskOptions: Array<{ value: WritingTaskKind; label: string }> = [
   { value: 'develop_character', label: 'Develop a character' },
   { value: 'build_world', label: 'Build the story world' },
   { value: 'outline_episode', label: 'Outline an episode or film' },
+  { value: 'plan_storyboard', label: 'Plan a shot-by-shot storyboard' },
   { value: 'draft_scene', label: 'Draft a scene' },
   { value: 'rewrite_dialogue', label: 'Rewrite dialogue' },
-  { value: 'check_continuity', label: 'Check continuity' }
+  { value: 'check_continuity', label: 'Check continuity' },
+  { value: 'plan_youtube_release', label: 'Plan title, SEO, thumbnail, and release' }
 ]
 
 const providerNames = {
@@ -34,7 +38,74 @@ function modelLabel(provider: WritingProvider, modelId: string, displayName: str
   return purpose ? `${displayName} — ${purpose}` : displayName
 }
 
-function DraftView({ draft }: { draft: WritingDraftRecord }): JSX.Element {
+const taskCanonKind: Record<WritingTaskKind, CanonKind> = {
+  develop_character: 'character',
+  build_world: 'world',
+  outline_episode: 'episode-outline',
+  plan_storyboard: 'storyboard',
+  draft_scene: 'script',
+  rewrite_dialogue: 'script',
+  check_continuity: 'series-bible',
+  plan_youtube_release: 'release-strategy'
+}
+
+function DraftView({
+  draft,
+  fingerprint,
+  onApproved
+}: {
+  draft: WritingDraftRecord
+  fingerprint?: PromotableDraftFingerprint
+  onApproved(): Promise<void>
+}): JSX.Element {
+  const [kind, setKind] = useState<CanonKind>(taskCanonKind[draft.taskKind])
+  const [label, setLabel] = useState(draft.output.title)
+  const [reason, setReason] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<string>()
+  const [issues, setIssues] = useState<string[]>([])
+
+  const approve = async (event: FormEvent): Promise<void> => {
+    event.preventDefault()
+    const nextIssues: string[] = []
+    if (label.trim().length < 2)
+      nextIssues.push('Enter a canon name containing at least 2 characters.')
+    if (reason.trim().length < 10)
+      nextIssues.push('Explain the approval in at least 10 characters.')
+    if (!confirmed) nextIssues.push('Confirm that you reviewed this exact proposal.')
+    if (!fingerprint) nextIssues.push('Wait for the proposal fingerprint to finish checking.')
+    if (fingerprint?.alreadyPromoted) nextIssues.push('This proposal is already part of canon.')
+    if (nextIssues.length > 0 || !fingerprint) {
+      setIssues(nextIssues)
+      return
+    }
+    setIssues([])
+    setSaving(true)
+    try {
+      const result = await window.studio.production.promoteDraft({
+        projectId: draft.projectId,
+        draftId: draft.draftId,
+        expectedDraftSha256: fingerprint.sha256,
+        kind,
+        label,
+        reason,
+        confirmation: true
+      })
+      if (result.ok) {
+        setMessage(`Approved as ${result.canon.kind} canon, revision ${result.canon.revision}.`)
+        setConfirmed(false)
+        await onApproved()
+      } else {
+        setMessage(result.error.message)
+      }
+    } catch {
+      setMessage('The approval could not be saved safely. The proposal remains unchanged.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <article className="creative-draft">
       <div className="draft-heading">
@@ -95,6 +166,95 @@ function DraftView({ draft }: { draft: WritingDraftRecord }): JSX.Element {
           </ul>
         </details>
       )}
+      <form className="canon-approval" noValidate onSubmit={(event) => void approve(event)}>
+        <div>
+          <h3>
+            {fingerprint?.alreadyPromoted ? 'Approved canon record created' : 'Approve into canon'}
+          </h3>
+          <p>
+            Approval freezes this exact proposal as a versioned source for character boards,
+            storyboards, voices, and later generation. It never starts a paid request.
+          </p>
+        </div>
+        {!fingerprint?.alreadyPromoted && (
+          <>
+            <div className="creative-form-grid">
+              <label>
+                <span>
+                  Canon type <RequiredMark />
+                </span>
+                <select value={kind} onChange={(event) => setKind(event.target.value as CanonKind)}>
+                  <option value="series-bible">Series or film bible</option>
+                  <option value="character">Character</option>
+                  <option value="world">World</option>
+                  <option value="location">Location</option>
+                  <option value="prop">Prop</option>
+                  <option value="visual-style">Visual style</option>
+                  <option value="voice">Voice</option>
+                  <option value="episode-outline">Episode or film outline</option>
+                  <option value="script">Script</option>
+                  <option value="storyboard">Storyboard plan</option>
+                </select>
+              </label>
+              <label>
+                <span>
+                  Canon name <RequiredMark />
+                </span>
+                <input
+                  value={label}
+                  minLength={2}
+                  maxLength={200}
+                  aria-invalid={label.trim().length < 2}
+                  onChange={(event) => setLabel(event.target.value)}
+                />
+              </label>
+            </div>
+            <label>
+              <span>
+                Why is this ready? <RequiredMark />
+              </span>
+              <textarea
+                value={reason}
+                minLength={10}
+                maxLength={2_000}
+                aria-invalid={reason.trim().length < 10}
+                onChange={(event) => setReason(event.target.value)}
+                placeholder="Example: I checked the identity, motivations, appearance anchors, and continuity questions."
+              />
+              <TextRequirement
+                id={`canon-reason-${draft.draftId}`}
+                value={reason}
+                minimum={10}
+                maximum={2_000}
+              />
+            </label>
+            <label className="canon-confirmation">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                aria-invalid={!confirmed}
+                onChange={(event) => setConfirmed(event.target.checked)}
+              />
+              <span>
+                I reviewed this exact proposal and approve it as canon. <RequiredMark />
+              </span>
+            </label>
+            <button className="button button-primary" disabled={saving || !fingerprint}>
+              {saving ? 'Saving approved revision…' : 'Approve into canon'}
+            </button>
+          </>
+        )}
+        {message && (
+          <div className="safety-feedback" role="status">
+            {message}
+          </div>
+        )}
+      </form>
+      <ValidationAlert
+        title="Canon approval needs attention"
+        messages={issues}
+        onClose={() => setIssues([])}
+      />
     </article>
   )
 }
@@ -166,6 +326,7 @@ export function CreativeRoom({
   const [generating, setGenerating] = useState(false)
   const [message, setMessage] = useState<string>()
   const [drafts, setDrafts] = useState<WritingDraftRecord[]>([])
+  const [draftFingerprints, setDraftFingerprints] = useState<PromotableDraftFingerprint[]>([])
   const [validationMessages, setValidationMessages] = useState<string[]>([])
 
   useEffect(() => {
@@ -213,6 +374,30 @@ export function CreativeRoom({
       })
       .catch(() => {
         if (!cancelled) setMessage('Earlier local proposals could not be read safely.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [project.manifest.id])
+
+  const reloadProduction = useCallback(async (): Promise<void> => {
+    try {
+      const workspace = await window.studio.production.getWorkspace(project.manifest.id)
+      setDraftFingerprints(workspace.draftFingerprints)
+    } catch {
+      setMessage('Canon fingerprints could not be refreshed. No approval was changed.')
+    }
+  }, [project.manifest.id])
+
+  useEffect(() => {
+    let cancelled = false
+    void window.studio.production
+      .getWorkspace(project.manifest.id)
+      .then((workspace) => {
+        if (!cancelled) setDraftFingerprints(workspace.draftFingerprints)
+      })
+      .catch(() => {
+        if (!cancelled) setMessage('Canon fingerprints could not be checked safely.')
       })
     return () => {
       cancelled = true
@@ -285,6 +470,7 @@ export function CreativeRoom({
       })
       if (result.ok) {
         setDrafts((current) => [result.draft, ...current])
+        await reloadProduction()
         setPaidConfirmed(false)
         setMessage(
           'The response was validated and saved locally as a proposal, not approved canon.'
@@ -613,7 +799,12 @@ export function CreativeRoom({
           <span className="status-chip local">Stored in this project</span>
         </div>
         {drafts.map((draft) => (
-          <DraftView draft={draft} key={draft.draftId} />
+          <DraftView
+            draft={draft}
+            fingerprint={draftFingerprints.find((item) => item.draftId === draft.draftId)}
+            key={draft.draftId}
+            onApproved={reloadProduction}
+          />
         ))}
       </section>
     </div>

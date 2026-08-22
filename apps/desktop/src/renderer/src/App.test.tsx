@@ -289,6 +289,61 @@ beforeEach(() => {
       generateDraft: vi.fn(),
       listDrafts: vi.fn().mockResolvedValue([])
     },
+    production: {
+      getWorkspace: vi.fn().mockImplementation(async (projectId) => ({
+        projectId,
+        canon: [],
+        media: [],
+        jobs: [],
+        draftFingerprints: [],
+        staleDependencyCount: 0,
+        estimatedApprovedSpendUsd: 0,
+        actualSpendUsd: 0,
+        elapsedCloudUsageEstimateUsd: 0
+      })),
+      promoteDraft: vi.fn(),
+      importMedia: vi.fn(),
+      reviewMedia: vi.fn(),
+      planJob: vi.fn(),
+      approveJob: vi.fn(),
+      getJob: vi.fn(),
+      listWorkflows: vi.fn().mockResolvedValue([]),
+      estimateWorkflow: vi.fn(),
+      queueJob: vi.fn(),
+      cancelJob: vi.fn(),
+      reconcileJob: vi.fn()
+    },
+    finish: {
+      getWorkspace: vi.fn().mockImplementation(async (projectId) => ({
+        projectId,
+        timelines: [],
+        releaseDetails: [],
+        attestations: [],
+        releasePackages: [],
+        blockers: []
+      })),
+      saveTimeline: vi.fn(),
+      lockTimeline: vi.fn(),
+      saveReleaseDetails: vi.fn(),
+      saveAttestations: vi.fn(),
+      createReleasePackage: vi.fn(),
+      getLocalMediaStatus: vi.fn().mockResolvedValue({
+        state: 'missing',
+        source: 'none',
+        ffmpegAvailable: false,
+        ffprobeAvailable: false,
+        message: 'Install the free local media tools once.'
+      }),
+      installLocalMediaTools: vi.fn(),
+      renderTimeline: vi.fn(),
+      exportCaptions: vi.fn(),
+      renderThumbnail: vi.fn()
+    },
+    upstream: {
+      chooseImport: vi.fn(),
+      listImports: vi.fn().mockResolvedValue([]),
+      acceptImport: vi.fn()
+    },
     skills: {
       getStatus: vi.fn().mockResolvedValue({ installed: [] }),
       install: vi.fn().mockResolvedValue({ ok: true, status: { installed: [] } }),

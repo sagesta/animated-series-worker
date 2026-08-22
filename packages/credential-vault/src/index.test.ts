@@ -2,7 +2,12 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { afterEach, describe, expect, it } from 'vitest'
-import { CredentialVaultError, EncryptedCredentialVault, type SecretProtector } from './index'
+import {
+  CredentialVaultError,
+  EncryptedCredentialVault,
+  EncryptedSecretMapVault,
+  type SecretProtector
+} from './index'
 
 const temporaryDirectories: string[] = []
 
@@ -78,5 +83,29 @@ describe('encrypted credential vault', () => {
       code: 'unavailable'
     } satisfies Partial<CredentialVaultError>)
     expect(await vault.hasSecret()).toBe(false)
+  })
+})
+
+describe('encrypted worker-session token vault', () => {
+  it('keeps multiple lease tokens encrypted and removes only the selected lease', async () => {
+    const directory = await createTemporaryDirectory()
+    const filePath = join(directory, 'worker-sessions.bin')
+    const vault = new EncryptedSecretMapVault({ filePath, protector: createProtector() })
+    const firstLease = '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+    const secondLease = '01ARZ3NDEKTSV4RRFFQ69G5FAW'
+    const firstToken = 'a'.repeat(43)
+    const secondToken = 'b'.repeat(43)
+
+    await vault.storeSecret(firstLease, firstToken)
+    await vault.storeSecret(secondLease, secondToken)
+    const encrypted = await readFile(filePath)
+    expect(encrypted.includes(Buffer.from(firstToken))).toBe(false)
+    expect(encrypted.includes(Buffer.from(secondToken))).toBe(false)
+    expect(await vault.listKeys()).toEqual([firstLease, secondLease])
+    expect(await vault.readSecret(secondLease)).toBe(secondToken)
+
+    await vault.removeSecret(firstLease)
+    expect(await vault.hasSecret(firstLease)).toBe(false)
+    expect(await vault.readSecret(secondLease)).toBe(secondToken)
   })
 })

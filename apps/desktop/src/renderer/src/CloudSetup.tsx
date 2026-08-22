@@ -544,7 +544,9 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
             <h3>Prepared studio check</h3>
             <p>Green means proven. Grey items are honestly still locked.</p>
           </div>
-          <span>Generation locked</span>
+          <span>
+            {status?.generationState === 'ready' ? 'Generation ready' : 'Generation locked'}
+          </span>
         </div>
         <ul>
           <li className={status?.setupChecklist.accountConnected ? 'complete' : ''}>
@@ -555,14 +557,17 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
             <span>{status?.setupChecklist.guardrailsSaved ? '✓' : '2'}</span>
             Spending defaults saved locally
           </li>
-          <li>
-            <span>3</span> Persistent model storage created and priced
+          <li className={status?.setupChecklist.modelStorageReady ? 'complete' : ''}>
+            <span>{status?.setupChecklist.modelStorageReady ? '✓' : '3'}</span> Persistent model
+            storage created and verified
           </li>
-          <li>
-            <span>4</span> Pinned ComfyUI, Qwen, TTS, LTX, and lip-sync worker verified
+          <li className={status?.setupChecklist.workerImageReady ? 'complete' : ''}>
+            <span>{status?.setupChecklist.workerImageReady ? '✓' : '4'}</span> Pinned ComfyUI, Qwen,
+            TTS, LTX, and lip-sync worker verified
           </li>
-          <li>
-            <span>5</span> Paid smoke test, remote watchdog, purge, and termination proven
+          <li className={status?.setupChecklist.automaticShutdownTested ? 'complete' : ''}>
+            <span>{status?.setupChecklist.automaticShutdownTested ? '✓' : '5'}</span> Paid smoke
+            test, idle stop, hard stop, purge, and termination proven
           </li>
         </ul>
         <p className="locked-explanation">{status?.generationReason}</p>

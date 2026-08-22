@@ -5,9 +5,11 @@ const taskLabels: Record<WritingTaskKind, string> = {
   develop_character: 'Character development',
   build_world: 'World building',
   outline_episode: 'Episode or film outlines',
+  plan_storyboard: 'Shot-by-shot storyboard plans',
   draft_scene: 'Scene drafting',
   rewrite_dialogue: 'Dialogue rewriting',
-  check_continuity: 'Continuity checks'
+  check_continuity: 'Continuity checks',
+  plan_youtube_release: 'YouTube title, SEO, thumbnail, and release plans'
 }
 
 const permissionLabels = {

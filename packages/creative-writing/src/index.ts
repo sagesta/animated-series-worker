@@ -393,10 +393,31 @@ const taskLabels = {
   develop_character: 'character development',
   build_world: 'world building',
   outline_episode: 'episode outlining',
+  plan_storyboard: 'shot-by-shot storyboard planning',
   draft_scene: 'scene drafting',
   rewrite_dialogue: 'dialogue rewriting',
-  check_continuity: 'continuity checking'
+  check_continuity: 'continuity checking',
+  plan_youtube_release: 'YouTube release packaging and search discovery planning'
 } as const
+
+const taskGuidance: Record<WritingTaskKind, string> = {
+  develop_character:
+    'Define motives, contradictions, relationships, voice, visual anchors, and development risks.',
+  build_world:
+    'Define repeatable locations, rules, culture, props, visual anchors, and story constraints.',
+  outline_episode:
+    'Provide acts, scene purposes, reversals, emotional turns, continuity dependencies, and an ending.',
+  plan_storyboard:
+    'Use stable shot IDs. For every shot state location, characters, framing, camera, action, emotion, dialogue or narration, sound, intended duration, transition, and continuity anchors.',
+  draft_scene:
+    'Write playable scene action and dialogue with clear staging, emotional intention, and continuity anchors.',
+  rewrite_dialogue:
+    'Preserve plot facts while improving character-specific voice, subtext, rhythm, and speakability.',
+  check_continuity:
+    'Separate confirmed conflicts, possible risks, missing facts, and suggested repairs. Do not silently rewrite canon.',
+  plan_youtube_release:
+    'Propose three truthful titles no longer than 100 characters, one description no longer than 5000 characters, tags, up to 15 hashtags, chapters beginning at 0:00, thumbnail concepts that accurately represent the video, credits, made-for-kids questions, and synthetic-media disclosure questions. Never promise views or fabricate keywords.'
+}
 
 function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex')
@@ -689,6 +710,7 @@ export class CreativeWritingService {
       ].join('\n\n'),
       userPrompt: [
         `TASK: ${taskLabels[input.taskKind]}`,
+        `TASK-SPECIFIC DELIVERABLE:\n${taskGuidance[input.taskKind]}`,
         `USER INSTRUCTION:\n${input.instruction}`,
         `EXACT LOCAL CONTEXT SELECTED BY THE USER:\n${context.text}`,
         `EXACT ATTACHED-SKILL PLAN SHA-256: ${resolvedPlan.preview.planSha256}`

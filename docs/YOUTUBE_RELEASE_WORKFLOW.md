@@ -1,6 +1,6 @@
 # YouTube release, packaging, and learning workflow
 
-Status: accepted product design; release features not implemented. The project-level Audience & Creative Direction source that will feed release drafting has been implemented since version 0.6.0.
+Status: version 0.9.0 implements local release details, deterministic thumbnail generation, editable captions, human attestations, immutable release records, and a hash-checked manual-upload package. Automatic publishing and analytics remain outside the release. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 Reference inspected: `darkzOGx/youtube-automation-agent` at commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` on 2026-08-21.
 

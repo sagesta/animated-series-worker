@@ -1,5 +1,7 @@
 # System architecture
 
+Current implementation note (0.9.0): the local control plane, canon/media/release stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. Exact remote workflows and production receipts remain externally unqualified. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
 ## 1. Architectural outcome
 
 Animated Series Studio is a local control plane with disposable cloud execution workers.

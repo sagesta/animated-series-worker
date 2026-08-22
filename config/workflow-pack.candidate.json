@@ -1,0 +1,354 @@
+{
+  "schemaVersion": 1,
+  "packId": "animated-series-production",
+  "packVersion": "0.9.0-candidate.1",
+  "comfyUiCommit": "783545f689a0af730065994b46b382ae24844c99",
+  "workerImage": "animated-series-studio/worker:0.9.0-candidate.1",
+  "workerImageDigest": null,
+  "workflows": [
+    {
+      "workflowId": "qwen-image-character-board",
+      "version": "1.0.0",
+      "label": "Character identity board",
+      "jobKind": "qwen-image",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 24,
+      "expectedRuntimeMinutes": 3,
+      "maximumRuntimeMinutes": 12,
+      "outputKind": "image",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Comfy-Org/Qwen-Image-2512/diffusion-fp8", "relativePath": "models/diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Comfy-Org/Qwen-Image/text-encoder-fp8", "relativePath": "models/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Comfy-Org/Qwen-Image/vae", "relativePath": "models/vae/qwen_image_vae.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "prompt", "label": "Character description", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "negativePrompt", "label": "Things to avoid", "type": "string", "required": false, "maximumLength": 2000, "defaultValue": "" },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 },
+        { "key": "width", "label": "Width", "type": "integer", "required": false, "minimum": 512, "maximum": 2048, "defaultValue": 1536 },
+        { "key": "height", "label": "Height", "type": "integer", "required": false, "minimum": 512, "maximum": 2048, "defaultValue": 1024 }
+      ],
+      "notes": ["Creates candidate identity views only; human approval is still required.", "Exact model and workflow hashes must pass BENCH-001 before this candidate can run."]
+    },
+    {
+      "workflowId": "qwen-image-targeted-edit",
+      "version": "1.0.0",
+      "label": "Targeted character or environment correction",
+      "jobKind": "qwen-image-edit",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 48,
+      "expectedRuntimeMinutes": 3,
+      "maximumRuntimeMinutes": 12,
+      "outputKind": "image",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Comfy-Org/Qwen-Image-Edit-2511/diffusion-bf16", "relativePath": "models/diffusion_models/qwen_image_edit_2511_bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Comfy-Org/Qwen-Image/text-encoder-fp8", "relativePath": "models/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Comfy-Org/Qwen-Image/vae", "relativePath": "models/vae/qwen_image_vae.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "instruction", "label": "Requested correction", "type": "string", "required": true, "maximumLength": 3000 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 },
+        { "key": "strength", "label": "Change strength", "type": "number", "required": false, "minimum": 0.05, "maximum": 1, "defaultValue": 0.35 }
+      ],
+      "notes": ["Preserves the original as an immutable parent asset."]
+    },
+    {
+      "workflowId": "qwen3-tts-voice-design",
+      "version": "1.0.0",
+      "label": "Original character voice design",
+      "jobKind": "qwen3-tts",
+      "engine": "worker-python",
+      "qualificationState": "candidate",
+      "minimumVramGb": 16,
+      "expectedRuntimeMinutes": 2,
+      "maximumRuntimeMinutes": 8,
+      "outputKind": "audio",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign", "relativePath": "models/qwen3-tts/voice-design", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "text", "label": "Calibration line", "type": "string", "required": true, "maximumLength": 1200 },
+        { "key": "language", "label": "Language", "type": "string", "required": true, "maximumLength": 40 },
+        { "key": "voiceDescription", "label": "Voice description", "type": "string", "required": true, "maximumLength": 1500 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["Use voice design for original recurring voices; reference cloning requires a recorded rights decision."]
+    },
+    {
+      "workflowId": "qwen3-tts-line-book",
+      "version": "1.0.0",
+      "label": "Approved voice line batch",
+      "jobKind": "qwen3-tts",
+      "engine": "worker-python",
+      "qualificationState": "candidate",
+      "minimumVramGb": 16,
+      "expectedRuntimeMinutes": 4,
+      "maximumRuntimeMinutes": 20,
+      "outputKind": "audio",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-Base", "relativePath": "models/qwen3-tts/base", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "lineBookJson", "label": "Line book", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "language", "label": "Language", "type": "string", "required": true, "maximumLength": 40 },
+        { "key": "referenceText", "label": "Words spoken in the approved voice reference", "type": "string", "required": true, "maximumLength": 1200 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["Requires one approved, rights-cleared voice reference generated by this studio or recorded with permission.", "Every line is saved separately so one retake cannot alter approved lines."]
+    },
+    {
+      "workflowId": "ltx2-image-to-video-draft",
+      "version": "1.0.0",
+      "label": "LTX draft image-to-video take",
+      "jobKind": "ltx-video-draft",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 32,
+      "expectedRuntimeMinutes": 8,
+      "maximumRuntimeMinutes": 30,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Lightricks/LTX-2.5/distilled-transformer-bf16", "relativePath": "models/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/gemma4-text-encoder-bf16", "relativePath": "models/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/video-vae-bf16", "relativePath": "models/vae/ltx-2.5-video-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/audio-vae-bf16", "relativePath": "models/vae/ltx-2.5-audio-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/spatial-upscaler-bf16", "relativePath": "models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/duration-head-bf16", "relativePath": "models/model_patches/ltx-2.5-duration-head-bf16.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "motionPrompt", "label": "Movement and camera direction", "type": "string", "required": true, "maximumLength": 3000 },
+        { "key": "durationSeconds", "label": "Shot length", "type": "number", "required": true, "minimum": 1, "maximum": 12 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 },
+        { "key": "framesPerSecond", "label": "Frames per second", "type": "integer", "required": false, "minimum": 12, "maximum": 30, "defaultValue": 24 }
+      ],
+      "notes": ["Draft profile is for motion and continuity review before final rendering."]
+    },
+    {
+      "workflowId": "ltx2-image-to-video-final",
+      "version": "1.0.0",
+      "label": "LTX final image-to-video take",
+      "jobKind": "ltx-video-final",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 48,
+      "expectedRuntimeMinutes": 18,
+      "maximumRuntimeMinutes": 60,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Lightricks/LTX-2.5/distilled-transformer-bf16", "relativePath": "models/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/gemma4-text-encoder-bf16", "relativePath": "models/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/video-vae-bf16", "relativePath": "models/vae/ltx-2.5-video-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/audio-vae-bf16", "relativePath": "models/vae/ltx-2.5-audio-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/spatial-upscaler-bf16", "relativePath": "models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/duration-head-bf16", "relativePath": "models/model_patches/ltx-2.5-duration-head-bf16.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "motionPrompt", "label": "Movement and camera direction", "type": "string", "required": true, "maximumLength": 3000 },
+        { "key": "durationSeconds", "label": "Shot length", "type": "number", "required": true, "minimum": 1, "maximum": 12 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 },
+        { "key": "framesPerSecond", "label": "Frames per second", "type": "integer", "required": false, "minimum": 12, "maximum": 30, "defaultValue": 24 }
+      ],
+      "notes": ["Final profile remains a candidate take until human approval."]
+    },
+    {
+      "workflowId": "ltx2-audio-driven-dialogue",
+      "version": "1.0.0",
+      "label": "LTX audio-driven dialogue take",
+      "jobKind": "ltx-audio-to-video",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 48,
+      "expectedRuntimeMinutes": 20,
+      "maximumRuntimeMinutes": 60,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Lightricks/LTX-2.5/distilled-transformer-bf16", "relativePath": "models/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/gemma4-text-encoder-bf16", "relativePath": "models/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/video-vae-bf16", "relativePath": "models/vae/ltx-2.5-video-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/audio-vae-bf16", "relativePath": "models/vae/ltx-2.5-audio-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/spatial-upscaler-bf16", "relativePath": "models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/duration-head-bf16", "relativePath": "models/model_patches/ltx-2.5-duration-head-bf16.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "motionPrompt", "label": "Performance and camera direction", "type": "string", "required": true, "maximumLength": 3000 },
+        { "key": "preserveApprovedAudio", "label": "Preserve approved dialogue", "type": "boolean", "required": true },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["Approved dialogue must remain the source audio; the workflow may not silently replace it."]
+    },
+    {
+      "workflowId": "latentsync-lip-repair",
+      "version": "1.0.0",
+      "label": "LatentSync targeted mouth and timing repair",
+      "jobKind": "lip-sync",
+      "engine": "worker-python",
+      "qualificationState": "candidate",
+      "minimumVramGb": 18,
+      "expectedRuntimeMinutes": 8,
+      "maximumRuntimeMinutes": 30,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "ByteDance/LatentSync-1.6", "relativePath": "models/latentsync-1.6", "sha256": null, "licenseReview": "required" },
+        { "modelId": "stabilityai/sd-vae-ft-mse", "relativePath": "models/huggingface-cache/hub/models--stabilityai--sd-vae-ft-mse", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "inferenceSteps", "label": "Lip repair quality steps", "type": "integer", "required": false, "minimum": 10, "maximum": 50, "defaultValue": 20 },
+        { "key": "guidanceScale", "label": "Lip guidance strength", "type": "number", "required": false, "minimum": 1, "maximum": 3, "defaultValue": 1.5 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 },
+        { "key": "preserveApprovedAudio", "label": "Preserve approved dialogue", "type": "boolean", "required": true }
+      ],
+      "notes": ["Input 1 must be the approved video and input 2 its approved dialogue audio.", "Close, medium, profile, multi-person, animated, and off-screen fixtures must pass before qualification.", "The open model and every transitive model license require review before monetized use."]
+    },
+    {
+      "workflowId": "assistive-creative-qc",
+      "version": "1.0.0",
+      "label": "Assistive identity, motion, flicker, and lip review",
+      "jobKind": "creative-qc",
+      "engine": "worker-python",
+      "qualificationState": "candidate",
+      "minimumVramGb": 24,
+      "expectedRuntimeMinutes": 3,
+      "maximumRuntimeMinutes": 15,
+      "outputKind": "document",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "checks", "label": "Requested checks", "type": "string", "required": true, "maximumLength": 1000 },
+        { "key": "expectedDialogue", "label": "Expected dialogue", "type": "string", "required": false, "maximumLength": 4000, "defaultValue": "" }
+      ],
+      "notes": ["Produces evidence and warnings only; it cannot approve a take."]
+    },
+    {
+      "workflowId": "local-storyboard-animatic",
+      "version": "1.0.0",
+      "label": "Local timed storyboard animatic",
+      "jobKind": "animatic",
+      "engine": "local-ffmpeg",
+      "qualificationState": "candidate",
+      "minimumVramGb": 0,
+      "expectedRuntimeMinutes": 2,
+      "maximumRuntimeMinutes": 10,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "timelineJson", "label": "Storyboard timing", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "resolution", "label": "Preview resolution", "type": "string", "required": false, "maximumLength": 20, "defaultValue": "1280x720" }
+      ],
+      "notes": ["Runs on the local computer and does not rent a GPU."]
+    },
+    {
+      "workflowId": "local-rough-cut-render",
+      "version": "1.0.0",
+      "label": "Deterministic rough cut",
+      "jobKind": "timeline-render",
+      "engine": "local-ffmpeg",
+      "qualificationState": "candidate",
+      "minimumVramGb": 0,
+      "expectedRuntimeMinutes": 8,
+      "maximumRuntimeMinutes": 60,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "timelineJson", "label": "Approved timeline", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "profile", "label": "Render profile", "type": "string", "required": true, "maximumLength": 40 }
+      ],
+      "notes": ["Only approved media may enter the deterministic timeline."]
+    },
+    {
+      "workflowId": "local-caption-package",
+      "version": "1.0.0",
+      "label": "Editable captions",
+      "jobKind": "caption-export",
+      "engine": "local-package",
+      "qualificationState": "candidate",
+      "minimumVramGb": 0,
+      "expectedRuntimeMinutes": 1,
+      "maximumRuntimeMinutes": 5,
+      "outputKind": "document",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "cuesJson", "label": "Approved caption cues", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "format", "label": "Caption format", "type": "string", "required": true, "maximumLength": 10 }
+      ],
+      "notes": ["Approved script and line timings are authoritative; ASR is review evidence only."]
+    },
+    {
+      "workflowId": "local-thumbnail-render",
+      "version": "1.0.0",
+      "label": "Truthful thumbnail layout",
+      "jobKind": "thumbnail-render",
+      "engine": "local-package",
+      "qualificationState": "candidate",
+      "minimumVramGb": 0,
+      "expectedRuntimeMinutes": 1,
+      "maximumRuntimeMinutes": 5,
+      "outputKind": "image",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "layoutJson", "label": "Thumbnail layout", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "headline", "label": "Thumbnail text", "type": "string", "required": true, "maximumLength": 120 }
+      ],
+      "notes": ["Uses approved or separately authorized source images and deterministic typography."]
+    },
+    {
+      "workflowId": "local-youtube-release-package",
+      "version": "1.0.0",
+      "label": "Verified manual YouTube upload package",
+      "jobKind": "release-package",
+      "engine": "local-package",
+      "qualificationState": "candidate",
+      "minimumVramGb": 0,
+      "expectedRuntimeMinutes": 2,
+      "maximumRuntimeMinutes": 10,
+      "outputKind": "package",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "releaseManifestJson", "label": "Release details and attestations", "type": "string", "required": true, "maximumLength": 4000 }
+      ],
+      "notes": ["Creates a manual-upload package; version 1 does not publish automatically."]
+    }
+  ]
+}

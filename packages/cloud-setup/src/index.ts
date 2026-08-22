@@ -55,8 +55,21 @@ export interface CloudSetupServiceOptions {
   vault: CloudCredentialVault
   provider: CloudProvider
   settingsStore: CloudSettingsStore
+  productionReadiness?: () => ProductionReadiness
   now?: () => Date
 }
+
+export interface ProductionReadiness {
+  modelStorageReady: boolean
+  workerImageReady: boolean
+  automaticShutdownTested: boolean
+}
+
+const NOT_READY: ProductionReadiness = Object.freeze({
+  modelStorageReady: false,
+  workerImageReady: false,
+  automaticShutdownTested: false
+})
 
 export class CloudSetupError extends Error {
   readonly code: 'settings-error' | 'not-connected'
@@ -144,18 +157,36 @@ function catalogFailureMessage(error: unknown): string {
   return 'Connected, but current GPU prices could not be checked. Refresh later.'
 }
 
-function statusFrom(record: CloudSettingsRecord, credentialStored: boolean): CloudConnectionStatus {
+function statusFrom(
+  record: CloudSettingsRecord,
+  credentialStored: boolean,
+  readiness: ProductionReadiness
+): CloudConnectionStatus {
   const connected = credentialStored && record.account !== null
   const connectionState = connected
     ? 'connected'
     : credentialStored
       ? 'attention'
       : 'not-configured'
-  const generationReason = connected
-    ? 'RunPod is connected. Paid generation stays locked until model storage, the worker image, and automatic shutdown pass a controlled setup test.'
-    : credentialStored
-      ? 'A protected key exists, but the account check is incomplete. Refresh or reconnect RunPod.'
-      : 'Connect RunPod with a no-cost account check. Connecting never rents a GPU.'
+  const generationReady =
+    connected &&
+    record.guardrailsSaved &&
+    readiness.modelStorageReady &&
+    readiness.workerImageReady &&
+    readiness.automaticShutdownTested
+  const missingReadiness: string[] = []
+  if (!readiness.modelStorageReady) missingReadiness.push('verified model storage')
+  if (!readiness.workerImageReady) missingReadiness.push('the pinned worker image')
+  if (!readiness.automaticShutdownTested) missingReadiness.push('the automatic shutdown test')
+  const generationReason = generationReady
+    ? 'Production checks are complete. Each paid job still requires its own cost approval and a separate worker-start confirmation.'
+    : !connected
+      ? credentialStored
+        ? 'A protected key exists, but the account check is incomplete. Refresh or reconnect RunPod.'
+        : 'Connect RunPod with a no-cost account check. Connecting never rents a GPU.'
+      : !record.guardrailsSaved
+        ? 'RunPod is connected. Save the spending and shutdown limits before paid generation can start.'
+        : `RunPod is connected. Paid generation stays locked until ${missingReadiness.join(', ')} ${missingReadiness.length === 1 ? 'is' : 'are'} proven.`
 
   return CloudConnectionStatusSchema.parse({
     provider: 'runpod',
@@ -171,11 +202,11 @@ function statusFrom(record: CloudSettingsRecord, credentialStored: boolean): Clo
     setupChecklist: {
       accountConnected: connected,
       guardrailsSaved: record.guardrailsSaved,
-      modelStorageReady: false,
-      workerImageReady: false,
-      automaticShutdownTested: false
+      modelStorageReady: readiness.modelStorageReady,
+      workerImageReady: readiness.workerImageReady,
+      automaticShutdownTested: readiness.automaticShutdownTested
     },
-    generationState: 'locked',
+    generationState: generationReady ? 'ready' : 'locked',
     generationReason
   })
 }
@@ -184,12 +215,14 @@ export class CloudSetupService {
   private readonly vault: CloudCredentialVault
   private readonly provider: CloudProvider
   private readonly settingsStore: CloudSettingsStore
+  private readonly productionReadiness: () => ProductionReadiness
   private readonly now: () => Date
 
   constructor(options: CloudSetupServiceOptions) {
     this.vault = options.vault
     this.provider = options.provider
     this.settingsStore = options.settingsStore
+    this.productionReadiness = options.productionReadiness ?? (() => NOT_READY)
     this.now = options.now ?? (() => new Date())
   }
 
@@ -198,7 +231,7 @@ export class CloudSetupService {
       this.settingsStore.load(),
       this.vault.hasSecret()
     ])
-    return statusFrom(record, credentialStored)
+    return statusFrom(record, credentialStored, this.productionReadiness())
   }
 
   async connect(input: unknown): Promise<CloudConnectionStatus> {
