@@ -1,6 +1,6 @@
 # YouTube release, packaging, and learning workflow
 
-Status: accepted product design; release features not implemented. The project-level Audience & Creative Direction source that will feed release drafting is implemented in version 0.6.0.
+Status: accepted product design; release features not implemented. The project-level Audience & Creative Direction source that will feed release drafting has been implemented since version 0.6.0.
 
 Reference inspected: `darkzOGx/youtube-automation-agent` at commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` on 2026-08-21.
 

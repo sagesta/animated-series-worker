@@ -5,6 +5,7 @@ import {
   type CloudConnectionStatus,
   type CloudGuardrails
 } from '@studio/contracts'
+import { ChoiceRequirement, RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 
 interface CloudSetupProps {
   status?: CloudConnectionStatus
@@ -54,10 +55,16 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
   const [feedback, setFeedback] = useState<Feedback>()
   const [confirmRemoval, setConfirmRemoval] = useState(false)
   const [guardrailDraft, setGuardrailDraft] = useState<CloudGuardrails>()
+  const [validationMessages, setValidationMessages] = useState<string[]>([])
   const guardrails = guardrailDraft ?? status?.guardrails ?? DEFAULT_CLOUD_GUARDRAILS
 
   const connect = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
+    if (apiKey.trim().length < 20) {
+      setValidationMessages(['Enter a RunPod API key containing at least 20 characters.'])
+      return
+    }
+    setValidationMessages([])
     setBusy('connect')
     setFeedback(undefined)
     try {
@@ -126,6 +133,40 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
 
   const saveGuardrails = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
+    const issues: string[] = []
+    if (
+      !Number.isFinite(guardrails.maxSessionCostUsd) ||
+      guardrails.maxSessionCostUsd < 1 ||
+      guardrails.maxSessionCostUsd > 1000
+    ) {
+      issues.push('Set the maximum session cost between $1 and $1,000.')
+    }
+    if (
+      !Number.isInteger(guardrails.maxRuntimeMinutes) ||
+      guardrails.maxRuntimeMinutes < 15 ||
+      guardrails.maxRuntimeMinutes > 1440
+    ) {
+      issues.push('Set the maximum session time to a whole number from 15 to 1,440 minutes.')
+    }
+    if (
+      !Number.isInteger(guardrails.idleTimeoutMinutes) ||
+      guardrails.idleTimeoutMinutes < 2 ||
+      guardrails.idleTimeoutMinutes > 60
+    ) {
+      issues.push('Set idle shutdown to a whole number from 2 to 60 minutes.')
+    }
+    if (
+      !Number.isInteger(guardrails.maxConcurrentGpus) ||
+      guardrails.maxConcurrentGpus < 1 ||
+      guardrails.maxConcurrentGpus > 3
+    ) {
+      issues.push('Set concurrent GPUs to a whole number from 1 to 3.')
+    }
+    if (issues.length > 0) {
+      setValidationMessages(issues)
+      return
+    }
+    setValidationMessages([])
     setBusy('guardrails')
     setFeedback(undefined)
     try {
@@ -183,11 +224,15 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
         </div>
       )}
 
-      <form className="cloud-form" onSubmit={(event) => void connect(event)}>
-        <label htmlFor="runpod-api-key">RunPod API key</label>
+      <form className="cloud-form" noValidate onSubmit={(event) => void connect(event)}>
+        <label htmlFor="runpod-api-key">
+          RunPod API key <RequiredMark />
+        </label>
         <div className="secret-input-row">
           <input
             id="runpod-api-key"
+            required
+            minLength={20}
             type={showKey ? 'text' : 'password'}
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}
@@ -196,7 +241,8 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
             placeholder={
               connected ? 'Paste a new key only when replacing it' : 'Paste your key here'
             }
-            aria-describedby="runpod-key-help"
+            aria-invalid={apiKey.trim().length < 20}
+            aria-describedby="runpod-key-requirement runpod-key-help"
           />
           <button
             className="button button-quiet secret-toggle"
@@ -207,16 +253,13 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
             {showKey ? 'Hide' : 'Show'}
           </button>
         </div>
+        <TextRequirement id="runpod-key-requirement" value={apiKey} minimum={20} />
         <p id="runpod-key-help" className="field-help">
           Stored outside every production using Windows-protected encryption. It is excluded from
           project files, exports, logs, and Git.
         </p>
         <div className="cloud-form-actions">
-          <button
-            className="button button-primary"
-            type="submit"
-            disabled={Boolean(busy) || apiKey.trim().length < 20}
-          >
+          <button className="button button-primary" type="submit" disabled={Boolean(busy)}>
             {busy === 'connect'
               ? 'Testing safely…'
               : connected
@@ -317,7 +360,7 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
         <p className="catalog-message">{status.catalogMessage}</p>
       )}
 
-      <form className="guardrail-panel" onSubmit={(event) => void saveGuardrails(event)}>
+      <form className="guardrail-panel" noValidate onSubmit={(event) => void saveGuardrails(event)}>
         <div className="subsection-heading">
           <div>
             <h3>Default spending safety</h3>
@@ -330,15 +373,25 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
         </div>
         <div className="guardrail-grid">
           <label>
-            <span>Maximum cost per session</span>
+            <span>
+              Maximum cost per session <RequiredMark />
+            </span>
             <div className="unit-input">
               <span>$</span>
               <input
+                aria-label="Maximum cost per session"
                 type="number"
+                required
                 min="1"
                 max="1000"
                 step="0.5"
                 value={guardrails.maxSessionCostUsd}
+                aria-invalid={
+                  !Number.isFinite(guardrails.maxSessionCostUsd) ||
+                  guardrails.maxSessionCostUsd < 1 ||
+                  guardrails.maxSessionCostUsd > 1000
+                }
+                aria-describedby="guardrail-cost-requirement"
                 onChange={(event) =>
                   setGuardrailDraft({
                     ...guardrails,
@@ -347,16 +400,37 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
                 }
               />
             </div>
+            <ChoiceRequirement
+              id="guardrail-cost-requirement"
+              valid={
+                Number.isFinite(guardrails.maxSessionCostUsd) &&
+                guardrails.maxSessionCostUsd >= 1 &&
+                guardrails.maxSessionCostUsd <= 1000
+              }
+              validMessage="Allowed range: $1 to $1,000."
+            >
+              Required · use $1 to $1,000.
+            </ChoiceRequirement>
           </label>
           <label>
-            <span>Maximum session time</span>
+            <span>
+              Maximum session time <RequiredMark />
+            </span>
             <div className="unit-input suffix">
               <input
+                aria-label="Maximum session time"
                 type="number"
+                required
                 min="15"
                 max="1440"
                 step="15"
                 value={guardrails.maxRuntimeMinutes}
+                aria-invalid={
+                  !Number.isInteger(guardrails.maxRuntimeMinutes) ||
+                  guardrails.maxRuntimeMinutes < 15 ||
+                  guardrails.maxRuntimeMinutes > 1440
+                }
+                aria-describedby="guardrail-runtime-requirement"
                 onChange={(event) =>
                   setGuardrailDraft({
                     ...guardrails,
@@ -366,16 +440,37 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
               />
               <span>min</span>
             </div>
+            <ChoiceRequirement
+              id="guardrail-runtime-requirement"
+              valid={
+                Number.isInteger(guardrails.maxRuntimeMinutes) &&
+                guardrails.maxRuntimeMinutes >= 15 &&
+                guardrails.maxRuntimeMinutes <= 1440
+              }
+              validMessage="Allowed range: 15 to 1,440 whole minutes."
+            >
+              Required · use 15 to 1,440 whole minutes.
+            </ChoiceRequirement>
           </label>
           <label>
-            <span>Shut down after idle</span>
+            <span>
+              Shut down after idle <RequiredMark />
+            </span>
             <div className="unit-input suffix">
               <input
+                aria-label="Shut down after idle"
                 type="number"
+                required
                 min="2"
                 max="60"
                 step="1"
                 value={guardrails.idleTimeoutMinutes}
+                aria-invalid={
+                  !Number.isInteger(guardrails.idleTimeoutMinutes) ||
+                  guardrails.idleTimeoutMinutes < 2 ||
+                  guardrails.idleTimeoutMinutes > 60
+                }
+                aria-describedby="guardrail-idle-requirement"
                 onChange={(event) =>
                   setGuardrailDraft({
                     ...guardrails,
@@ -385,16 +480,37 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
               />
               <span>min</span>
             </div>
+            <ChoiceRequirement
+              id="guardrail-idle-requirement"
+              valid={
+                Number.isInteger(guardrails.idleTimeoutMinutes) &&
+                guardrails.idleTimeoutMinutes >= 2 &&
+                guardrails.idleTimeoutMinutes <= 60
+              }
+              validMessage="Allowed range: 2 to 60 whole minutes."
+            >
+              Required · use 2 to 60 whole minutes.
+            </ChoiceRequirement>
           </label>
           <label>
-            <span>Most GPUs at once</span>
+            <span>
+              Most GPUs at once <RequiredMark />
+            </span>
             <div className="unit-input suffix">
               <input
+                aria-label="Most GPUs at once"
                 type="number"
+                required
                 min="1"
                 max="3"
                 step="1"
                 value={guardrails.maxConcurrentGpus}
+                aria-invalid={
+                  !Number.isInteger(guardrails.maxConcurrentGpus) ||
+                  guardrails.maxConcurrentGpus < 1 ||
+                  guardrails.maxConcurrentGpus > 3
+                }
+                aria-describedby="guardrail-gpus-requirement"
                 onChange={(event) =>
                   setGuardrailDraft({
                     ...guardrails,
@@ -404,6 +520,17 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
               />
               <span>GPU</span>
             </div>
+            <ChoiceRequirement
+              id="guardrail-gpus-requirement"
+              valid={
+                Number.isInteger(guardrails.maxConcurrentGpus) &&
+                guardrails.maxConcurrentGpus >= 1 &&
+                guardrails.maxConcurrentGpus <= 3
+              }
+              validMessage="Allowed range: 1 to 3 whole GPUs."
+            >
+              Required · use 1 to 3 whole GPUs.
+            </ChoiceRequirement>
           </label>
         </div>
         <button className="button button-secondary" type="submit" disabled={Boolean(busy)}>
@@ -476,6 +603,11 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
           )}
         </div>
       )}
+      <ValidationAlert
+        title="This setup needs a little more information"
+        messages={validationMessages}
+        onClose={() => setValidationMessages([])}
+      />
     </div>
   )
 }

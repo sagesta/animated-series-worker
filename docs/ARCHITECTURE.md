@@ -157,6 +157,7 @@ Archive UI, future-migration registry/upgrade breadth, incremental/release archi
 ### Desktop renderer
 
 - Presents guided project setup including Audience & Creative Direction, overview revision, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens.
+- Owns reusable presentation-only form guidance: visible required markers, live length/range state, invalid styling, and accessible correction summaries. It keeps actions available until work is actually running, but it never replaces main-process/domain schema validation.
 - Never receives raw provider secrets.
 - Communicates only through typed Electron IPC exposed by the preload boundary.
 - Keeps technical details behind an optional expert drawer.

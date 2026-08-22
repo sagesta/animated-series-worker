@@ -16,7 +16,7 @@ import { CreativeDirectionPanel } from './CreativeDirectionPanel'
 import { CreativeRoom } from './CreativeRoom'
 
 const systemStatus: SystemStatus = {
-  appVersion: '0.6.0',
+  appVersion: '0.7.0',
   electronVersion: '43.4.1',
   nodeVersion: '24.18.1',
   storagePath: 'C:\\Studio\\projects',
@@ -321,6 +321,14 @@ describe('desktop project foundation', () => {
     await user.click(screen.getByRole('button', { name: /one-off film/i }))
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    const identityAlert = await screen.findByRole('alertdialog')
+    expect(
+      within(identityAlert).getByText(/production title containing at least 2 characters/i)
+    ).toBeTruthy()
+    expect(createProject).not.toHaveBeenCalled()
+    await user.click(within(identityAlert).getByRole('button', { name: 'Go back and fix' }))
+
     await user.type(screen.getByLabelText('Production title'), 'The Last Kite')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     await user.type(
@@ -370,6 +378,13 @@ describe('desktop project foundation', () => {
     render(<App />)
 
     await user.click(await screen.findByRole('button', { name: /settings/i }))
+    await user.type(screen.getByLabelText('RunPod API key'), 'short')
+    await user.click(screen.getByRole('button', { name: 'Test and store securely' }))
+    const keyAlert = await screen.findByRole('alertdialog')
+    expect(within(keyAlert).getByText(/at least 20 characters/i)).toBeTruthy()
+    expect(connectCloud).not.toHaveBeenCalled()
+    await user.click(within(keyAlert).getByRole('button', { name: 'Go back and fix' }))
+    await user.clear(screen.getByLabelText('RunPod API key'))
     await user.type(screen.getByLabelText('RunPod API key'), 'rpa_valid_secret_value_123456789')
     await user.click(screen.getByRole('button', { name: 'Test and store securely' }))
 
@@ -558,7 +573,7 @@ describe('creative room', () => {
     render(
       <CreativeRoom
         project={createdFilm}
-        writingStatus={connectedWritingStatus}
+        writingStatus={{ ...connectedWritingStatus, defaultProfile: null }}
         onHome={vi.fn()}
         onSettings={vi.fn()}
       />
@@ -571,7 +586,17 @@ describe('creative room', () => {
       screen.getByLabelText(/Your instruction/),
       'Outline the film with a strong emotional turn and a memorable final image.'
     )
-    expect((createButton as HTMLButtonElement).disabled).toBe(true)
+    expect((createButton as HTMLButtonElement).disabled).toBe(false)
+    await user.click(createButton)
+    const approvalAlert = await screen.findByRole('alertdialog')
+    expect(within(approvalAlert).getByText(/paid-token approval box/i)).toBeTruthy()
+    expect(generateDraft).not.toHaveBeenCalled()
+    const closeAlert = within(approvalAlert).getByRole('button', { name: 'Go back and fix' })
+    expect(document.activeElement).toBe(closeAlert)
+    await user.tab()
+    expect(document.activeElement).toBe(closeAlert)
+    await user.click(closeAlert)
+    expect(document.activeElement).toBe(createButton)
     await user.click(
       screen.getByLabelText('I approve one paid text request using the model shown above.')
     )
@@ -616,6 +641,13 @@ describe('audience and creative direction', () => {
     await user.click(screen.getByRole('button', { name: 'Revise direction' }))
     const niche = screen.getByLabelText('Primary niche')
     await user.clear(niche)
+    await user.click(screen.getByRole('button', { name: 'Save as new version' }))
+    const directionAlert = await screen.findByRole('alertdialog')
+    expect(
+      within(directionAlert).getByText(/primary niche using at least 2 characters/i)
+    ).toBeTruthy()
+    expect(saveCreativeDirection).not.toHaveBeenCalled()
+    await user.click(within(directionAlert).getByRole('button', { name: 'Go back and fix' }))
     await user.type(niche, 'Hopeful African family fantasy')
     await user.click(screen.getByRole('button', { name: 'Save as new version' }))
 

@@ -1,7 +1,9 @@
 import { useState, type FormEvent, type JSX } from 'react'
 import type { ProjectDetails } from '@studio/contracts'
 import { AudienceDirectionFields } from './CreativeDirectionForm'
+import { ValidationAlert } from './FormGuidance'
 import {
+  creativeDirectionDraftIssues,
   creativeDirectionInputFromDraft,
   draftFromCreativeDirection
 } from './creativeDirectionModel'
@@ -29,16 +31,24 @@ export function CreativeDirectionPanel({
   )
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string>()
+  const [validationMessages, setValidationMessages] = useState<string[]>([])
   const profile = project.creativeDirection
 
   const beginEditing = (): void => {
     setDraft(draftFromCreativeDirection(profile, project.manifest.type))
     setMessage(undefined)
+    setValidationMessages([])
     setEditing(true)
   }
 
   const save = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
+    const issues = creativeDirectionDraftIssues(draft)
+    if (issues.length > 0) {
+      setValidationMessages(issues)
+      return
+    }
+    setValidationMessages([])
     setSaving(true)
     setMessage(undefined)
     try {
@@ -63,6 +73,7 @@ export function CreativeDirectionPanel({
     return (
       <form
         className="creative-direction-card direction-editor"
+        noValidate
         onSubmit={(event) => void save(event)}
       >
         <div className="section-heading">
@@ -76,14 +87,17 @@ export function CreativeDirectionPanel({
           </div>
           <span className="status-chip local">No paid action</span>
         </div>
-        <AudienceDirectionFields draft={draft} onChange={setDraft} />
+        <AudienceDirectionFields draft={draft} onChange={setDraft} idPrefix="direction-panel" />
         {message && <div className="safety-feedback error">{message}</div>}
         <div className="direction-editor-actions">
           <button
             className="button button-quiet"
             type="button"
             disabled={saving}
-            onClick={() => setEditing(false)}
+            onClick={() => {
+              setValidationMessages([])
+              setEditing(false)
+            }}
           >
             Cancel
           </button>
@@ -91,6 +105,11 @@ export function CreativeDirectionPanel({
             {saving ? 'Saving safely…' : profile ? 'Save as new version' : 'Save direction'}
           </button>
         </div>
+        <ValidationAlert
+          title="The creative direction is not ready to save"
+          messages={validationMessages}
+          onClose={() => setValidationMessages([])}
+        />
       </form>
     )
   }

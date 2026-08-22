@@ -8,8 +8,10 @@ import {
 } from '@studio/contracts'
 import { normalizeProjectCode } from '@studio/domain'
 import { AudienceDirectionFields } from './CreativeDirectionForm'
+import { ChoiceRequirement, RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 import {
   createCreativeDirectionDraft,
+  creativeDirectionDraftIssues,
   creativeDirectionInputFromDraft
 } from './creativeDirectionModel'
 
@@ -83,6 +85,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
+  const [validationMessages, setValidationMessages] = useState<string[]>([])
 
   useEffect(() => {
     headingRef.current?.focus()
@@ -90,14 +93,14 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && !busy) {
+      if (event.key === 'Escape' && !busy && validationMessages.length === 0) {
         onClose()
       }
     }
 
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [busy, onClose])
+  }, [busy, onClose, validationMessages.length])
 
   const chooseType = (nextType: ProjectType): void => {
     setType(nextType)
@@ -115,6 +118,32 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
     setError(undefined)
+
+    const issues: string[] = []
+    if (step === 2 || step === 6) {
+      if (title.trim().length < 2) {
+        issues.push('Enter a production title containing at least 2 characters.')
+      }
+      if (language.trim().length < 2) {
+        issues.push('Enter a primary language containing at least 2 characters.')
+      }
+      if (
+        !Number.isInteger(targetDurationMinutes) ||
+        targetDurationMinutes < 1 ||
+        targetDurationMinutes > 240
+      ) {
+        issues.push('Enter a target duration between 1 and 240 minutes.')
+      }
+    }
+    if (step === 3) issues.push(...creativeDirectionDraftIssues(creativeDirection, 'audience'))
+    if (step === 4) issues.push(...creativeDirectionDraftIssues(creativeDirection, 'direction'))
+    if (step === 6) issues.push(...creativeDirectionDraftIssues(creativeDirection))
+
+    if (issues.length > 0) {
+      setValidationMessages([...new Set(issues)])
+      return
+    }
+    setValidationMessages([])
 
     if (step < 6) {
       setStep((current) => current + 1)
@@ -138,7 +167,8 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
       const project = await window.studio.projects.create(input)
       onCreated(project)
     } catch (creationError) {
-      setError(cleanError(creationError))
+      const safeError = cleanError(creationError)
+      setError(safeError)
       setBusy(false)
     }
   }
@@ -176,7 +206,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
           </div>
         </aside>
 
-        <form className="wizard-content" onSubmit={handleSubmit}>
+        <form className="wizard-content" noValidate onSubmit={handleSubmit}>
           <button
             className="icon-button wizard-close"
             type="button"
@@ -244,8 +274,11 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
             {step === 2 && (
               <div className="form-grid">
                 <label className="field field-wide">
-                  <span>Production title</span>
+                  <span>
+                    Production title <RequiredMark />
+                  </span>
                   <input
+                    aria-label="Production title"
                     autoFocus
                     required
                     minLength={2}
@@ -255,6 +288,14 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
                     placeholder={
                       type === 'series' ? 'e.g. The Lantern Keepers' : 'e.g. The Last Kite'
                     }
+                    aria-invalid={title.trim().length < 2}
+                    aria-describedby="project-title-requirement"
+                  />
+                  <TextRequirement
+                    id="project-title-requirement"
+                    value={title}
+                    minimum={2}
+                    maximum={120}
                   />
                 </label>
                 <label className="field">
@@ -271,32 +312,70 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
                   <small>Used only to keep folders easy to recognise.</small>
                 </label>
                 <label className="field">
-                  <span>Primary language</span>
+                  <span>
+                    Primary language <RequiredMark />
+                  </span>
                   <input
+                    aria-label="Primary language"
                     required
                     minLength={2}
                     maxLength={40}
                     value={language}
                     onChange={(event) => setLanguage(event.target.value)}
+                    aria-invalid={language.trim().length < 2}
+                    aria-describedby="project-language-requirement"
+                  />
+                  <TextRequirement
+                    id="project-language-requirement"
+                    value={language}
+                    minimum={2}
+                    maximum={40}
                   />
                 </label>
                 <label className="field">
-                  <span>{type === 'series' ? 'Target episode length' : 'Target film length'}</span>
+                  <span>
+                    {type === 'series' ? 'Target episode length' : 'Target film length'}{' '}
+                    <RequiredMark />
+                  </span>
                   <div className="number-input">
                     <input
+                      aria-label={
+                        type === 'series' ? 'Target episode length' : 'Target film length'
+                      }
                       required
                       type="number"
                       min={1}
                       max={240}
                       value={targetDurationMinutes}
                       onChange={(event) => setTargetDurationMinutes(Number(event.target.value))}
+                      aria-invalid={
+                        !Number.isInteger(targetDurationMinutes) ||
+                        targetDurationMinutes < 1 ||
+                        targetDurationMinutes > 240
+                      }
+                      aria-describedby="project-duration-requirement"
                     />
                     <span>minutes</span>
                   </div>
+                  <ChoiceRequirement
+                    id="project-duration-requirement"
+                    valid={
+                      Number.isInteger(targetDurationMinutes) &&
+                      targetDurationMinutes >= 1 &&
+                      targetDurationMinutes <= 240
+                    }
+                    validMessage="Allowed range: 1 to 240 whole minutes."
+                  >
+                    Required · enter a whole number from 1 to 240 minutes.
+                  </ChoiceRequirement>
                 </label>
                 <label className="field">
-                  <span>Visual direction</span>
+                  <span>
+                    Visual direction <RequiredMark />
+                  </span>
                   <select
+                    aria-label="Visual direction"
+                    required
                     value={visualDirection}
                     onChange={(event) => setVisualDirection(event.target.value as VisualDirection)}
                   >
@@ -315,6 +394,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
                 draft={creativeDirection}
                 onChange={setCreativeDirection}
                 section="audience"
+                idPrefix="project-wizard"
               />
             )}
 
@@ -323,6 +403,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
                 draft={creativeDirection}
                 onChange={setCreativeDirection}
                 section="direction"
+                idPrefix="project-wizard"
               />
             )}
 
@@ -434,6 +515,11 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
             </button>
           </footer>
         </form>
+        <ValidationAlert
+          title="This production setup needs a little more information"
+          messages={validationMessages}
+          onClose={() => setValidationMessages([])}
+        />
       </section>
     </div>
   )

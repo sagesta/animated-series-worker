@@ -4,6 +4,23 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-22 (guided required-field and caution feedback)
+
+- Added reusable visible required asterisks, live minimum/remaining/maximum text feedback, allowed-range messages, and non-color invalid styling.
+- Replaced silent primary-action disabling with an accessible correction popup in production setup, Audience & Creative Direction revision, RunPod and GPT/Claude/Gemini key setup, spending defaults, and paid Creative Room requests. Buttons remain disabled while an operation is actually running to prevent duplicates.
+- Every correction popup lists all known issues, receives keyboard focus, closes with its button or Escape, and states that nothing was submitted or charged. Short key checks reveal only a character count and never echo secret content.
+- Fixed Creative Room model initialization so the first connected, approved, available model is selected when no saved default exists or provider status arrives/changes.
+- Expanded renderer regression paths to prove missing identity, a short RunPod key, unchecked paid-text approval, and a missing revised niche open guidance without calling the protected operation. The local suite remains 57 tests.
+- The full quality gate passes. A separate unpacked Windows test package reports product version `0.7.0.0` and SHA-256 `8091E40BB747C61D0356E88206682F1CE195913F0BABAE54260CE1CBBFBB1969`; it remains unsigned and is not a production installer.
+
+User impact: the creator no longer has to guess why **Create writing proposal**, **Continue**, **Save direction**, or a connection action cannot proceed. Required inputs and limits are visible before clicking, and one plain-language popup explains exactly what to correct.
+
+Migration impact: none. No project, proposal, credential, cloud, writing-settings, or creative-direction schema changed. Existing projects and protected keys remain readable.
+
+Documentation impact: added FR-068, NFR-022, AT-060, and D-044, then synchronized UX, architecture, security, cost, creative-direction, implementation, backlog, traceability, status, README, test, and changelog records.
+
+Rollback: close the application and revert this feature commit. No data conversion or external cleanup is required. Any provider request or local write already completed before rollback retains its existing record; invalid-form popups created no remote or durable state.
+
 ### Added — 2026-08-22 (versioned Audience & Creative Direction)
 
 - Added a six-step series/film wizard that records intended audience, creative age band, niche, genres, tone, themes, story promise, cultural setting, content boundaries, episode/film format, YouTube positioning, visual-style notes, comparable-title direction, and differentiation.

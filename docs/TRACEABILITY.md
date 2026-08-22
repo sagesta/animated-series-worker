@@ -41,6 +41,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | FR-064, FR-065 | `YOUTUBE_RELEASE_WORKFLOW.md` measurement/learning, `ARCHITECTURE.md`, `API_CONTRACTS.md` | performance importer, optional read-only connector, learning registry | AT-056, AT-057, security suite |
 | FR-066 | `YOUTUBE_RELEASE_WORKFLOW.md` readiness, `UX_SPEC.md`, `ARCHITECTURE.md` | readiness aggregator, prerequisite/probe registry | AT-058, AT-013, AT-026 |
 | FR-067 | `CREATIVE_DIRECTION_PROFILE.md`, `DOMAIN_MODEL.md`, `UX_SPEC.md`, `ARCHITECTURE.md` | `contracts`, `project-store`, renderer, creative-direction compiler, dependency engine, every consuming adapter | AT-059, AT-031, AT-054 |
+| FR-068 | `UX_SPEC.md`, `ARCHITECTURE.md`, `SECURITY_AND_RECOVERY.md` | renderer form-guidance components, trusted IPC/domain validators | AT-060, AT-035, security suite |
 
 ## Non-functional requirements
 
@@ -67,13 +68,15 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | NFR-019 | `ARCHITECTURE.md` creative QC, `API_CONTRACTS.md` authorization boundary, `UX_SPEC.md` review warnings | creative-qc, review UI, authorization service | AT-046, security suite |
 | NFR-020 | `YOUTUBE_RELEASE_WORKFLOW.md`, `SOURCES.md`, `CHANGE_CONTROL.md` | versioned release rules, validation, attestation UI | AT-051–AT-055, security suite |
 | NFR-021 | `YOUTUBE_RELEASE_WORKFLOW.md`, `DOMAIN_MODEL.md`, `API_CONTRACTS.md` | performance snapshot and learning registry | AT-056, AT-057, isolation suite |
+| NFR-022 | `UX_SPEC.md`, `ARCHITECTURE.md` | renderer form guidance, accessibility tests | AT-060, AT-035 |
 
-## Current implementation evidence — version 0.6.0
+## Current implementation evidence — version 0.7.0
 
 | Requirement slice | State | Implemented components/evidence | Remaining acceptance boundary |
 | --- | --- | --- | --- |
 | FR-001–FR-004 project foundation | Partial | `apps/desktop`, `contracts`, `domain`, `project-store`; create/reopen plus verified series/film backup/restore, no-overwrite, tamper-refusal, and single-writer tests; automated AT-001 passes locally | Close/archive lifecycle, failure injection/migration rollback, production-unit hierarchy, clean-machine restore, and full cross-project access controls |
 | FR-067 Audience & Creative Direction | Partial | Runtime schemas, six-step wizard, immutable project-sidecar creation/revision, stale-profile refusal, old-project `null` compatibility, overview display/edit, exact Creative Room preview and schema-2 source hashes, plus storage/renderer/writing tests pass | Upstream/canon/image/voice/video/thumbnail/release compiler pins, dependency impact/stale propagation, packaged/non-technical flow, and full AT-059 |
+| FR-068 and NFR-022 guided validation | Partial | Reusable required markers, live length/range messages, invalid-state styling, accessible correction summaries, and no-silent-disable behavior cover project creation, creative-direction revision, writing requests, provider keys, RunPod keys, and spending defaults; renderer regression paths prove blocked calls are not made | Automated accessibility audit, clean-machine packaged review, destructive-action expansion, and representative-user AT-035/AT-060 |
 | FR-024 cloud setup | Partial | `credential-vault`, `cloud-setup`, `provider-runpod`, typed IPC, and guided Settings UI validate/store/refresh/remove the key, read aggregate Pods and current catalogue prices, and save local defaults without a provider mutation | Network volume, pinned worker, minimum-cost smoke, purge, watchdog, termination, cost receipt, and full AT-013 |
 | NFR-001 non-technical operation | Partial | Guided series/film wizard and unpacked Windows application; no terminal inside the app | Installer/first-run/cloud/pilot usability acceptance AT-013/AT-024/AT-035 |
 | NFR-005 secret protection | Partial | Electron asynchronous `safeStorage`/Windows DPAPI adapter, encrypted bytes outside project roots, opaque renderer status, safe provider errors, explicit removal, plaintext non-leakage tests, structured redacted/flushed logs, renderer-boundary capture, and local support JSON with known-secret/path scan | Broader worker/skill/provider patterns, retention and packaged support scan, clean-machine credential persistence/upgrade, worker tokens, gateway, and security suite |

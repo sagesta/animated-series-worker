@@ -8,6 +8,7 @@ import {
   type WritingSettingsStatus,
   type WritingTaskKind
 } from '@studio/contracts'
+import { ChoiceRequirement, RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 
 const taskOptions: Array<{ value: WritingTaskKind; label: string }> = [
   { value: 'develop_character', label: 'Develop a character' },
@@ -93,9 +94,36 @@ export function CreativeRoom({
       ),
     [writingStatus]
   )
-  const initialProvider = writingStatus?.defaultProfile?.provider ?? connectedProviders[0]
-  const [provider, setProvider] = useState<WritingProvider | undefined>(initialProvider)
-  const [model, setModel] = useState(writingStatus?.defaultProfile?.model ?? '')
+  const savedProvider = writingStatus?.defaultProfile?.provider
+  const initialProvider =
+    savedProvider && connectedProviders.includes(savedProvider)
+      ? savedProvider
+      : connectedProviders[0]
+  const availableInitialModels = initialProvider
+    ? (writingStatus?.providers[initialProvider].models ?? [])
+    : []
+  const preferredInitialModel =
+    writingStatus?.defaultProfile?.provider === initialProvider
+      ? writingStatus.defaultProfile.model
+      : undefined
+  const initialModel =
+    availableInitialModels.find((item) => item.id === preferredInitialModel)?.id ??
+    availableInitialModels[0]?.id ??
+    ''
+  const [providerChoice, setProviderChoice] = useState<WritingProvider | undefined>(initialProvider)
+  const provider =
+    providerChoice && connectedProviders.includes(providerChoice) ? providerChoice : initialProvider
+  const [modelChoice, setModelChoice] = useState(initialModel)
+  const availableModels = provider ? (writingStatus?.providers[provider].models ?? []) : []
+  const savedModel =
+    writingStatus?.defaultProfile?.provider === provider
+      ? writingStatus.defaultProfile.model
+      : undefined
+  const model =
+    availableModels.find((item) => item.id === modelChoice)?.id ??
+    availableModels.find((item) => item.id === savedModel)?.id ??
+    availableModels[0]?.id ??
+    ''
   const [profile, setProfile] = useState<'balanced' | 'best-draft' | 'custom'>(
     writingStatus?.defaultProfile?.profile ?? 'balanced'
   )
@@ -113,6 +141,7 @@ export function CreativeRoom({
   const [generating, setGenerating] = useState(false)
   const [message, setMessage] = useState<string>()
   const [drafts, setDrafts] = useState<WritingDraftRecord[]>([])
+  const [validationMessages, setValidationMessages] = useState<string[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -148,13 +177,33 @@ export function CreativeRoom({
   }, [project.manifest.id])
 
   const changeProvider = (nextProvider: WritingProvider): void => {
-    setProvider(nextProvider)
-    setModel(writingStatus?.providers[nextProvider].models[0]?.id ?? '')
+    setProviderChoice(nextProvider)
+    setModelChoice(writingStatus?.providers[nextProvider].models[0]?.id ?? '')
+  }
+
+  const requestIssues = (): string[] => {
+    const issues: string[] = []
+    if (!provider || !connectedProviders.includes(provider)) {
+      issues.push('Choose a connected writing service.')
+    }
+    if (!model) issues.push('Choose a writing model.')
+    if (instruction.trim().length < 10) {
+      issues.push('Enter a writing instruction containing at least 10 characters.')
+    }
+    if (previewError) issues.push('Repair the context preview before sending anything.')
+    else if (!preview) issues.push('Wait for the exact context preview to finish preparing.')
+    if (!paidConfirmed) issues.push('Tick the one-request paid-token approval box.')
+    return issues
   }
 
   const generate = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
-    if (!provider || !model || !paidConfirmed) return
+    const issues = requestIssues()
+    if (issues.length > 0 || !provider || !model || !paidConfirmed) {
+      setValidationMessages(issues)
+      return
+    }
+    setValidationMessages([])
     setGenerating(true)
     setMessage('Sending only the previewed context and waiting for a structured proposal…')
     try {
@@ -221,7 +270,7 @@ export function CreativeRoom({
         </p>
       </header>
 
-      <form className="creative-request" onSubmit={(event) => void generate(event)}>
+      <form className="creative-request" noValidate onSubmit={(event) => void generate(event)}>
         <section className="creative-form-card">
           <div className="subsection-heading">
             <div>
@@ -231,8 +280,12 @@ export function CreativeRoom({
           </div>
           <div className="creative-form-grid">
             <label>
-              <span>Writing task</span>
+              <span>
+                Writing task <RequiredMark />
+              </span>
               <select
+                aria-label="Writing task"
+                required
                 value={taskKind}
                 onChange={(event) => setTaskKind(event.target.value as WritingTaskKind)}
               >
@@ -244,8 +297,13 @@ export function CreativeRoom({
               </select>
             </label>
             <label>
-              <span>Writing service</span>
+              <span>
+                Writing service <RequiredMark />
+              </span>
               <select
+                aria-label="Writing service"
+                required
+                aria-invalid={!provider}
                 value={provider}
                 onChange={(event) => changeProvider(event.target.value as WritingProvider)}
               >
@@ -257,8 +315,16 @@ export function CreativeRoom({
               </select>
             </label>
             <label>
-              <span>Model</span>
-              <select value={model} onChange={(event) => setModel(event.target.value)}>
+              <span>
+                Model <RequiredMark />
+              </span>
+              <select
+                aria-label="Model"
+                required
+                aria-invalid={!model}
+                value={model}
+                onChange={(event) => setModelChoice(event.target.value)}
+              >
                 {provider &&
                   writingStatus?.providers[provider].models.map((item) => (
                     <option value={item.id} key={item.id}>
@@ -268,8 +334,12 @@ export function CreativeRoom({
               </select>
             </label>
             <label>
-              <span>Writing depth</span>
+              <span>
+                Writing depth <RequiredMark />
+              </span>
               <select
+                aria-label="Writing depth"
+                required
                 value={profile}
                 onChange={(event) =>
                   setProfile(event.target.value as 'balanced' | 'best-draft' | 'custom')
@@ -282,14 +352,26 @@ export function CreativeRoom({
             </label>
           </div>
           <label className="instruction-field">
-            <span>Your instruction</span>
+            <span>
+              Your instruction <RequiredMark />
+            </span>
             <textarea
+              aria-label="Your instruction"
+              required
+              minLength={10}
+              aria-invalid={instruction.trim().length < 10}
+              aria-describedby="writing-instruction-requirement"
               value={instruction}
               maxLength={12_000}
               onChange={(event) => setInstruction(event.target.value)}
               placeholder="Example: Outline the pilot. Introduce the hero's everyday problem, the event that changes everything, and a final question that makes viewers want episode two."
             />
-            <small>{instruction.length.toLocaleString()} / 12,000 characters</small>
+            <TextRequirement
+              id="writing-instruction-requirement"
+              value={instruction}
+              minimum={10}
+              maximum={12_000}
+            />
           </label>
         </section>
 
@@ -365,11 +447,19 @@ export function CreativeRoom({
           <label>
             <input
               type="checkbox"
+              required
+              aria-invalid={!paidConfirmed}
+              aria-describedby="paid-confirmation-requirement"
               checked={paidConfirmed}
               onChange={(event) => setPaidConfirmed(event.target.checked)}
             />
-            I approve one paid text request using the model shown above.
+            <span>
+              I approve one paid text request using the model shown above. <RequiredMark />
+            </span>
           </label>
+          <ChoiceRequirement id="paid-confirmation-requirement" valid={paidConfirmed}>
+            Required · confirm this one potentially paid text request. No GPU will start.
+          </ChoiceRequirement>
           <label className="token-limit">
             <span>Maximum answer size</span>
             <select
@@ -382,22 +472,18 @@ export function CreativeRoom({
               <option value={4000}>Maximum allowed</option>
             </select>
           </label>
-          <button
-            className="button button-primary button-large"
-            disabled={
-              generating ||
-              previewError ||
-              !preview ||
-              !paidConfirmed ||
-              instruction.trim().length < 10 ||
-              !model
-            }
-          >
+          <button className="button button-primary button-large" disabled={generating}>
             {generating ? 'Creating proposal…' : 'Create writing proposal'}
           </button>
           {message && <div className="cloud-feedback success">{message}</div>}
         </section>
       </form>
+
+      <ValidationAlert
+        title="The writing request is not ready yet"
+        messages={validationMessages}
+        onClose={() => setValidationMessages([])}
+      />
 
       <section className="creative-results">
         <div className="section-heading">

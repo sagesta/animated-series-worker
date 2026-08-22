@@ -184,6 +184,10 @@ The product may later support collaborators, but version 1 is optimized for one 
 
 - **FR-067:** Every new series or film records a project-local Audience & Creative Direction profile containing target audience, creative age band, primary niche, genres, tone, themes, viewer/story promise, cultural setting, content boundaries, episode/film format, YouTube positioning, visual-style notes, comparable-title direction, and differentiation. Each revision is immutable and project-isolated; later writing and production jobs pin the exact selected profile version/hash. Revising it creates an impact preview rather than silently rewriting approved work. The creative age band and positioning cannot complete child-directed, synthetic-media, originality, rights, or truthfulness attestations, and comparable titles cannot authorize imitation.
 
+### Guided form validation
+
+- **FR-068:** Every required user-entry field displays a visible asterisk, its minimum or allowed range, and a live plain-language state. A primary action remains available unless work is actually running or the action is intrinsically unavailable. If the creator tries to continue with missing, short, invalid, or unconfirmed information, the studio opens an accessible summary that names every correction and states whether anything was submitted, charged, or started. Client guidance supplements rather than replaces contract validation at the trusted process boundary.
+
 ## 7. Non-functional requirements
 
 - **NFR-001 Usability:** After initial installation, the primary workflow must require no terminal, Docker command, SSH session, ComfyUI graph editing, or manual cloud console operation.
@@ -207,6 +211,7 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **NFR-019 Human creative authority:** Automated creative, identity, speech, motion, and synchronization checks assist review but cannot create an approval, lock, release waiver, or destructive correction. The creator sees the evidence and makes the final decision.
 - **NFR-020 Platform-policy safety:** Platform rules, limits, fields, metric definitions, and disclosure guidance are versioned external assumptions and revalidated before release changes. The application never hardcodes a legal/policy declaration, stuffs irrelevant keywords, presents a local candidate comparison as a live audience test, or promises ranking/monetization.
 - **NFR-021 Analytics integrity:** Performance evidence is project/profile scoped, time-windowed, source-labelled, immutable after capture, comparable only under stated rules, and separated from recommendations. Missing, simulated, or low-sample data cannot be presented as a reliable result or silently influence generation.
+- **NFR-022 Validation clarity:** A creator must never have to infer a hidden field rule from an unexplained grey action. Required markers, inline constraints, invalid-state styling, keyboard-focusable summaries, and safe-next-action wording remain understandable without technical knowledge or color perception.
 
 ## 8. Release success criteria
 

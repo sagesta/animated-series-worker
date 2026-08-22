@@ -96,7 +96,7 @@ The six-step production wizard is:
 5. Starting point — original idea or later import.
 6. Review — confirm the project and direction before local creation.
 
-The overview displays the active revision and lets the creator add or revise it. This is a local, no-GPU, no-provider action. The Creative Room includes the active profile by default, shows it in the exact context preview, and records its ID, revision, timestamp, and SHA-256 in every new schema-2 writing proposal.
+The overview displays the active revision and lets the creator add or revise it. Required direction fields show an asterisk and live minimum guidance; attempting to continue or save while a required value is missing or short opens one correction summary without writing a revision. This is a local, no-GPU, no-provider action. The Creative Room includes the active profile by default, shows it in the exact context preview, and records its ID, revision, timestamp, and SHA-256 in every new schema-2 writing proposal.
 
 ## 6. Planned compilation into the full production workflow
 

@@ -5,6 +5,7 @@ import {
   type WritingSettingsActionResult,
   type WritingSettingsStatus
 } from '@studio/contracts'
+import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 
 interface WritingSetupProps {
   status?: WritingSettingsStatus
@@ -53,6 +54,7 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
     kind: 'success' | 'error'
     message: string
   }>()
+  const [validationMessages, setValidationMessages] = useState<string[]>([])
   const connectedProviders = useMemo(
     () =>
       writingProviders.filter(
@@ -78,6 +80,13 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
 
   const connect = async (provider: WritingProvider, event: FormEvent): Promise<void> => {
     event.preventDefault()
+    if (keys[provider].trim().length < 20) {
+      setValidationMessages([
+        `Enter the ${providerNames[provider]} API key containing at least 20 characters.`
+      ])
+      return
+    }
+    setValidationMessages([])
     setBusy(`${provider}-connect`)
     setFeedback(undefined)
     try {
@@ -140,7 +149,11 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
 
   const saveProfile = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
-    if (!selectedProfile?.model) return
+    if (!selectedProfile?.model) {
+      setValidationMessages(['Choose an available model before saving the writing preference.'])
+      return
+    }
+    setValidationMessages([])
     setBusy('profile')
     setFeedback(undefined)
     try {
@@ -184,6 +197,7 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
             <form
               className="writing-provider-card"
               key={provider}
+              noValidate
               onSubmit={(event) => void connect(provider, event)}
             >
               <div className="provider-card-heading">
@@ -198,10 +212,14 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
                   </span>
                 </div>
               </div>
-              <label htmlFor={`${provider}-api-key`}>API key</label>
+              <label htmlFor={`${provider}-api-key`}>
+                API key <RequiredMark />
+              </label>
               <div className="secret-input-row">
                 <input
                   id={`${provider}-api-key`}
+                  required
+                  minLength={20}
                   type={show[provider] ? 'text' : 'password'}
                   value={keys[provider]}
                   onChange={(event) =>
@@ -210,6 +228,8 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
                   autoComplete="new-password"
                   spellCheck={false}
                   placeholder={connected ? 'Paste only to replace the saved key' : 'Paste key'}
+                  aria-invalid={keys[provider].trim().length < 20}
+                  aria-describedby={`${provider}-key-requirement ${provider}-key-help`}
                 />
                 <button
                   className="button button-quiet secret-toggle"
@@ -221,7 +241,12 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
                   {show[provider] ? 'Hide' : 'Show'}
                 </button>
               </div>
-              <p className="field-help">
+              <TextRequirement
+                id={`${provider}-key-requirement`}
+                value={keys[provider]}
+                minimum={20}
+              />
+              <p className="field-help" id={`${provider}-key-help`}>
                 Windows protects this key outside all project, export, log, and support files.
               </p>
               <div className="approved-model-list">
@@ -234,11 +259,7 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
                   ))}
                 </ul>
               </div>
-              <button
-                className="button button-primary"
-                type="submit"
-                disabled={Boolean(busy) || keys[provider].trim().length < 20}
-              >
+              <button className="button button-primary" type="submit" disabled={Boolean(busy)}>
                 {busy === `${provider}-connect`
                   ? 'Checking safely…'
                   : connected
@@ -285,7 +306,11 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
       )}
 
       {selectedProfile && connectedProviders.length > 0 && (
-        <form className="writing-profile-card" onSubmit={(event) => void saveProfile(event)}>
+        <form
+          className="writing-profile-card"
+          noValidate
+          onSubmit={(event) => void saveProfile(event)}
+        >
           <div className="subsection-heading">
             <div>
               <h3>Preferred writing profile</h3>
@@ -298,7 +323,9 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
           </div>
           <div className="writing-profile-grid">
             <label>
-              <span>Service</span>
+              <span>
+                Service <RequiredMark />
+              </span>
               <select
                 value={selectedProfile.provider}
                 onChange={(event) => {
@@ -318,8 +345,12 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
               </select>
             </label>
             <label>
-              <span>Model</span>
+              <span>
+                Model <RequiredMark />
+              </span>
               <select
+                required
+                aria-invalid={!selectedProfile.model}
                 value={selectedProfile.model}
                 onChange={(event) =>
                   setProfileDraft({ ...selectedProfile, model: event.target.value })
@@ -333,7 +364,9 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
               </select>
             </label>
             <label>
-              <span>Writing depth</span>
+              <span>
+                Writing depth <RequiredMark />
+              </span>
               <select
                 value={selectedProfile.profile}
                 onChange={(event) =>
@@ -354,6 +387,11 @@ export function WritingSetup({ status, onStatus }: WritingSetupProps): JSX.Eleme
           </button>
         </form>
       )}
+      <ValidationAlert
+        title="The writing setup needs more information"
+        messages={validationMessages}
+        onClose={() => setValidationMessages([])}
+      />
     </div>
   )
 }

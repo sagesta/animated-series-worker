@@ -1,6 +1,14 @@
 import type { JSX } from 'react'
 import type { AudienceAgeBand } from '@studio/contracts'
+import { ChoiceRequirement, RequiredMark, TextRequirement } from './FormGuidance'
 import type { CreativeDirectionDraft } from './creativeDirectionModel'
+
+function listCount(value: string): number {
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean).length
+}
 
 const ageBandOptions: Array<{ value: AudienceAgeBand; label: string }> = [
   { value: 'undecided', label: 'Decide later' },
@@ -19,25 +27,33 @@ function FieldHelp({ children }: { children: string }): JSX.Element {
 export function AudienceDirectionFields({
   draft,
   onChange,
-  section = 'all'
+  section = 'all',
+  idPrefix = 'creative-direction'
 }: {
   draft: CreativeDirectionDraft
   onChange(next: CreativeDirectionDraft): void
   section?: 'audience' | 'direction' | 'all'
+  idPrefix?: string
 }): JSX.Element {
   const set = <Key extends keyof CreativeDirectionDraft>(
     key: Key,
     value: CreativeDirectionDraft[Key]
   ): void => onChange({ ...draft, [key]: value })
+  const requirementId = (field: string): string => `${idPrefix}-${field}-requirement`
 
   return (
     <div className="direction-fields">
       {(section === 'audience' || section === 'all') && (
         <div className="form-grid">
           <label className="field field-wide">
-            <span>Who is this production for?</span>
+            <span>
+              Who is this production for? <RequiredMark />
+            </span>
             <textarea
+              aria-label="Who is this production for?"
               required
+              aria-invalid={draft.targetAudience.trim().length < 2}
+              aria-describedby={requirementId('target-audience')}
               rows={3}
               minLength={2}
               maxLength={500}
@@ -48,6 +64,12 @@ export function AudienceDirectionFields({
             <FieldHelp>
               Describe the people, interests, and viewing situation—not only an age.
             </FieldHelp>
+            <TextRequirement
+              id={requirementId('target-audience')}
+              value={draft.targetAudience}
+              minimum={2}
+              maximum={500}
+            />
           </label>
           <label className="field">
             <span>Creative age band</span>
@@ -66,26 +88,49 @@ export function AudienceDirectionFields({
             </FieldHelp>
           </label>
           <label className="field">
-            <span>Primary niche</span>
+            <span>
+              Primary niche <RequiredMark />
+            </span>
             <input
+              aria-label="Primary niche"
               required
+              aria-invalid={draft.primaryNiche.trim().length < 2}
+              aria-describedby={requirementId('primary-niche')}
               minLength={2}
               maxLength={300}
               value={draft.primaryNiche}
               onChange={(event) => set('primaryNiche', event.target.value)}
               placeholder="African folklore fantasy adventures"
             />
+            <TextRequirement
+              id={requirementId('primary-niche')}
+              value={draft.primaryNiche}
+              minimum={2}
+              maximum={300}
+            />
           </label>
           <label className="field">
-            <span>Genre and subgenre</span>
+            <span>
+              Genre and subgenre <RequiredMark />
+            </span>
             <input
+              aria-label="Genre and subgenre"
               required
+              aria-invalid={draft.genres.trim().length === 0}
+              aria-describedby={requirementId('genre')}
               maxLength={600}
               value={draft.genres}
               onChange={(event) => set('genres', event.target.value)}
               placeholder="Fantasy, mystery, family adventure"
             />
             <FieldHelp>Separate several choices with commas.</FieldHelp>
+            <ChoiceRequirement
+              id={requirementId('genre')}
+              valid={draft.genres.trim().length > 0}
+              validMessage={`${listCount(draft.genres)} / 8 genre or subgenre entries.`}
+            >
+              Required · add at least one genre or subgenre.
+            </ChoiceRequirement>
           </label>
           <label className="field">
             <span>Cultural or story setting</span>
@@ -102,9 +147,14 @@ export function AudienceDirectionFields({
       {(section === 'direction' || section === 'all') && (
         <div className="form-grid">
           <label className="field field-wide">
-            <span>Viewer promise</span>
+            <span>
+              Viewer promise <RequiredMark />
+            </span>
             <textarea
+              aria-label="Viewer promise"
               required
+              aria-invalid={draft.storyPromise.trim().length < 10}
+              aria-describedby={requirementId('story-promise')}
               rows={3}
               minLength={10}
               maxLength={1_200}
@@ -112,17 +162,35 @@ export function AudienceDirectionFields({
               onChange={(event) => set('storyPromise', event.target.value)}
               placeholder="What should viewers reliably feel, experience, or receive from every episode?"
             />
+            <TextRequirement
+              id={requirementId('story-promise')}
+              value={draft.storyPromise}
+              minimum={10}
+              maximum={1_200}
+            />
           </label>
           <label className="field">
-            <span>Tone</span>
+            <span>
+              Tone <RequiredMark />
+            </span>
             <input
+              aria-label="Tone"
               required
+              aria-invalid={draft.toneKeywords.trim().length === 0}
+              aria-describedby={requirementId('tone')}
               maxLength={600}
               value={draft.toneKeywords}
               onChange={(event) => set('toneKeywords', event.target.value)}
               placeholder="Warm, adventurous, mysterious, funny"
             />
             <FieldHelp>Separate tone words with commas.</FieldHelp>
+            <ChoiceRequirement
+              id={requirementId('tone')}
+              valid={draft.toneKeywords.trim().length > 0}
+              validMessage={`${listCount(draft.toneKeywords)} / 8 tone words.`}
+            >
+              Required · add at least one tone word.
+            </ChoiceRequirement>
           </label>
           <label className="field">
             <span>Core themes</span>
@@ -145,13 +213,24 @@ export function AudienceDirectionFields({
             <FieldHelp>Separate distinct boundaries with commas or new lines.</FieldHelp>
           </label>
           <label className="field">
-            <span>Episode or film format</span>
+            <span>
+              Episode or film format <RequiredMark />
+            </span>
             <input
+              aria-label="Episode or film format"
               required
+              aria-invalid={draft.episodeFormat.trim().length < 2}
+              aria-describedby={requirementId('episode-format')}
               minLength={2}
               maxLength={500}
               value={draft.episodeFormat}
               onChange={(event) => set('episodeFormat', event.target.value)}
+            />
+            <TextRequirement
+              id={requirementId('episode-format')}
+              value={draft.episodeFormat}
+              minimum={2}
+              maximum={500}
             />
           </label>
           <label className="field">

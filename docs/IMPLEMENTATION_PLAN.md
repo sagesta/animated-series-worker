@@ -56,9 +56,9 @@ flowchart LR
 
 ## 4. Phase 1 — local application foundation
 
-### Current checkpoint — version 0.6.0
+### Current checkpoint — version 0.7.0
 
-- `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
+- `FOUND-001` is implemented as a development foundation: pinned pnpm/Electron/React/TypeScript workspace, secure desktop boundary, accessible navigation/wizard baseline, shared required markers/live constraints/keyboard correction summaries, quality commands, production build, unpacked Windows smoke, and unsigned NSIS test installer.
 - `DATA-001` is in progress: series/film create, list, open, current schema-2/backward-compatible schema-1 manifests, a guided v1→v2 preview with automatic verified backup and rollback at four injected failure points, identity-scoped folders, atomic manifest and sidecar writes/hashes, per-project SQLite, rebuildable catalog, startup reconciliation, verified full backup/restore, tamper refusal, and live/stale single-writer handling are implemented and tested.
 - `DIRECTION-001` is in progress: the six-step project wizard creates a structured Audience & Creative Direction revision; the overview appends immutable revisions with a stale-screen check; old projects may add revision 1 without migration; and the Creative Room previews and records the exact direction version/hash in schema-2 proposals. Upstream, canon, dependency-impact, media, voice, video, thumbnail, and release compilers remain to be implemented.
 - `SEC-001` is in progress: the RunPod key is validated before save, encrypted through Electron asynchronous `safeStorage`/Windows DPAPI outside projects, never returned after submission, removable explicitly, and covered by plaintext non-leakage tests. Structured flushed diagnostics, protected-field/known-provider-secret/private-path redaction, renderer-boundary capture, and a local-only support JSON with a plain-language Settings flow are implemented and tested; broader worker/skill patterns, retention, and packaged scans remain.
@@ -308,7 +308,7 @@ This is the delivery-order summary. The granular, append-only work ledger is [BU
 
 | Order | Work package | Current state | Output |
 | --- | --- | --- | --- |
-| 1 | `FOUND-001` workspace/toolchain | Foundation implemented; signed/clean-machine release pending | Buildable TypeScript/Electron shell |
+| 1 | `FOUND-001` workspace/toolchain | Foundation plus shared required-field/length/range guidance and correction popups implemented; automated accessibility, signed, and clean-machine release evidence pending | Buildable TypeScript/Electron shell |
 | 2 | `DATA-001` project store | In progress — verified full backup/restore, writer lock, and guided v1→v2 migration rollback matrix pass; archive/future migration/recovery breadth remain | Series/film create/open, files, SQLite, migrations, recovery |
 | 3 | `SEC-001` credential/logging | In progress — separate protected RunPod/OpenAI/Anthropic/Gemini vaults plus local redacted diagnostics/support file pass; broader provider/worker/skill and packaged scans remain | Vault adapter and redacted diagnostics |
 | 3A | `DIRECTION-001` audience and creative compass | In progress — guided create/revise, immutable project sidecars, old-project compatibility, and exact writing lineage pass | Upstream/canon/media/voice/video/release compilation plus impact preview and AT-059 |

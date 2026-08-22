@@ -200,7 +200,7 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 
 A creative writing job proposes a new local version; it never edits a locked version or treats a provider conversation as canonical.
 
-Current version 0.6.0 persists provider-neutral `WritingDraftRecord` versions as no-overwrite JSON files under `provenance/writing`. Schema 2 includes the project manifest plus the exact selected creative-direction ID/revision/timestamp/hash when enabled, exact context selection/hash, OpenAI/Anthropic/Gemini provider and approved model/profile, request ID, token usage, uncalculated dollar-cost state, and validated proposal sections. Schema-1 proposal files remain readable. `skillsPlanned` and `skillsUsed` must both be empty until the skill runtime exists. Promotion of selected proposal content into separate versioned canon is still planned.
+Current version 0.7.0 persists provider-neutral `WritingDraftRecord` versions as no-overwrite JSON files under `provenance/writing`. Schema 2 includes the project manifest plus the exact selected creative-direction ID/revision/timestamp/hash when enabled, exact context selection/hash, OpenAI/Anthropic/Gemini provider and approved model/profile, request ID, token usage, uncalculated dollar-cost state, and validated proposal sections. Schema-1 proposal files remain readable. `skillsPlanned` and `skillsUsed` must both be empty until the skill runtime exists. Promotion of selected proposal content into separate versioned canon is still planned.
 
 | Field | Meaning |
 | --- | --- |

@@ -71,6 +71,50 @@ function parseList(value: string): string[] {
   ]
 }
 
+export function creativeDirectionDraftIssues(
+  draft: CreativeDirectionDraft,
+  section: 'audience' | 'direction' | 'all' = 'all'
+): string[] {
+  const issues: string[] = []
+  const validateList = (
+    label: string,
+    value: string,
+    maximumItems: number,
+    required: boolean
+  ): void => {
+    const items = parseList(value)
+    if (required && items.length === 0) issues.push(`Add at least one ${label}.`)
+    if (items.length > maximumItems) {
+      issues.push(`Use no more than ${maximumItems} ${label} entries.`)
+    }
+    if (items.some((item) => item.length > 160)) {
+      issues.push(`Keep each ${label} entry at 160 characters or fewer.`)
+    }
+  }
+  if (section === 'audience' || section === 'all') {
+    if (draft.targetAudience.trim().length < 2) {
+      issues.push('Describe who the production is for using at least 2 characters.')
+    }
+    if (draft.primaryNiche.trim().length < 2) {
+      issues.push('Enter a primary niche using at least 2 characters.')
+    }
+    validateList('genre or subgenre', draft.genres, 8, true)
+  }
+  if (section === 'direction' || section === 'all') {
+    if (draft.storyPromise.trim().length < 10) {
+      issues.push('Explain the viewer promise using at least 10 characters.')
+    }
+    validateList('tone word', draft.toneKeywords, 8, true)
+    validateList('core theme', draft.coreThemes, 10, false)
+    validateList('content boundary', draft.contentBoundaries, 12, false)
+    validateList('comparable production', draft.comparableTitles, 8, false)
+    if (draft.episodeFormat.trim().length < 2) {
+      issues.push('Describe the episode or film format using at least 2 characters.')
+    }
+  }
+  return issues
+}
+
 export function creativeDirectionInputFromDraft(
   draft: CreativeDirectionDraft
 ): CreativeDirectionInput {

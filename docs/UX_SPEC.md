@@ -6,9 +6,18 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.6.0
+### Current implementation — version 0.7.0
 
-The production library, six-step series/film wizard, project overview, navigation, backup/recovery/migration, RunPod setup, and local support flow are implemented. The wizard now collects an Audience & Creative Direction profile; the overview shows its active revision and can append a revised local version without overwriting the earlier one. Settings provides separate masked OpenAI, Anthropic, and Gemini cards with free model-list validation and independent refresh/disable/enable/remove. Every card names the approved studio models and their balanced/deep/economy purpose; only models both approved and available to that key appear in the profile picker. Story is a working Creative Room for character, world, outline, scene, dialogue, and continuity proposals: it shows the exact selected project manifest and creative-direction context, requires a checkbox for one potentially paid text request, and labels the locally saved result “proposal, not canon” with model/token/source/skill-use lineage. No model is presented as a task benchmark winner. World & Cast, Storyboard, Generate, Review, Edit & Export, Release, canon promotion/version comparison, exact text-dollar quotes, and external skills remain planned/locked. GPU generation remains unavailable.
+The production library, six-step series/film wizard, project overview, navigation, backup/recovery/migration, RunPod setup, and local support flow are implemented. The wizard now collects an Audience & Creative Direction profile; the overview shows its active revision and can append a revised local version without overwriting the earlier one. Required fields show a visible asterisk and live minimum/range guidance. Project setup, direction revision, RunPod and writing-provider keys, spending defaults, and the paid Creative Room request use an accessible correction popup instead of an unexplained grey action. Settings provides separate masked OpenAI, Anthropic, and Gemini cards with free model-list validation and independent refresh/disable/enable/remove. Every card names the approved studio models and their balanced/deep/economy purpose; only models both approved and available to that key appear in the profile picker. Story is a working Creative Room for character, world, outline, scene, dialogue, and continuity proposals: it shows the exact selected project manifest and creative-direction context, requires a checkbox for one potentially paid text request, and labels the locally saved result “proposal, not canon” with model/token/source/skill-use lineage. No model is presented as a task benchmark winner. World & Cast, Storyboard, Generate, Review, Edit & Export, Release, canon promotion/version comparison, exact text-dollar quotes, and external skills remain planned/locked. GPU generation remains unavailable.
+
+### Shared field and warning behavior
+
+- Every required field has a visible red `*`; the control also uses native required semantics for assistive technology.
+- Text fields show the minimum before typing, the exact remaining count when short, and the current/maximum count after the minimum is met. Number fields show the allowed range.
+- Missing or invalid controls receive a non-color-only warning message and invalid-state border.
+- Pressing the primary action with unresolved information opens one keyboard-focusable popup listing all corrections. The popup states that nothing was submitted or charged; RunPod setup wording also makes clear that no GPU was rented.
+- Primary actions are disabled only while that action is already running or where the action is genuinely unavailable. Busy-state disabling still prevents duplicate requests.
+- Closing the popup returns the creator to the unchanged form. Trusted main-process and domain validation still run when valid-looking data is submitted; renderer guidance is not a security boundary.
 
 ## 2. Navigation
 
@@ -50,6 +59,7 @@ Explain in one page:
 - Accept the API key into a masked field.
 - Store it in the operating-system credential vault.
 - Test account access without displaying or saving the key in logs.
+- Show that a key needs at least 20 characters before the free check; a short-key warning makes no provider call and rents no GPU.
 
 ### Step 3b: Writing accounts (optional until creative assistance is requested)
 
@@ -58,6 +68,7 @@ Explain in one page:
 - Accept each key in a masked field and return only opaque connected/error status after the main process stores it with OS protection.
 - Let the creator choose a default `Balanced`, `Best draft`, or later benchmarked custom writing profile, while keeping a provider/model selector available per task.
 - Both first adapters use a no-cost model-list check. Any future provider that cannot do so must show the smallest test's maximum token/cost before approval.
+- Show that each key needs at least 20 characters; a short-key warning makes no provider request.
 
 ### Step 4: Spending guardrails
 
