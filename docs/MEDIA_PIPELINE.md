@@ -1,6 +1,6 @@
 # Image, voice, video, audio, and delivery pipeline
 
-Current implementation note (0.9.0): governed candidate definitions and runners now cover Qwen image/edit, Qwen3-TTS, LTX-2.5, LatentSync lip repair, technical QC, verified local media review, deterministic timeline/captions/thumbnail/master/package operations. Remote creative engines still require exact workflow/model/license/quality qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): governed candidate definitions and runners cover Qwen image/edit, Qwen3-TTS, LTX-2.5, LatentSync lip repair, technical QC, verified local media review, and deterministic timeline/captions/thumbnail/master/package operations. The media store now recognizes control/layer/adaptation roles and the candidate pack includes control-guided Qwen/LTX, separate foley, and project adaptation definitions. Remote creative engines still require exact workflow/model/license/quality qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Pipeline policy
 
@@ -74,6 +74,8 @@ A public YouTube thumbnail is a release artifact, not the small rebuildable prox
 Candidates are previewed at full, desktop-card, and phone-card sizes and checked for current delivery dimensions/aspect ratio/format/file size, readability, safe margins, corruption, duplicates, and truthful representation. Each candidate preserves its hypothesis, recipe, hashes, cost, and review decision. Local comparison never creates an audience experiment result; only imported official platform evidence for the exact candidate hashes may do that.
 
 ### Layered 2D/parallax workflow
+
+Version 0.10 implements import, project ownership, hashing, review, and lineage for foreground/subject/background and region-mask media roles, plus contextual planning assistance. The non-destructive layer-separation tool, occlusion/safe-margin editor, composite recipe, and deterministic parallax acceptance described below remain to be implemented and tested.
 
 1. Start from an approved source image or approved generated candidate.
 2. Produce or import foreground, subject, and background layers plus masks.
@@ -162,6 +164,8 @@ Canonical control roles are start/end frame, pose, depth, edge, segmentation, ma
 5. Fail unsupported/conflicting combinations; never ignore a requested control.
 6. Record the resolved numerical values only in the compiled job manifest.
 
+The current foundation lets the creator select approved control/reference media in order and serializes asset ID, role, label, and SHA-256 into a neutral JSON manifest. A non-control media role blocks before estimate rather than being ignored. Project/hash/approval checks are inherited from media selection; typed coordinate/time-basis, overlay/strength editing, rights records, and exact adapter parameters remain required before the candidate control workflows can qualify.
+
 Dialogue text is not used as a substitute for the approved audio file. For A2V, the manifest marks audio preservation as required and QC compares source/returned audio.
 
 ### Duration and shot boundaries
@@ -242,6 +246,8 @@ Audio layers:
 - Current LTX Foley evidence is validated on LTX-2.3 rather than the selected LTX-2.5 baseline, so it remains a Phase 0/7 benchmark candidate behind `AudioEffectsEngine`.
 - Failed or near-silent generated effects can produce new candidates within a bounded budget; they never overwrite a cue or trigger unlimited seed retries.
 
+Version 0.10 adds field-level cue-plan assistance, a separate `foley` job kind, an `effect` output role, `preserveDialogue: true`, and a candidate workflow. Because no exact rights-reviewed model, runner, template, license decision, or synchronized fixture has been selected, the registry keeps this workflow non-billable.
+
 The mix pipeline stores editable layer sources and creates a derived master. Initial web-delivery target is approximately -14 to -16 LUFS integrated with true peak no higher than -1 dBTP; the exact profile is confirmed during the pilot and recorded rather than silently changed.
 
 Captions derive from line IDs and approved audio timing. Export SRT and WebVTT; preserve a machine-readable cue file linked to dialogue versions.
@@ -303,6 +309,8 @@ Before adopting a new model revision, precision, quantization, LoRA, or workflow
 Runtime ComfyUI Manager installation, package updates, model downloads, and Git changes are disabled in a production worker. A missing dependency is a worker-release defect: quarantine/terminate, then build and test a new image separately.
 
 ## 11. Optional project adaptation
+
+Version 0.10 adds `adaptation-dataset`/`adaptation-artifact` media roles and a non-billable LTX-2.5 LoRA candidate. Before even estimating it, the UI requires exactly one approved dataset manifest and explicit confirmation that the reference-only benchmark failed and dataset rights/provenance/project scope were reviewed. The candidate has no qualified trainer/template and cannot be queued or promoted.
 
 Use an adaptation only after the reference-only locked image/video benchmark fails the agreed identity/style threshold:
 

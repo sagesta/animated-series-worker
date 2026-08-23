@@ -1,6 +1,6 @@
 # YouTube release, packaging, and learning workflow
 
-Status: version 0.9.0 implements local release details, deterministic thumbnail generation, editable captions, human attestations, immutable release records, and a hash-checked manual-upload package. Automatic publishing and analytics remain outside the release. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Status: version 0.10.0 implements project-local release-profile revisions, a source-labelled Idea Library, local release details, deterministic thumbnail generation, editable captions, human attestations, immutable release records, a hash-checked manual-upload package, structured performance snapshots, and human-reviewed learning proposals. Report-file parsing, optional read-only OAuth, and automatic publishing remain outside the release. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 Reference inspected: `darkzOGx/youtube-automation-agent` at commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` on 2026-08-21.
 
@@ -43,7 +43,9 @@ It is not the same as either record below:
 
 A creative age band of `children`, `all-ages`, or any other value never pre-fills the made-for-kids attestation. `youtubePositioning` never proves that a title or thumbnail is truthful. The release UI may show the project direction beside the question as context, but it must leave the legal/platform answer unresolved until the creator decides it.
 
-A `ChannelReleaseProfileVersion` is packaging guidance, not a creative project database. It records:
+The current `ProjectReleaseProfile` is immutable project-local packaging guidance, not a creative project database. It records profile name/revision, audience, language, region/timezone, channel promise, packaging voice/visual direction, default CTA/credits, blocked claims/topics, category, and playlist convention. A later explicit copy/bind operation is still required before one channel profile can be shared across projects safely.
+
+The broader `ChannelReleaseProfileVersion` target records:
 
 - Channel/profile name and optional channel ID after connection.
 - Intended audience, language, region, timezone, and release cadence.
@@ -53,7 +55,7 @@ A `ChannelReleaseProfileVersion` is packaging guidance, not a creative project d
 
 One profile may be bound to several series only after an explicit choice. A series may change to a new profile version prospectively without changing old releases. A film can use a profile or a project-local release brief.
 
-The Idea Library stores a topic or story idea, intended project/profile, source links or manual origin, rationale, audience promise, status, duplicate similarity, continuity conflicts, and editorial decision. Trend and competitor signals are suggestions with dates and provenance; they cannot silently create an episode, rewrite a season arc, or trigger paid generation.
+The current Idea Library stores a project-scoped title, premise, creator/LLM/audience/trend/other source label, rationale, continuity notes, and editorial status. Trend and competitor signals are suggestions; they cannot silently create an episode, rewrite a season arc, or trigger paid generation. Automated duplicate scoring, source-link import, and shared-profile scope remain later slices.
 
 ## 4. Thumbnail Room
 
@@ -83,7 +85,7 @@ The creator sees one editable workspace containing:
 - End-screen/card plan as editorial notes. It does not claim those elements have been created on YouTube.
 - A factual-support view showing which title/description claims come from approved story facts or cited research.
 
-AI may draft options through the provider-neutral writing contract and applicable skills using the exact project-direction, release-profile, final-master, and factual-source versions selected. A human edits and selects them. Validation is deterministic; a numerical `SEO score` does not approve or block release.
+AI may draft options through the provider-neutral writing contract and applicable skills using the exact project context selected. Version 0.10 exposes that governed assistant beside release-profile, Idea Library, thumbnail, title, description, credits, chapter/metadata, and evidence-analysis text fields. A human chooses whether to insert, edit, and save an answer. Made-for-kids, synthetic-media, truthfulness, originality, rights, and full-watch decisions are explanation-only and cannot be inserted by the assistant. Validation is deterministic; a numerical `SEO score` does not approve or block release.
 
 ## 6. Policy and release-attestation gate
 
@@ -128,12 +130,20 @@ The upload checklist gives plain instructions for YouTube Studio and copy-ready 
 
 ## 8. Post-release measurement and learning
 
-After the creator manually records the YouTube video ID/URL, the studio may use one of two explicit paths:
+Version 0.10 accepts a structured local evidence slice after the creator manually records the YouTube video ID:
+
+- choose `manual official`, `official report`, or `rehearsal` as the source;
+- enter the exact start/end window, collection time, supplied metrics, and evidence notes;
+- store an immutable snapshot with metric-definition version and warnings for every unavailable metric;
+- retain but exclude rehearsal, fewer-than-100-view, and views-only records from learning baselines; 100 is a conservative local eligibility floor, not a claim of statistical significance or success;
+- create a separate learning proposal citing one or more snapshots, then record a human approval or rejection with reason.
+
+The broader studio may later use one of two additional explicit paths:
 
 1. Import creator-exported reports/files.
 2. Connect a read-only YouTube/Analytics account using least-privilege OAuth credentials stored in the operating-system vault.
 
-Performance snapshots are immutable, time-windowed observations such as 24 hours, 7 days, and 28 days. They record eligible official metrics, collection time, scope, API/report version, missing-data warnings, and whether the values are real, imported, or a local rehearsal. Simulated values never enter a baseline.
+Performance snapshots are immutable, time-windowed observations such as 24 hours, 7 days, and 28 days. They record eligible official metrics, collection time, scope, API/report version, missing-data warnings, and whether the values are official/manual or a local rehearsal. Rehearsal, fewer-than-100-view, and views-only records remain visible but cannot be cited by a learning proposal. The 100-view floor is a conservative product guardrail, not evidence that 100 views is statistically sufficient. Version 0.10 does not claim to parse a report file or connect an account; `official report` means the creator transcribed a named official report slice into the structured form and retained its evidence notes.
 
 Recommendations compare like with like inside the creator's own channel/profile and clearly separate observation from inference. Examples include `the opening lost viewers earlier than the series median` or `candidate B earned more watch-time share in YouTube's test`. Every recommendation lists its supporting releases and confidence. It remains `proposed` until the creator approves it for a named scope such as one next release, this series, or a future profile version.
 
@@ -141,13 +151,13 @@ Analytics can inform packaging, pacing experiments, and editorial questions. It 
 
 ## 9. Implementation slices
 
-1. Release-profile and Idea Library schemas, local storage, and project/profile isolation.
+1. **Implemented local slice:** project release-profile and Idea Library schemas, storage, revision/source status, and project isolation.
 2. Release Details editor, timeline-derived chapter validator, deterministic metadata/package contracts, and copy-ready export.
 3. Thumbnail Room using approved project media, local typography/layout, responsive previews, candidate lineage, and selection.
 4. Policy/rights/originality attestations plus Release Readiness gate.
 5. Versioned release package and clean-machine verification.
-6. Manual video-link registration and analytics file import.
-7. Optional read-only YouTube Analytics connector and approved-learning workflow after OAuth/security review.
+6. **Implemented local slice:** manual video ID, structured time-windowed evidence capture, rehearsal exclusion, and human-reviewed learning proposals. Report-file parsing remains open.
+7. Optional read-only YouTube Analytics connector after OAuth/security review.
 8. Separately decided post-version-1 private upload/scheduling connector, only if its failure, duplicate, quota, privacy, audit, and rollback model passes.
 
 No slice is complete until its acceptance tests, non-technical wording, security review, source updates, and rollback/portability evidence pass.

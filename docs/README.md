@@ -2,7 +2,7 @@
 
 This folder is the authoritative build specification for Animated Series Studio. If code and documentation disagree, the change is incomplete until they are reconciled and tested.
 
-Current version 0.9.0 implements the local production control plane, canon/media review, governed GPU orchestration, authenticated worker, deterministic local finishing, and manual YouTube package. The paid generation path is implemented behind a strict external qualification lock; it cannot run until exact workflow/model/image/license/benchmark/shutdown evidence creates a production pack and readiness receipt. [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) is the current implementation overlay; [STATUS.md](STATUS.md) separates implemented code from live external proof.
+Current version 0.10.0 implements the local production control plane, project-aware creative-field idea assistance, canon/media review, governed GPU orchestration, authenticated worker, deterministic local finishing, project-local release/idea/performance/learning records, and manual YouTube package. The paid generation path is implemented behind a strict external qualification lock; it cannot run until exact workflow/model/image/license/benchmark/shutdown evidence creates a production pack and readiness receipt. [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) is the current implementation overlay; [STATUS.md](STATUS.md) separates implemented code from live external proof.
 
 ## Product and experience
 

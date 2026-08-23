@@ -200,11 +200,11 @@ Celebrity/public-figure imitation is not a supported default. Reference voices n
 
 A creative writing job proposes a new local version; it never edits a locked version or treats a provider conversation as canonical.
 
-Version 0.9.0 preserves the provider-neutral schema-3 `WritingDraftRecord` behavior and adds separate versioned canon promotion. A creator chooses the accepted proposal, label, and canon kind; the production store appends a new canon record and supersedes the earlier active revision of the same logical kind/label without rewriting it. Storyboard plans and release strategies are supported canon kinds. Removing/updating a skill or changing a provider never rewrites an earlier proposal or canon record.
+Version 0.10.0 preserves the provider-neutral schema-3 `WritingDraftRecord` behavior and adds field-level assistant tasks without changing proposal authority. A creator chooses the accepted proposal, label, and canon kind; the production store appends a new canon record and supersedes the earlier active revision of the same logical kind/label without rewriting it. Applying an assistant suggestion changes only unsaved renderer form text and does not create canon, approval, evidence, spend, or publication. Removing/updating a skill or changing a provider never rewrites an earlier proposal or canon record.
 
 | Field | Meaning |
 | --- | --- |
-| `taskKind` | Story, character, world, outline, scene, dialogue rewrite, continuity, or storyboard planning |
+| `taskKind` | Story/character/world/outline/scene/dialogue/continuity plus creative-direction, visual, voice, motion, control, edit/sound, foley, adaptation, thumbnail, release, or evidence-analysis planning |
 | `sourceVersionIds` | Exact local facts/bibles/scripts selected as context |
 | `providerProfile` | Provider, model, adapter/profile version, and request settings |
 | `contextManifestPath` | User-previewed task-scoped context with hashes |
@@ -233,6 +233,8 @@ A `ControlPackVersion` contains ordered control bindings. Each binding records i
 
 A `LayeredCompositeVersion` pins its source image, foreground/subject/background layer assets, masks, occlusion order, anchor points, safe movement bounds, composite recipe, and preview. Layers are derivatives; the approved source remains immutable.
 
+Version 0.10 implements the precursor media roles (`start-frame-control`, `end-frame-control`, `pose-control`, `depth-control`, `edge-control`, `segmentation-control`, `region-mask`, `motion-track`, `reference-clip`, `foreground-layer`, `subject-layer`, and `background-layer`). Selected approved controls compile to ordered asset ID/kind/label/hash JSON in a candidate job. The richer coordinate/time-basis `ControlPackVersion` and `LayeredCompositeVersion` authoring contracts above remain required before full AT-043/AT-044 acceptance.
+
 ### Creative-QC report and audio-effects cue
 
 A `CreativeQcReportVersion` records checker/model version, expected facts/reference hashes, observations with confidence and frame/time evidence, and reviewer disposition. It has no field capable of approving or rejecting a take.
@@ -243,15 +245,17 @@ An `AudioEffectsCueVersion` records cue type, time range, source mode (`imported
 
 An `AdaptationProfileVersion` records the project scope, purpose (`character` or `style`), rights-approved dataset manifest, captions/tags, exact base model, training recipe, worker/cost record, output hash, benchmark comparison, status, and rollback parent. Status is `draft`, `training`, `candidate`, `approved`, `rejected`, or `archived`; only an approved version can be compiled into a production job.
 
+The current precursor records use `adaptation-dataset` and `adaptation-artifact` media kinds plus a candidate `adaptation-train` job. Its input manifest records ordered dataset identity/hashes, base model, project trigger, repeatable seed, and explicit failed-reference-benchmark/rights confirmations. No current contract promotes the output; the trainer/evaluation/profile lifecycle above remains release-blocked.
+
 ### Production manifest
 
 The manifest is the immutable receipt for a take or derived export. It contains the exact lineage listed in `ARCHITECTURE.md` and must be stored beside the output. A manifest schema change creates a new schema version; old manifests remain readable.
 
 ### YouTube release and learning records
 
-`ChannelReleaseProfileVersion` stores a channel/profile's intended audience, locale/timezone, promise, packaging voice/visual direction, CTA/credit/link blocks, blocked claims/topics, category/playlist conventions, and the project IDs explicitly allowed to bind it. The profile is not a character/style bible and cannot override project facts.
+The current immutable `ProjectReleaseProfile` stores one project's profile ID/revision, audience, language, region/timezone, promise, packaging voice/visual direction, CTA/credit blocks, blocked claims/topics, and category/playlist convention. It is not a character/style bible and cannot override project facts. The broader shared `ChannelReleaseProfileVersion` with explicit project bindings remains a future copy/bind layer.
 
-`ReleaseIdea` stores project/profile scope, topic or story premise, source/evidence links, rationale, duplicate similarity, continuity/brand checks, editorial status, and optional planned production binding. Research signals never create that binding automatically.
+The current `ReleaseIdeaEntry` stores project scope, title/premise, source type and label, rationale, continuity notes, and editorial status. The richer shared-profile/evidence-link/duplicate-similarity/planned-production binding remains future work; research signals never create production automatically.
 
 `ThumbnailCandidateVersion` stores release/project/profile scope; hypothesis; approved source-frame/reference IDs and hashes; generated image job when applicable; exact local text/layout/font recipe; responsive preview derivatives; technical/policy/rights checks; cost; status; and selected/rejected decision. Candidate review and platform experiment evidence are different records.
 
@@ -261,9 +265,9 @@ The manifest is the immutable receipt for a take or derived export. It contains 
 
 `ReleasePackageVersion` binds one immutable master, caption set, selected thumbnail/details/attestation versions, QC/rights artifacts, upload checklist, file inventory/hashes, approvals, and optional later platform video ID. Any input change creates a new version; locking never mutates an earlier package.
 
-`PerformanceSnapshot` stores release/profile/project/platform identity; measurement window; collection time; metric names/values/definitions version; source (`report_import` or `read_only_connector`); missing-data notes; reliability/sample status; and immutable raw-evidence hash. Rehearsal or simulated data is explicitly ineligible for baselines.
+The current `PerformanceSnapshot` stores project/release/platform identity; measurement window; collection time; a pinned metric-definition version; typed nullable metrics; source (`official-report`, `manual-official`, or `rehearsal`); missing-data warnings; evidence notes; and baseline eligibility. Rehearsal, fewer-than-100-view, and views-only snapshots are retained but ineligible; the floor is a conservative workflow guard, not a statistical-success claim. Raw report-file hashes, profile comparison rules, and read-only connector evidence remain future extensions.
 
-`LearningRecommendation` separates observation, inference, confidence, supporting snapshot/release IDs, proposed prospective scope, status (`proposed`, `approved`, `rejected`, `superseded`), and reviewer. Approval can create a future planning constraint but never modifies the evidence or locked creative/release records.
+The current `ReleaseLearning` separates observation, inference, recommendation, confidence, supporting snapshot IDs, proposed scope, status (`proposed`, `approved`, or `rejected`), review reason, and timestamps. Approval records human review but no current compiler applies it automatically; it never modifies evidence or locked creative/release records.
 
 ## 4. State machines
 
@@ -402,7 +406,7 @@ projects/
 
 Media filenames are friendly, but identity comes from manifest IDs and hashes. No code relies on user-visible names being unique.
 
-The current source creates this directory skeleton, `project.json`, `project.sqlite`, revision 1 of the creative-direction sidecar, and production storage on demand. It appends/reads direction, writing, canon, media, jobs/events, timelines, releases and package inventory without overwriting historical records. Media identities come from ULIDs and SHA-256 rather than friendly names; parent/dependency links and active/superseded/approved/rejected states remain project-scoped.
+The current source creates this directory skeleton, `project.json`, `project.sqlite`, revision 1 of the creative-direction sidecar, and production storage on demand. It appends/reads direction, writing, canon, media, jobs/events, timelines, release-profile revisions, ideas, performance snapshots, learnings, releases, and package inventory without overwriting historical records. Media identities come from ULIDs and SHA-256 rather than friendly names; parent/dependency links and active/superseded/approved/rejected states remain project-scoped.
 
 Verified full backups live outside individual project folders under the application backup root:
 
@@ -421,7 +425,7 @@ Incomplete backup and restore staging folders are never indexed as healthy proje
 - The worker receives a session-scoped project token and a project-specific temporary root.
 - Shared asset reuse is a copy operation that creates new project ownership plus lineage back to the source.
 - Global model caches contain models/workflows only, never project bibles or voice references.
-- Release profiles require explicit project bindings; idea, thumbnail, release-details, package, platform-ID, performance, and learning records always carry both project and profile/brief scope so one series cannot inherit another channel identity accidentally.
+- Current release profiles, ideas, release details, packages, platform IDs, performance snapshots, and learnings carry the owning project ID and are read from that project's database. Reuse across series requires the future explicit copy/bind operation; it is never inferred from similar names or direction.
 - Automated tests attempt path traversal, wrong-project IDs, cache collisions, and concurrent jobs across projects.
 
 ## 8. SQLite and file consistency

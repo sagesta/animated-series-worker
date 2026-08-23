@@ -650,6 +650,7 @@ export const WritingProviderEnabledInputSchema = z
 export type WritingProviderEnabledInput = z.infer<typeof WritingProviderEnabledInputSchema>
 
 export const WritingTaskKindSchema = z.enum([
+  'design_creative_direction',
   'develop_character',
   'build_world',
   'outline_episode',
@@ -657,6 +658,15 @@ export const WritingTaskKindSchema = z.enum([
   'draft_scene',
   'rewrite_dialogue',
   'check_continuity',
+  'design_visual_generation',
+  'design_voice_performance',
+  'plan_motion',
+  'plan_advanced_controls',
+  'plan_edit_sound',
+  'plan_foley',
+  'plan_adaptation',
+  'plan_thumbnail',
+  'analyze_performance',
   'plan_youtube_release'
 ])
 export type WritingTaskKind = z.infer<typeof WritingTaskKindSchema>
@@ -1238,6 +1248,18 @@ export const MediaAssetKindSchema = z.enum([
   'style-board',
   'environment-board',
   'storyboard-frame',
+  'start-frame-control',
+  'end-frame-control',
+  'pose-control',
+  'depth-control',
+  'edge-control',
+  'segmentation-control',
+  'region-mask',
+  'motion-track',
+  'reference-clip',
+  'foreground-layer',
+  'subject-layer',
+  'background-layer',
   'voice-line',
   'ambience',
   'effect',
@@ -1247,6 +1269,8 @@ export const MediaAssetKindSchema = z.enum([
   'caption',
   'thumbnail',
   'master-video',
+  'adaptation-dataset',
+  'adaptation-artifact',
   'document'
 ])
 export type MediaAssetKind = z.infer<typeof MediaAssetKindSchema>
@@ -1326,6 +1350,7 @@ export const ProductionJobKindSchema = z.enum([
   'lip-sync',
   'creative-qc',
   'foley',
+  'adaptation-train',
   'timeline-render',
   'caption-export',
   'thumbnail-render',
@@ -1732,6 +1757,163 @@ export const CreateReleasePackageInputSchema = z
   .strict()
 export type CreateReleasePackageInput = z.infer<typeof CreateReleasePackageInputSchema>
 
+export const ProjectReleaseProfileSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    profileId: UlidSchema,
+    projectId: UlidSchema,
+    revision: z.number().int().positive(),
+    name: z.string().trim().min(2).max(160),
+    audience: z.string().trim().min(2).max(500),
+    language: z.string().trim().min(2).max(80),
+    region: z.string().trim().max(120),
+    timezone: z.string().trim().min(1).max(120),
+    channelPromise: z.string().trim().min(10).max(1_500),
+    packagingVoice: z.string().trim().min(2).max(1_000),
+    visualDirection: z.string().trim().min(2).max(1_000),
+    defaultCta: z.string().trim().max(500),
+    defaultCredits: z.string().trim().max(2_000),
+    blockedClaims: z.array(z.string().trim().min(1).max(200)).max(30),
+    blockedTopics: z.array(z.string().trim().min(1).max(200)).max(30),
+    category: z.string().trim().min(1).max(100),
+    playlistConvention: z.string().trim().max(500),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ProjectReleaseProfile = z.infer<typeof ProjectReleaseProfileSchema>
+
+export const SaveProjectReleaseProfileInputSchema = ProjectReleaseProfileSchema.omit({
+  schemaVersion: true,
+  profileId: true,
+  revision: true,
+  createdAt: true,
+  updatedAt: true
+})
+  .extend({
+    profileId: UlidSchema.nullable(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict()
+export type SaveProjectReleaseProfileInput = z.infer<typeof SaveProjectReleaseProfileInputSchema>
+
+export const ReleaseIdeaEntrySchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    ideaId: UlidSchema,
+    projectId: UlidSchema,
+    title: z.string().trim().min(2).max(200),
+    premise: z.string().trim().min(10).max(4_000),
+    sourceType: z.enum(['creator', 'llm-proposal', 'audience-request', 'trend-signal', 'other']),
+    sourceLabel: z.string().trim().min(2).max(300),
+    rationale: z.string().trim().min(10).max(2_000),
+    continuityNotes: z.string().trim().max(2_000),
+    status: z.enum(['backlog', 'reviewing', 'selected', 'rejected']),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type ReleaseIdeaEntry = z.infer<typeof ReleaseIdeaEntrySchema>
+
+export const SaveReleaseIdeaInputSchema = ReleaseIdeaEntrySchema.omit({
+  schemaVersion: true,
+  ideaId: true,
+  createdAt: true,
+  updatedAt: true
+})
+  .extend({ ideaId: UlidSchema.nullable() })
+  .strict()
+export type SaveReleaseIdeaInput = z.infer<typeof SaveReleaseIdeaInputSchema>
+
+export const PerformanceMetricsSchema = z
+  .object({
+    views: z.number().int().nonnegative(),
+    impressions: z.number().int().nonnegative().nullable(),
+    impressionsClickThroughRatePct: z.number().min(0).max(100).nullable(),
+    averageViewDurationSeconds: z.number().nonnegative().nullable(),
+    estimatedWatchTimeHours: z.number().nonnegative().nullable(),
+    likes: z.number().int().nonnegative().nullable(),
+    comments: z.number().int().nonnegative().nullable(),
+    shares: z.number().int().nonnegative().nullable(),
+    subscribersGained: z.number().int().nonnegative().nullable(),
+    retentionAt30SecondsPct: z.number().min(0).max(100).nullable()
+  })
+  .strict()
+export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>
+
+export const PerformanceSnapshotSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    snapshotId: UlidSchema,
+    projectId: UlidSchema,
+    releaseId: UlidSchema.nullable(),
+    youtubeVideoId: z.string().regex(/^[A-Za-z0-9_-]{6,32}$/),
+    source: z.enum(['official-report', 'manual-official', 'rehearsal']),
+    windowStart: z.string().date(),
+    windowEnd: z.string().date(),
+    collectedAt: z.string().datetime({ offset: true }),
+    metricDefinitionVersion: z.literal('youtube-analytics-2026-08'),
+    metrics: PerformanceMetricsSchema,
+    missingDataWarnings: z.array(z.string().trim().min(1).max(500)).max(20),
+    evidenceNotes: z.string().trim().min(10).max(4_000),
+    baselineEligible: z.boolean(),
+    createdAt: z.string().datetime({ offset: true })
+  })
+  .strict()
+export type PerformanceSnapshot = z.infer<typeof PerformanceSnapshotSchema>
+
+export const SavePerformanceSnapshotInputSchema = PerformanceSnapshotSchema.omit({
+  schemaVersion: true,
+  snapshotId: true,
+  metricDefinitionVersion: true,
+  baselineEligible: true,
+  createdAt: true
+}).refine((value) => value.windowEnd >= value.windowStart, {
+  message: 'The performance window must end on or after its start date.',
+  path: ['windowEnd']
+})
+export type SavePerformanceSnapshotInput = z.infer<typeof SavePerformanceSnapshotInputSchema>
+
+export const ReleaseLearningSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    learningId: UlidSchema,
+    projectId: UlidSchema,
+    snapshotIds: z.array(UlidSchema).min(1).max(30),
+    observation: z.string().trim().min(10).max(3_000),
+    inference: z.string().trim().min(10).max(3_000),
+    recommendation: z.string().trim().min(10).max(3_000),
+    confidence: z.enum(['low', 'medium', 'high']),
+    scope: z.enum(['next-release', 'this-project', 'future-profile-version']),
+    status: z.enum(['proposed', 'approved', 'rejected']),
+    reviewReason: z.string().trim().max(2_000).nullable(),
+    createdAt: z.string().datetime({ offset: true }),
+    reviewedAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict()
+export type ReleaseLearning = z.infer<typeof ReleaseLearningSchema>
+
+export const SaveReleaseLearningInputSchema = ReleaseLearningSchema.omit({
+  schemaVersion: true,
+  learningId: true,
+  status: true,
+  reviewReason: true,
+  createdAt: true,
+  reviewedAt: true
+}).strict()
+export type SaveReleaseLearningInput = z.infer<typeof SaveReleaseLearningInputSchema>
+
+export const ReviewReleaseLearningInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    learningId: UlidSchema,
+    decision: z.enum(['approved', 'rejected']),
+    reason: z.string().trim().min(10).max(2_000),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type ReviewReleaseLearningInput = z.infer<typeof ReviewReleaseLearningInputSchema>
+
 export const FinishWorkspaceSchema = z
   .object({
     projectId: UlidSchema,
@@ -1739,6 +1921,10 @@ export const FinishWorkspaceSchema = z
     releaseDetails: z.array(ReleaseDetailsSchema),
     attestations: z.array(ReleaseAttestationsSchema),
     releasePackages: z.array(ReleasePackageSchema),
+    releaseProfiles: z.array(ProjectReleaseProfileSchema).default([]),
+    ideas: z.array(ReleaseIdeaEntrySchema).default([]),
+    performanceSnapshots: z.array(PerformanceSnapshotSchema).default([]),
+    learnings: z.array(ReleaseLearningSchema).default([]),
     blockers: z.array(z.string().min(1).max(300))
   })
   .strict()
@@ -2176,6 +2362,11 @@ export const IPC_CHANNELS = {
   finishLockTimeline: 'studio:finish:lock-timeline',
   finishSaveReleaseDetails: 'studio:finish:save-release-details',
   finishSaveAttestations: 'studio:finish:save-attestations',
+  finishSaveReleaseProfile: 'studio:finish:save-release-profile',
+  finishSaveIdea: 'studio:finish:save-idea',
+  finishSavePerformanceSnapshot: 'studio:finish:save-performance-snapshot',
+  finishSaveLearning: 'studio:finish:save-learning',
+  finishReviewLearning: 'studio:finish:review-learning',
   finishCreateReleasePackage: 'studio:finish:create-release-package',
   finishGetLocalMediaStatus: 'studio:finish:get-local-media-status',
   finishInstallLocalMediaTools: 'studio:finish:install-local-media-tools',
@@ -2251,6 +2442,11 @@ export interface StudioApi {
     lockTimeline(input: LockProductionTimelineInput): Promise<FinishActionResult>
     saveReleaseDetails(input: SaveReleaseDetailsInput): Promise<FinishActionResult>
     saveAttestations(input: SaveReleaseAttestationsInput): Promise<FinishActionResult>
+    saveReleaseProfile(input: SaveProjectReleaseProfileInput): Promise<FinishActionResult>
+    saveIdea(input: SaveReleaseIdeaInput): Promise<FinishActionResult>
+    savePerformanceSnapshot(input: SavePerformanceSnapshotInput): Promise<FinishActionResult>
+    saveLearning(input: SaveReleaseLearningInput): Promise<FinishActionResult>
+    reviewLearning(input: ReviewReleaseLearningInput): Promise<FinishActionResult>
     createReleasePackage(input: CreateReleasePackageInput): Promise<FinishActionResult>
     getLocalMediaStatus(): Promise<LocalMediaRuntimeStatus>
     installLocalMediaTools(input: InstallLocalMediaToolsInput): Promise<LocalMediaInstallResult>

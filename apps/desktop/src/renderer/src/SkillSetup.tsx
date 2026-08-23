@@ -2,6 +2,7 @@ import { useEffect, useState, type JSX } from 'react'
 import type { ExternalSkillStatus, ProjectSummary, WritingTaskKind } from '@studio/contracts'
 
 const taskLabels: Record<WritingTaskKind, string> = {
+  design_creative_direction: 'Audience and creative direction',
   develop_character: 'Character development',
   build_world: 'World building',
   outline_episode: 'Episode or film outlines',
@@ -9,6 +10,15 @@ const taskLabels: Record<WritingTaskKind, string> = {
   draft_scene: 'Scene drafting',
   rewrite_dialogue: 'Dialogue rewriting',
   check_continuity: 'Continuity checks',
+  design_visual_generation: 'Image and visual prompts',
+  design_voice_performance: 'Voice and performance direction',
+  plan_motion: 'Movement and camera plans',
+  plan_advanced_controls: 'Pose, depth, mask, layer, and motion controls',
+  plan_edit_sound: 'Timeline, caption, and sound plans',
+  plan_foley: 'Ambience, effects, and foley plans',
+  plan_adaptation: 'Optional project adaptation plans',
+  plan_thumbnail: 'Truthful thumbnail concepts',
+  analyze_performance: 'Performance evidence analysis',
   plan_youtube_release: 'YouTube title, SEO, thumbnail, and release plans'
 }
 

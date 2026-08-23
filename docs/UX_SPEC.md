@@ -1,6 +1,6 @@
 # Non-technical user experience specification
 
-Current implementation note (0.9.0): Home, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, and Settings are wired to local production services. Media is viewed inside the app; ComfyUI is headless. Paid start remains visibly locked until qualification, with exact input, estimate, approval, and separate start guidance. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): Home, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, and Settings are wired to local production services. Applicable creative/planning fields offer a governed project-aware idea assistant. Media is viewed inside the app; ComfyUI is headless. Paid start remains visibly locked until qualification, with exact input, estimate, approval, and separate start guidance. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Experience goal
 
@@ -8,9 +8,9 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.9.0
+### Current implementation — version 0.10.0
 
-The production library, guided series/film wizard, overview, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, Settings, backup/recovery, protected providers, and declarative skills are wired to production services. Proposals remain separate from canon; generated/imported media remains separate from approval. Generate shows input order, compatible memory, expected/hard maximum, cost confirmation, and a separate start confirmation. Exact remote candidates remain visibly locked until the worker qualification receipt exists. The creator reviews media and finishes locally without opening ComfyUI or a terminal. Higher-risk executable/MCP skills, advanced controls, generated foley, adaptation, analytics, and automatic publishing remain absent.
+The production library, guided series/film wizard, overview, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, Settings, backup/recovery, protected providers, and declarative skills are wired to production services. Proposals remain separate from canon; generated/imported media remains separate from approval. A reusable assistant supplies reviewable ideas beside applicable text fields using exact context and skill previews. Generate shows input order, compatible memory, expected/hard maximum, cost confirmation, and a separate start confirmation. Exact remote candidates remain visibly locked until the worker qualification receipt exists. The creator reviews media and finishes locally without opening ComfyUI or a terminal. Local control/layer/dataset roles and control/foley/adaptation candidates exist, as do structured performance/learning records; higher-risk executable/MCP skills, exact advanced engines/trainers, report parsing/read-only OAuth, and automatic publishing remain absent.
 
 ### Shared field and warning behavior
 
@@ -170,6 +170,18 @@ The Skills settings page shows source, publisher, version, task types, requested
 
 Version 0.8.0 implements this pattern for declarative JSON writing skills. `Install skill file` opens the Windows file picker; the app explains that nothing in the package is executed. Each card shows the self-declared publisher/source, unverified/verified signature state, short package fingerprint, matching tasks, requested context, compatibility, and a checkbox for each existing production. Updating to a new version clears every project checkbox. Removal uses a second confirmation and retains historical proposal receipts. The Creative Room refreshes its exact plan when the task changes, refuses a stale or blocked plan, and shows successful/failed receipts on the saved proposal. Higher-risk skill classes remain absent rather than appearing disabled without explanation.
 
+### Project-aware help beside creative fields
+
+Version 0.10 reuses the Creative Room's governed path as a modal assistant beside creative-direction, cast/world, storyboard, generation, edit/sound, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text groups:
+
+1. Choose the field and describe the kind of help wanted.
+2. Review the connected controlled provider/model, exact project context, and matching required/optional skills.
+3. Tick one potentially paid text-request confirmation; no GPU starts.
+4. Review the saved proposal and deliberately choose a summary or alternative to place in the unsaved field.
+5. Edit and save through the field's normal validation and approval boundary.
+
+The assistant never auto-saves and cannot write secrets, cost limits, measured metrics, exact reference transcripts, canon, approvals, rights/consent, made-for-kids/synthetic/truth/originality/full-watch decisions, GPU starts, or publishing. A human-only target may ask the model to explain considerations but exposes no **Use** action.
+
 ### Changing a character's visual style
 
 The character page provides **Create style/redesign version**. It asks what is changing—rendering style, proportions, age/story state, wardrobe, hair/details, or a complete approved redesign—and where it applies:
@@ -226,6 +238,8 @@ The default panel uses plain choices:
 - Layered parallax.
 
 The UI creates or imports the underlying pose/depth/edge/segmentation/mask/motion assets and previews them over the shot. It shows unsupported combinations before cost approval. Numerical node strengths and ComfyUI graph fields remain in an optional expert drawer.
+
+The current version implements import/review media roles and ordered manifest validation in Generate. Overlay preview, coordinate/time-basis editing, automatic control derivation, and the expert strength editor remain future depth; the text assistant can help plan which controls are needed but cannot fabricate an approved control asset.
 
 ## 7. Generate screen
 
@@ -299,11 +313,11 @@ The app creates a video, captions, manifest, and QC report. Public upload remain
 
 ## 10. YouTube release room
 
-The Release room opens only when an approved master exists. It keeps public packaging separate from story and shot production while retaining exact links to the final episode or film.
+Release planning can begin before picture lock; locking a package still requires the approved master and all release inputs. The room keeps public packaging separate from story and shot production while retaining exact links to the final episode or film.
 
 The normal flow is:
 
-1. Select or create the correct versioned channel release profile; a one-off film may use a project-local release brief.
+1. Select or create the current project-local release-profile revision. Cross-project channel-profile reuse remains unavailable until an explicit copy/bind flow exists.
 2. Open **Thumbnail Room**, choose approved source frames or an authorized new illustration, compare candidates at large/desktop/phone sizes, and select one. The screen says `Candidate review`, never `A/B test`, unless a real YouTube Test & Compare report has been imported.
 3. Open **Release Details** to review title variants, description, timeline-derived chapters, captions/languages, category, playlist placement, credits, links, tags, hashtags, and end-screen notes. The studio shows a factual checklist and truncation previews, not a universal `SEO score`.
 4. Complete explicit human questions for audience, altered/synthetic-media disclosure, truthful packaging, originality, rights/credits, and the full-master watch. `Unresolved` blocks the package.
@@ -311,7 +325,7 @@ The normal flow is:
 6. Select **Lock upload package**. The studio writes an immutable, hash-verified folder with the master, selected thumbnail, captions, copy-ready details, chapters, credits/rights, attestations, QC report, checklist, and manifests.
 7. Select **Open package folder** and follow the plain-language YouTube Studio checklist. Version 1 does not sign in, paste fields, schedule, or publish for the creator.
 
-After publication, the creator may attach the video URL/ID and import an official report. A later optional read-only connection can collect eligible analytics without permission to edit the channel. Performance observations and proposed lessons show their evidence and confidence; only a human can approve a lesson for future work. They cannot rewrite a released episode or start paid generation.
+After publication, the creator may enter the video ID and a structured metric window copied from an official source, or label a rehearsal. Missing values stay null with warnings and rehearsal is excluded from baselines. The creator can propose an observation/inference/recommendation citing selected snapshots and explicitly approve or reject it with a reason. Report-file parsing and a later optional read-only connection remain future work. Lessons are not applied automatically and cannot rewrite a released episode, change YouTube, or start paid generation.
 
 ## 11. Error language
 

@@ -1,8 +1,8 @@
 # Production implementation and qualification guide
 
-Version: 0.9.0
+Version: 0.10.0
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 Status: implemented local control plane; paid generation locked pending controlled GPU qualification
 
@@ -15,13 +15,14 @@ The application is a local-first Windows production control room for multiple an
 - isolated local projects, versioned creative direction, proposals, canon, media, approvals, dependencies, job events, cost records, timelines, releases, backups, and recovery records;
 - protected RunPod, OpenAI, Anthropic, and Gemini keys that are never returned to the renderer or written into projects;
 - project-scoped declarative writing skills with visible routing plans and exact execution receipts;
+- one governed project-aware idea assistant across applicable creative/planning fields, using the same protected provider, exact context preview, declarative-skill plan, paid-text confirmation, and schema-3 proposal lineage;
 - a pinned upstream `shuohao-skills` adapter that validates and imports supported story packages without modifying the submodule;
 - in-app image, audio, and video viewing through a restricted local-media protocol;
 - character/world/storyboard media import and approval, versioned canon promotion, scoped child-asset correction, and stale-dependency counts;
-- a governed GPU workflow catalogue for Qwen image generation/editing, Qwen3-TTS, LTX-2.5 motion/dialogue, LatentSync lip repair, and warning-only technical QC;
+- a governed GPU workflow catalogue for Qwen image generation/editing, Qwen3-TTS, LTX-2.5 motion/dialogue, LatentSync lip repair, warning-only technical QC, plus deliberately locked candidates for control-guided Qwen/LTX, separate foley, and optional project adaptation;
 - official RunPod Pod lifecycle calls, lease reconciliation, one-GPU-per-job concurrency, cost approval, separate start confirmation, hard deadlines, idle shutdown, cancellation, provider termination, and audit-preserving worker-close records;
 - an authenticated worker gateway with ComfyUI bound to `127.0.0.1:8188`, allowlisted workflow IDs, parameter schemas, node allowlists, exact templates, verified model paths, resumable 4 MiB file transfers, output hashes, purge, and recovery;
-- deterministic local FFmpeg installation, rough-cut rendering, editable SRT/VTT captions, thumbnails, local technical verification, immutable release records, and a verified manual YouTube upload package.
+- deterministic local FFmpeg installation, rough-cut rendering, editable SRT/VTT captions, thumbnails, local technical verification, project-local versioned release profiles/ideas/performance/learning records, immutable release records, and a verified manual YouTube upload package.
 
 The source implementation is broad, but the shipped candidate deliberately has no production workflow pack. It cannot start paid generation until the external qualification gate in section 8 produces exact evidence. This is a safety property, not unfinished button wiring.
 
@@ -30,11 +31,11 @@ The source implementation is broad, but the shipped candidate deliberately has n
 1. Create a series or one-off film. Its files and history stay separate from every other project.
 2. Complete the Audience & Creative Direction profile. Required fields have asterisks, live length/range help, and a correction popup.
 3. Connect a writing provider and optionally enable reviewed writing skills for this project.
-4. Create proposals for the bible, characters, world, outline, scenes, dialogue, continuity, storyboard plan, and YouTube release strategy.
+4. Create proposals for the bible, characters, world, outline, scenes, dialogue, continuity, storyboard plan, and YouTube release strategy. Beside applicable fields, use **Generate ideas** to see the exact project context, provider/model, and skills before approving one text request; a suggestion changes nothing until you choose it.
 5. Review and promote only accepted proposal sections into versioned canon. Revisions do not erase prior facts.
 6. Import or generate character boards, style boards, environment boards, storyboard frames, voice references, and other source media. Approve only usable assets.
 7. Build a timed storyboard/animatic locally before expensive motion work. The storyboard defines intent; the locked job also carries the exact approved files, canon versions, workflow version, parameters, seed, and cost limit needed to reproduce execution.
-8. In Generate, choose one operation. The app validates required input count and order, displays compatible GPUs, and calculates expected and maximum cost without renting anything.
+8. In Generate, choose one operation. The app validates required input count and order, displays compatible GPUs, and calculates expected and maximum cost without renting anything. Advanced controls are serialized as ordered approved roles/hashes; unsupported roles block. Adaptation additionally requires an approved dataset plus explicit benchmark-failure and rights confirmations.
 9. Approve that exact maximum. This saves a local record but still does not start a GPU.
 10. Give a separate start confirmation. Only a qualified workflow can now create one worker lease. Independent jobs may run concurrently up to the saved limit of one to three GPUs.
 11. The app uploads verified inputs, monitors the job, downloads outputs, verifies hashes, closes the worker, and preserves its IDs and events for audit. A failed or uncertain call is reconciled by lease before any retry.
@@ -51,6 +52,9 @@ The source implementation is broad, but the shipped candidate deliberately has n
 | Draft and final motion | LTX-2.5 split components in ComfyUI | LTX remains the only version-1 generative video engine; Wan is absent |
 | Audio-conditioned dialogue motion | LTX-2.5 candidate workflow | Approved dialogue remains the source audio; no silent replacement |
 | Targeted mouth/timing repair | LatentSync 1.6 isolated Python runner | A post-process repair tool, not a second video-generation engine; video first and approved audio second |
+| Control-guided board/shot | Qwen/LTX candidate definitions | Neutral start/end/pose/depth/edge/segmentation/mask/motion/reference roles compile to ordered manifests; paid execution stays locked until exact adapters qualify |
+| Ambience/effects/foley | Rights-aware candidate contract | Stays separate from dialogue/music; exact model, license, runner, timing and quality fixtures remain unresolved |
+| Optional project adaptation | LTX-2.5 LoRA candidate contract | Requires one rights-reviewed project dataset and recorded failed reference-only benchmark; trainer/evaluation/promotion remains locked |
 | Editorial, captions, thumbnail, package | Local FFmpeg and deterministic file operations | No rented GPU and only approved inputs |
 
 LTX Dub-It is not used in this baseline because the official feature guide validated it for LTX-2.3 while LTX-2.5 support was still in development. The isolated LatentSync path avoids silently mixing an incompatible LTX checkpoint into the main worker.
@@ -147,9 +151,11 @@ The promotion tool refuses stale pack fingerprints, model/source mismatches, nul
 - The remote watchdog uses the hard UTC deadline even if the desktop disappears. The gateway also exits after the configured authenticated-idle period.
 - Estimates show one GPU’s current hourly price, expected minutes, hard maximum minutes, and maximum total. They are not presented as actual provider invoices.
 
-## 10. Release and YouTube boundaries
+## 10. Release, performance evidence, and YouTube boundaries
 
 The Finish room renders from an approved timeline, creates editable captions, renders a deterministic thumbnail from authorized imagery and text, verifies the master, records explicit human attestations, and creates an immutable manual-upload package with file hashes.
+
+It also stores immutable project-local release-profile revisions, source-labelled ideas, and time-windowed structured performance snapshots. Snapshots pin the metric-definition version, identify official/manual/rehearsal source, warn about missing metrics, and exclude rehearsal values from baselines. A learning proposal cites snapshot IDs and separates observation, inference, recommendation, confidence, and scope; only a creator can approve or reject it with a reason. This implementation accepts structured manual entry. A report-file parser and optional read-only OAuth connector remain separate future work.
 
 Title and description validation uses current YouTube field limits. The package retains disclosure and rights decisions, but the app does not decide made-for-kids status or whether a synthetic-content disclosure legally applies. It does not auto-publish, promise ranking, keyword-stuff, or call local variants a real audience experiment.
 
@@ -163,7 +169,7 @@ The following are deliberately not claimed complete on this development machine:
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
 - no 20–35 minute pilot episode or one-off film has passed human continuity, motion, lip, audio, recovery, and budget acceptance;
 - the Windows artifact is not yet a signed production installer and has not passed a clean-machine non-technical acceptance run;
-- optional analytics and automatic YouTube publishing remain outside this release.
+- report-file analytics import, optional read-only YouTube OAuth, and automatic YouTube publishing remain outside this release; structured local performance evidence and human-reviewed learning are implemented without any account mutation.
 
 These are release evidence tasks, not permission to bypass the locks. [BUILD_BACKLOG.md](BUILD_BACKLOG.md) remains the ledger until they pass.
 

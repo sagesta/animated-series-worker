@@ -14,6 +14,7 @@ import {
 import { ChoiceRequirement, RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 
 const taskOptions: Array<{ value: WritingTaskKind; label: string }> = [
+  { value: 'design_creative_direction', label: 'Design audience and creative direction' },
   { value: 'develop_character', label: 'Develop a character' },
   { value: 'build_world', label: 'Build the story world' },
   { value: 'outline_episode', label: 'Outline an episode or film' },
@@ -21,6 +22,15 @@ const taskOptions: Array<{ value: WritingTaskKind; label: string }> = [
   { value: 'draft_scene', label: 'Draft a scene' },
   { value: 'rewrite_dialogue', label: 'Rewrite dialogue' },
   { value: 'check_continuity', label: 'Check continuity' },
+  { value: 'design_visual_generation', label: 'Create image and visual prompts' },
+  { value: 'design_voice_performance', label: 'Design a character voice and delivery' },
+  { value: 'plan_motion', label: 'Plan movement and camera direction' },
+  { value: 'plan_advanced_controls', label: 'Plan pose, depth, mask, and motion controls' },
+  { value: 'plan_edit_sound', label: 'Plan timeline, captions, and sound' },
+  { value: 'plan_foley', label: 'Plan ambience, effects, and foley' },
+  { value: 'plan_adaptation', label: 'Assess an optional character/style adaptation' },
+  { value: 'plan_thumbnail', label: 'Plan truthful thumbnail concepts' },
+  { value: 'analyze_performance', label: 'Analyze imported performance evidence' },
   { value: 'plan_youtube_release', label: 'Plan title, SEO, thumbnail, and release' }
 ]
 
@@ -39,6 +49,7 @@ function modelLabel(provider: WritingProvider, modelId: string, displayName: str
 }
 
 const taskCanonKind: Record<WritingTaskKind, CanonKind> = {
+  design_creative_direction: 'series-bible',
   develop_character: 'character',
   build_world: 'world',
   outline_episode: 'episode-outline',
@@ -46,6 +57,15 @@ const taskCanonKind: Record<WritingTaskKind, CanonKind> = {
   draft_scene: 'script',
   rewrite_dialogue: 'script',
   check_continuity: 'series-bible',
+  design_visual_generation: 'visual-style',
+  design_voice_performance: 'voice',
+  plan_motion: 'storyboard',
+  plan_advanced_controls: 'storyboard',
+  plan_edit_sound: 'storyboard',
+  plan_foley: 'storyboard',
+  plan_adaptation: 'visual-style',
+  plan_thumbnail: 'release-strategy',
+  analyze_performance: 'release-strategy',
   plan_youtube_release: 'release-strategy'
 }
 

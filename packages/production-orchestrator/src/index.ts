@@ -206,6 +206,18 @@ function outputKind(jobKind: string, configured: unknown): MediaAssetKind {
     'style-board',
     'environment-board',
     'storyboard-frame',
+    'start-frame-control',
+    'end-frame-control',
+    'pose-control',
+    'depth-control',
+    'edge-control',
+    'segmentation-control',
+    'region-mask',
+    'motion-track',
+    'reference-clip',
+    'foreground-layer',
+    'subject-layer',
+    'background-layer',
     'voice-line',
     'ambience',
     'effect',
@@ -214,6 +226,8 @@ function outputKind(jobKind: string, configured: unknown): MediaAssetKind {
     'caption',
     'thumbnail',
     'master-video',
+    'adaptation-dataset',
+    'adaptation-artifact',
     'document'
   ])
   const selected = allowed.safeParse(configured)
@@ -221,6 +235,8 @@ function outputKind(jobKind: string, configured: unknown): MediaAssetKind {
   if (jobKind === 'qwen3-tts') return 'voice-line'
   if (jobKind.startsWith('ltx') || jobKind === 'lip-sync') return 'video-take'
   if (jobKind === 'creative-qc') return 'document'
+  if (jobKind === 'foley') return 'effect'
+  if (jobKind === 'adaptation-train') return 'adaptation-artifact'
   return 'character-board'
 }
 

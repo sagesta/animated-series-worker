@@ -96,9 +96,11 @@ The six-step production wizard is:
 5. Starting point — original idea or later import.
 6. Review — confirm the project and direction before local creation.
 
-The overview displays the active revision and lets the creator add or revise it. Required direction fields show an asterisk and live minimum guidance; attempting to continue or save while a required value is missing or short opens one correction summary without writing a revision. This is a local, no-GPU, no-provider action. The Creative Room includes the active profile by default, shows it in the exact context preview, and records its ID, revision, timestamp, and SHA-256 in every new schema-2 writing proposal.
+The overview displays the active revision and lets the creator add or revise it. Required direction fields show an asterisk and live minimum guidance; attempting to continue or save while a required value is missing or short opens one correction summary without writing a revision. Saving the profile is a local, no-GPU, no-provider action. Version 0.10 adds **Generate direction ideas** beside the direction form for audience, niche, genre, setting, promise, tone, themes, format, boundaries, visual style, positioning, comparables, and differentiation. That optional action previews exact project context/skills, requires a separate potentially paid text confirmation, stores a proposal, and inserts only a creator-selected answer into the unsaved field. Creative age-band policy meaning remains explanation-only.
 
-## 6. Planned compilation into the full production workflow
+The Creative Room and field assistant include the active profile by default, show it in the exact context preview, and record its ID, revision, timestamp, and SHA-256 in every new schema-3 writing proposal.
+
+## 6. Compilation into the full production workflow
 
 The profile is an input, not an all-powerful prompt. Each stage combines it with the exact approved records relevant to that job:
 
@@ -115,7 +117,7 @@ The profile is an input, not an all-powerful prompt. Each stage combines it with
 | Release details | audience, niche, promise, themes, positioning | factual episode/package sources, rights/credits, timeline chapters |
 | Release attestations | no decision authority | creator's explicit current YouTube/policy/rights answers |
 
-Every compiled task must pin the exact profile version. Revising the profile marks affected future or unapproved work stale through the planned dependency engine; it does not automatically invalidate or regenerate approved history. The creator sees the affected scope and chooses what to revisit.
+Every writing request now pins the exact profile version. Every media/upstream/release compiler must do the same as it qualifies. Revising the profile never automatically invalidates, rewrites, or regenerates approved history; complete cross-stage dependency impact remains part of full AT-059 acceptance.
 
 ## 7. Multiple series and films
 
@@ -125,4 +127,4 @@ Possible future reusable channel defaults must be copied or explicitly bound thr
 
 ## 8. Acceptance boundary
 
-The current slice proves local creation, immutable revision, project isolation, renderer editing, and exact writing-context lineage. Full acceptance additionally requires each future outline, character, art, board, image, voice, video, thumbnail, and release compiler to pin the profile version; impact preview and stale propagation to work across those records; and representative non-technical users to complete both a series and a one-off-film flow without confusing creative guidance with platform declarations.
+The current slice proves local creation, immutable revision, project isolation, renderer editing, exact writing-context lineage, and review-only contextual idea generation for the direction fields. Full acceptance additionally requires each upstream/image/voice/video/thumbnail/release compiler to pin the profile version, impact preview and stale propagation across those records, and representative non-technical users to complete both a series and a one-off-film flow without confusing creative guidance with platform declarations.

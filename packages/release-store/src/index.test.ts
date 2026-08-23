@@ -217,4 +217,182 @@ describe('timeline and manual release package', () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'invalid-input' } })
     projects.close()
   })
+
+  it('keeps release profiles, ideas, performance evidence, and approved learnings project-scoped', () => {
+    const root = makeRoot()
+    const projects = new ProjectStore({ workspaceRoot: join(root, 'projects') })
+    const project = projects.createProject(projectInput())
+    const production = new ProductionStore({ projectStore: projects, now: () => now })
+    const release = new ReleaseStore({
+      projectStore: projects,
+      productionStore: production,
+      now: () => now
+    })
+
+    const firstProfile = release.saveProjectReleaseProfile({
+      projectId: project.manifest.id,
+      profileId: null,
+      expectedUpdatedAt: null,
+      name: 'Lantern Keepers channel profile',
+      audience: 'Families who enjoy adventurous fantasy stories.',
+      language: 'English',
+      region: 'Nigeria',
+      timezone: 'Africa/Lagos',
+      channelPromise: 'Warm community mysteries in a floating coastal kingdom.',
+      packagingVoice: 'Warm, intriguing, specific, and never sensational.',
+      visualDirection: 'Painted lantern light, one expressive face, and readable silhouettes.',
+      defaultCta: 'Join the keepers for the next mystery.',
+      defaultCredits: 'Original animated production.',
+      blockedClaims: ['true story', 'guaranteed'],
+      blockedTopics: ['unrelated celebrity news'],
+      category: 'Film & Animation',
+      playlistConvention: 'The Lantern Keepers · Season {season}'
+    })
+    if (!firstProfile.ok) throw new Error(firstProfile.error.message)
+    const profile = firstProfile.workspace.releaseProfiles[0]!
+    const revisedProfile = release.saveProjectReleaseProfile({
+      projectId: project.manifest.id,
+      profileId: profile.profileId,
+      expectedUpdatedAt: profile.updatedAt,
+      name: profile.name,
+      audience: profile.audience,
+      language: profile.language,
+      region: profile.region,
+      timezone: profile.timezone,
+      channelPromise: `${profile.channelPromise} Every title names the real mystery.`,
+      packagingVoice: profile.packagingVoice,
+      visualDirection: profile.visualDirection,
+      defaultCta: profile.defaultCta,
+      defaultCredits: profile.defaultCredits,
+      blockedClaims: profile.blockedClaims,
+      blockedTopics: profile.blockedTopics,
+      category: profile.category,
+      playlistConvention: profile.playlistConvention
+    })
+    if (!revisedProfile.ok) throw new Error(revisedProfile.error.message)
+    expect(revisedProfile.workspace.releaseProfiles.map((item) => item.revision)).toEqual([2, 1])
+
+    const idea = release.saveIdea({
+      projectId: project.manifest.id,
+      ideaId: null,
+      title: 'The lantern that remembered',
+      premise: 'A damaged harbour lantern begins replaying a warning from the city founder.',
+      sourceType: 'llm-proposal',
+      sourceLabel: 'Reviewed local writing proposal',
+      rationale: 'It explores memory and community while reusing approved locations.',
+      continuityNotes: 'Confirm the founder chronology before outlining.',
+      status: 'backlog'
+    })
+    expect(idea).toMatchObject({ ok: true, workspace: { ideas: [{ status: 'backlog' }] } })
+
+    const snapshot = release.savePerformanceSnapshot({
+      projectId: project.manifest.id,
+      releaseId: null,
+      youtubeVideoId: 'Lantern_001',
+      source: 'manual-official',
+      windowStart: '2026-08-01',
+      windowEnd: '2026-08-07',
+      collectedAt: now.toISOString(),
+      metrics: {
+        views: 1_200,
+        impressions: 10_000,
+        impressionsClickThroughRatePct: 6.5,
+        averageViewDurationSeconds: 420,
+        estimatedWatchTimeHours: 140,
+        likes: 150,
+        comments: 24,
+        shares: null,
+        subscribersGained: 18,
+        retentionAt30SecondsPct: null
+      },
+      missingDataWarnings: [],
+      evidenceNotes: 'Copied from the official YouTube Analytics advanced-mode report.'
+    })
+    if (!snapshot.ok) throw new Error(snapshot.error.message)
+    const evidence = snapshot.workspace.performanceSnapshots[0]!
+    expect(evidence.baselineEligible).toBe(true)
+    expect(evidence.missingDataWarnings).toEqual(
+      expect.arrayContaining(['shares was not supplied by the selected report.'])
+    )
+
+    const lowSample = release.savePerformanceSnapshot({
+      projectId: project.manifest.id,
+      releaseId: null,
+      youtubeVideoId: 'Lantern_002',
+      source: 'rehearsal',
+      windowStart: '2026-08-08',
+      windowEnd: '2026-08-08',
+      collectedAt: now.toISOString(),
+      metrics: {
+        views: 12,
+        impressions: null,
+        impressionsClickThroughRatePct: null,
+        averageViewDurationSeconds: null,
+        estimatedWatchTimeHours: null,
+        likes: null,
+        comments: null,
+        shares: null,
+        subscribersGained: null,
+        retentionAt30SecondsPct: null
+      },
+      missingDataWarnings: [],
+      evidenceNotes: 'A rehearsal record used only to prove that simulated evidence stays excluded.'
+    })
+    if (!lowSample.ok) throw new Error(lowSample.error.message)
+    const ineligible = lowSample.workspace.performanceSnapshots.find(
+      (item) => item.youtubeVideoId === 'Lantern_002'
+    )!
+    expect(ineligible.baselineEligible).toBe(false)
+    expect(ineligible.missingDataWarnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('fewer than 100 views'),
+        expect.stringContaining('Rehearsal evidence')
+      ])
+    )
+    expect(
+      release.saveLearning({
+        projectId: project.manifest.id,
+        snapshotIds: [ineligible.snapshotId],
+        observation: 'This rehearsal produced too little evidence for a reliable comparison.',
+        inference: 'No performance conclusion should be drawn from the rehearsal record.',
+        recommendation: 'Wait for baseline-eligible official evidence before proposing a change.',
+        confidence: 'low',
+        scope: 'next-release'
+      })
+    ).toMatchObject({ ok: false, error: { code: 'approval-required' } })
+
+    const learning = release.saveLearning({
+      projectId: project.manifest.id,
+      snapshotIds: [evidence.snapshotId],
+      observation: 'Average view duration was seven minutes during this stated window.',
+      inference: 'The opening may hold attention, but no retention curve was supplied.',
+      recommendation: 'Test one clearer opening question in the next release only.',
+      confidence: 'low',
+      scope: 'next-release'
+    })
+    if (!learning.ok) throw new Error(learning.error.message)
+    const proposed = learning.workspace.learnings[0]!
+    expect(proposed.status).toBe('proposed')
+    const reviewed = release.reviewLearning({
+      projectId: project.manifest.id,
+      learningId: proposed.learningId,
+      decision: 'approved',
+      reason: 'The limited next-release scope matches the evidence and preserves human review.',
+      confirmation: true
+    })
+    expect(reviewed).toMatchObject({ ok: true, workspace: { learnings: [{ status: 'approved' }] } })
+    const secondProject = projects.createProject({
+      ...projectInput(),
+      code: 'TIDEWAYS',
+      title: 'Tideways',
+      type: 'film'
+    })
+    expect(release.getWorkspace(secondProject.manifest.id)).toMatchObject({
+      releaseProfiles: [],
+      ideas: [],
+      performanceSnapshots: [],
+      learnings: []
+    })
+    projects.close()
+  })
 })

@@ -1,6 +1,6 @@
 # Cost and capacity model
 
-Current implementation note (0.9.0): per-job current-catalogue estimates, expected/hard-maximum display, exact cost approval, separate start confirmation, elapsed estimate, provider-reconciled spend field, one-GPU-per-job concurrency, and session guardrails are implemented. Actual image/video/episode costs remain unknown until controlled live benchmarks; retained storage can cost money without an active GPU. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): per-job current-catalogue estimates, expected/hard-maximum display, exact cost approval, separate start confirmation, elapsed estimate, provider-reconciled spend field, one-GPU-per-job concurrency, and session guardrails are implemented. Actual image/video/episode costs remain unknown until controlled live benchmarks; retained storage can cost money without an active GPU. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Honest cost statement
 
@@ -134,7 +134,7 @@ Each batch has:
 - Maximum workers.
 - Stop threshold that leaves time to sync and terminate.
 
-Version 0.9.0 reads current RunPod catalogue rates and existing active-Pod rates at no cost, then creates a per-workflow estimate using one selected GPU, expected minutes, the tighter workflow/session hard limit, and current rate. Cost approval and worker-start confirmation are separate records. The app tracks elapsed estimates and a provider-reconciled actual field; it does not pretend an estimate is an invoice. Live benchmarks must replace candidate runtime assumptions before promotion, and persistent storage remains separately billable even without active compute.
+The current source reads current RunPod catalogue rates and existing active-Pod rates at no cost, then creates a per-workflow estimate using one selected GPU, expected minutes, the tighter workflow/session hard limit, and current rate. Cost approval and worker-start confirmation are separate records. The app tracks elapsed estimates and a provider-reconciled actual field; it does not pretend an estimate is an invoice. Live benchmarks must replace candidate runtime assumptions before promotion, and persistent storage remains separately billable even without active compute.
 
 Budget state:
 

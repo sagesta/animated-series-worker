@@ -2,9 +2,9 @@
 
 Product baseline: 1.0
 
-Current source implementation: 0.9.0
+Current source implementation: 0.10.0
 
-Date: 2026-08-22
+Date: 2026-08-23
 
 Status: local control plane implemented; paid media generation qualification pending
 
@@ -193,6 +193,10 @@ The product may later support collaborators, but version 1 is optimized for one 
 ### Guided form validation
 
 - **FR-068:** Every required user-entry field displays a visible asterisk, its minimum or allowed range, and a live plain-language state. A primary action remains available unless work is actually running or the action is intrinsically unavailable. If the creator tries to continue with missing, short, invalid, or unconfirmed information, the studio opens an accessible summary that names every correction and states whether anything was submitted, charged, or started. Client guidance supplements rather than replaces contract validation at the trusted process boundary.
+
+### Project-aware field assistance
+
+- **FR-069:** Creative and planning workspaces offer an in-place idea assistant for applicable audience/direction, story, character, relationship, world, location, prop, visual style, voice, storyboard, movement, control, sound/foley, generation, edit, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text fields. Before each potentially paid text request, the creator sees the selected provider/model, exact project-context preview, applicable skill plan, and confirmation. The result is stored as a project-scoped proposal with lineage and changes a field only after the creator chooses a suggestion. AI assistance cannot enter or decide credentials, cost limits, measured performance values, exact source transcripts, approvals, canon, rights/consent, audience/disclosure/truth/originality attestations, worker starts, or publishing actions; those fields may receive explanation-only guidance where safe.
 
 ## 7. Non-functional requirements
 

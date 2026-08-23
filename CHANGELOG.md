@@ -4,6 +4,24 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-23 (version 0.10 project-wide idea assistance and governed future-feature foundations)
+
+- Added one reusable project-aware idea assistant throughout Audience & Creative Direction, World & Cast, Storyboard, Generate, Edit & Export, and Release planning. It can propose character, relationship, world, location, prop, style, voice, motion, control, foley, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text through the existing protected GPT/Claude/Gemini contract and compatible enabled declarative skills.
+- Every assistant request previews the exact local project context and skill plan, selects only an available controlled provider/model, requires one potentially paid text confirmation, and saves a schema-3 proposal with provider/model/context/skill lineage. Suggestions are never inserted automatically; human-only entries provide explanation without an apply action.
+- Expanded provider-neutral writing task kinds for creative direction, visual generation, voice performance, motion, advanced controls, edit/sound, foley, adaptation, thumbnails, release planning, and performance analysis.
+- Added project-local versioned release profiles, a source-labelled Idea Library, immutable official/manual/rehearsal performance snapshots with metric-definition version and missing-data warnings, and evidence-citing learning proposals that require a recorded human approval or rejection.
+- Added strict media roles for start/end frames, pose/depth/edge/segmentation controls, region masks, motion tracks, reference clips, foreground/subject/background layers, and adaptation datasets/artifacts. Control-guided Qwen/LTX, rights-aware foley, and project-scoped LTX adaptation definitions are candidate-only and cannot start paid work without the existing atomic qualification gate.
+- Advanced control jobs now serialize ordered approved asset IDs, roles, labels, and hashes into an engine-neutral manifest. Unsupported asset roles block before estimate. Adaptation additionally requires one approved dataset manifest plus explicit failed-reference-benchmark and dataset-rights confirmations; those confirmations still cannot override the candidate qualification lock.
+- Added local tests for the protected idea-assistant proposal/apply boundary, release-profile revision ordering and cross-project isolation, analytics/learning review, and non-billable advanced candidate definitions.
+
+User impact: a creator can ask for contextual ideas beside the fields where work is happening instead of manually moving text between screens. Release planning and evidence-based learning now remain organized per series or film. Advanced media classes are visible and safely preparable, but the app continues to block unqualified GPU/model work and never auto-publishes.
+
+Data/migration impact: application version advances to 0.10.0. Existing projects remain readable. Opening Finish creates additive SQLite tables for project release profiles, ideas, performance snapshots, and learnings; existing release/timeline/package rows are unchanged. New media/job enum values and writing task kinds are additive. The candidate worker/runtime remains version 0.9.0 until separately qualified; no model, GPU, OAuth connection, external report, or channel content was created in this change.
+
+Documentation impact: added FR-069, AT-061, and D-050; synchronized architecture, contracts, domain, UX, creative-direction, workflow, media, YouTube, implementation, backlog, traceability, tests, sources, status, README, and changelog with the exact implemented/locked boundary.
+
+Rollback: close the app, keep a verified project backup, and return to version 0.9.0. The additive release-planning tables and stored schema-3 proposals may remain inert but are not displayed by 0.9.0; no existing creative/release record is rewritten. Candidate workflow entries remain non-billable. Reverting local code does not cancel any external provider request already approved, though this implementation run made none.
+
 ### Added — 2026-08-22 (version 0.9 production control plane and qualification lock)
 
 - Added project-local canon, media, approval, dependency, production-job, timeline, release, attestation, and immutable package stores; Story proposals can now be promoted into versioned canon, while images/audio/video can be viewed and reviewed inside the app.

@@ -12,6 +12,7 @@ import {
   type UpstreamImportRecord
 } from '@studio/contracts'
 import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
+import { IdeaAssistant } from './IdeaAssistant'
 
 const assetKindOptions: Array<{ value: MediaAssetKind; label: string }> = [
   { value: 'reference-image', label: 'Character or visual reference' },
@@ -19,6 +20,18 @@ const assetKindOptions: Array<{ value: MediaAssetKind; label: string }> = [
   { value: 'style-board', label: 'Style board' },
   { value: 'environment-board', label: 'Environment board' },
   { value: 'storyboard-frame', label: 'Storyboard frame' },
+  { value: 'start-frame-control', label: 'Control · start frame' },
+  { value: 'end-frame-control', label: 'Control · end frame' },
+  { value: 'pose-control', label: 'Control · pose skeleton' },
+  { value: 'depth-control', label: 'Control · depth map' },
+  { value: 'edge-control', label: 'Control · edge map' },
+  { value: 'segmentation-control', label: 'Control · segmentation map' },
+  { value: 'region-mask', label: 'Control · region or occlusion mask' },
+  { value: 'motion-track', label: 'Control · motion track data' },
+  { value: 'reference-clip', label: 'Control · rights-cleared reference clip' },
+  { value: 'foreground-layer', label: 'Parallax · foreground layer' },
+  { value: 'subject-layer', label: 'Parallax · subject layer' },
+  { value: 'background-layer', label: 'Parallax · background layer' },
   { value: 'voice-line', label: 'Voice line' },
   { value: 'ambience', label: 'Ambience' },
   { value: 'effect', label: 'Sound effect' },
@@ -28,6 +41,8 @@ const assetKindOptions: Array<{ value: MediaAssetKind; label: string }> = [
   { value: 'caption', label: 'Caption file' },
   { value: 'thumbnail', label: 'Thumbnail' },
   { value: 'master-video', label: 'Master video' },
+  { value: 'adaptation-dataset', label: 'Adaptation · rights-reviewed dataset manifest' },
+  { value: 'adaptation-artifact', label: 'Adaptation · trained candidate artifact' },
   { value: 'document', label: 'Production document' }
 ]
 
@@ -269,6 +284,69 @@ export function WorldCastRoom({
           candidates until you approve them.
         </p>
       </header>
+      <div className="room-assistant-row">
+        <div>
+          <strong>Brainstorm before you lock anything</strong>
+          <span>
+            Create character, relationship, world, location, prop, style, or voice proposals.
+          </span>
+        </div>
+        <IdeaAssistant
+          project={project}
+          buttonLabel="Generate cast and world ideas"
+          targets={[
+            {
+              id: 'character',
+              label: 'Character concept and development',
+              taskKind: 'develop_character',
+              instruction:
+                'Develop motives, contradictions, relationships, voice, silhouette, identity anchors, wardrobe logic, expressions, development arc, and continuity risks.'
+            },
+            {
+              id: 'relationship',
+              label: 'Relationship dynamics',
+              taskKind: 'develop_character',
+              instruction:
+                'Create a relationship map with wants, tensions, history, power shifts, recurring behavior, and episode-level development opportunities.'
+            },
+            {
+              id: 'world',
+              label: 'Story world',
+              taskKind: 'build_world',
+              instruction:
+                'Develop repeatable rules, culture, institutions, geography, visual anchors, daily life, sources of conflict, and constraints that create stories.'
+            },
+            {
+              id: 'location',
+              label: 'Recurring location',
+              taskKind: 'build_world',
+              instruction:
+                'Design a production-friendly location with zones, scale, lighting states, props, story uses, visual anchors, and continuity rules.'
+            },
+            {
+              id: 'prop',
+              label: 'Story prop',
+              taskKind: 'build_world',
+              instruction:
+                'Design a recognizable prop with purpose, appearance, scale, material, ownership, rules, story uses, and continuity states.'
+            },
+            {
+              id: 'style',
+              label: 'Original visual style system',
+              taskKind: 'design_visual_generation',
+              instruction:
+                'Define shape language, line, palette, materials, lighting, texture, depth, animation economy, backgrounds, and repeatable consistency anchors without copying a living artist.'
+            },
+            {
+              id: 'voice',
+              label: 'Original character voice',
+              taskKind: 'design_voice_performance',
+              instruction:
+                'Design an original voice using range, texture, rhythm, energy, emotional limits, pronunciation needs, calibration lines, and performance notes. Do not clone a real person.'
+            }
+          ]}
+        />
+      </div>
       <WorkspaceState projectId={project.manifest.id}>
         {(workspace, refresh, setNotice) => (
           <>
@@ -764,6 +842,55 @@ export function StoryboardRoom({
           {importing ? 'Checking story package…' : 'Import story-package folder'}
         </button>
       </header>
+      <div className="room-assistant-row">
+        <div>
+          <strong>Need the board planned from scratch?</strong>
+          <span>
+            The LLM can create shots, staging, movement, dialogue, sound, and control ideas.
+          </span>
+        </div>
+        <IdeaAssistant
+          project={project}
+          buttonLabel="Generate storyboard ideas"
+          targets={[
+            {
+              id: 'shot-plan',
+              label: 'Shot-by-shot storyboard plan',
+              taskKind: 'plan_storyboard',
+              instruction:
+                'Create stable shot IDs and specify location, characters, framing, camera, action, emotion, dialogue or narration, sound, duration, transition, production method, and continuity anchors.'
+            },
+            {
+              id: 'coverage',
+              label: 'Scene coverage and edit rhythm',
+              taskKind: 'plan_storyboard',
+              instruction:
+                'Recommend essential master, medium, close, reaction, insert, transition, and economy shots with reasons and pacing risks.'
+            },
+            {
+              id: 'movement',
+              label: 'Character and camera movement',
+              taskKind: 'plan_motion',
+              instruction:
+                'Plan subject action, performance beats, camera motion, start/end states, duration, screen direction, and continuity locks for each shot.'
+            },
+            {
+              id: 'sound',
+              label: 'Dialogue, ambience, effects, and foley cues',
+              taskKind: 'plan_foley',
+              instruction:
+                'Create time-addressable dialogue, ambience, effect, and foley cues while keeping speech and music separate.'
+            },
+            {
+              id: 'controls',
+              label: 'Pose, depth, mask, layer, and motion controls',
+              taskKind: 'plan_advanced_controls',
+              instruction:
+                'For difficult shots, recommend the minimum useful control assets, why each is needed, and the source, scope, rights, and compatibility questions to resolve.'
+            }
+          ]}
+        />
+      </div>
       {message && (
         <div className="safety-feedback" role="status">
           {message}
@@ -822,6 +949,7 @@ function workflowStage(workflow: ProductionWorkflowSummary): string {
   if (workflow.jobKind.startsWith('ltx') || workflow.jobKind === 'lip-sync')
     return 'LTX motion and LatentSync lip repair'
   if (workflow.jobKind === 'creative-qc') return 'Assistive creative checks'
+  if (workflow.jobKind === 'adaptation-train') return 'Optional project-scoped adaptation'
   if (['timeline-render', 'caption-export', 'foley'].includes(workflow.jobKind))
     return 'Edit, sound, and captions'
   return 'Thumbnail and YouTube release package'
@@ -831,31 +959,51 @@ function workflowParameters(
   workflow: ProductionWorkflowSummary,
   instruction: string,
   referenceText: string,
+  sourceAssets: MediaAssetView[],
+  referenceBenchmarkFailed: boolean,
+  adaptationRightsConfirmed: boolean,
   seed: number,
   gpuTypeId: string | null,
   priceTier: 'secure' | 'community' | null
 ): Record<string, string | number | boolean | null> {
+  const sourceManifest = JSON.stringify({
+    direction: instruction,
+    assets: sourceAssets.map((asset, index) => ({
+      order: index + 1,
+      assetId: asset.assetId,
+      kind: asset.kind,
+      label: asset.label,
+      sha256: asset.sha256
+    }))
+  })
   const shared: Record<string, string | number | boolean | null> = {
     studioGpuTypeId: gpuTypeId,
     studioPriceTier: priceTier,
     studioContainerDiskInGb: 100,
     studioVolumeInGb: 150,
     studioOutputKind:
-      workflow.outputKind === 'audio'
-        ? 'voice-line'
-        : workflow.outputKind === 'video'
-          ? 'video-take'
-          : workflow.outputKind === 'document'
-            ? 'document'
-            : workflow.jobKind === 'thumbnail-render'
-              ? 'thumbnail'
-              : 'character-board'
+      workflow.jobKind === 'foley'
+        ? 'effect'
+        : workflow.jobKind === 'adaptation-train'
+          ? 'adaptation-artifact'
+          : workflow.outputKind === 'audio'
+            ? 'voice-line'
+            : workflow.outputKind === 'video'
+              ? 'video-take'
+              : workflow.outputKind === 'document'
+                ? 'document'
+                : workflow.jobKind === 'thumbnail-render'
+                  ? 'thumbnail'
+                  : 'character-board'
   }
   if (workflow.workflowId === 'qwen-image-character-board') {
     return { ...shared, prompt: instruction, negativePrompt: '', seed, width: 1536, height: 1024 }
   }
   if (workflow.workflowId === 'qwen-image-targeted-edit') {
     return { ...shared, instruction, seed, strength: 0.35 }
+  }
+  if (workflow.workflowId === 'qwen-image-controlled-board') {
+    return { ...shared, prompt: instruction, controlManifestJson: sourceManifest, seed }
   }
   if (workflow.workflowId === 'qwen3-tts-voice-design') {
     return {
@@ -890,6 +1038,15 @@ function workflowParameters(
       preserveApprovedAudio: true
     }
   }
+  if (workflow.workflowId === 'ltx2-controlled-shot') {
+    return {
+      ...shared,
+      motionPrompt: instruction,
+      controlManifestJson: sourceManifest,
+      durationSeconds: 5,
+      seed
+    }
+  }
   if (workflow.workflowId.includes('audio-driven')) {
     return { ...shared, motionPrompt: instruction, preserveApprovedAudio: true, seed }
   }
@@ -898,6 +1055,20 @@ function workflowParameters(
   }
   if (workflow.jobKind === 'creative-qc') {
     return { ...shared, checks: instruction, expectedDialogue: '' }
+  }
+  if (workflow.jobKind === 'foley') {
+    return { ...shared, cueSheetJson: instruction, preserveDialogue: true, seed }
+  }
+  if (workflow.jobKind === 'adaptation-train') {
+    return {
+      ...shared,
+      datasetManifestJson: sourceManifest,
+      baseModel: 'Lightricks/LTX-2.5',
+      triggerPhrase: `${seed}-project-style`,
+      referenceBenchmarkFailed,
+      rightsConfirmed: adaptationRightsConfirmed,
+      seed
+    }
   }
   if (workflow.jobKind === 'thumbnail-render') {
     return { ...shared, layoutJson: instruction, headline: instruction.slice(0, 120) }
@@ -1036,6 +1207,8 @@ export function GenerateRoom({
   const [label, setLabel] = useState('')
   const [instruction, setInstruction] = useState('')
   const [referenceText, setReferenceText] = useState('')
+  const [referenceBenchmarkFailed, setReferenceBenchmarkFailed] = useState(false)
+  const [adaptationRightsConfirmed, setAdaptationRightsConfirmed] = useState(false)
   const [seed, setSeed] = useState(12345)
   const [selectedAssets, setSelectedAssets] = useState<string[]>([])
   const [estimate, setEstimate] = useState<CostEstimate>()
@@ -1091,6 +1264,8 @@ export function GenerateRoom({
     setCostConfirmed(false)
     setStartConfirmed(false)
     setSelectedAssets([])
+    setReferenceBenchmarkFailed(false)
+    setAdaptationRightsConfirmed(false)
     if (!next?.requiresGpu) {
       setGpuTypeId('')
       return
@@ -1167,6 +1342,46 @@ export function GenerateRoom({
       )
       return
     }
+    const controlKinds = new Set([
+      'reference-image',
+      'start-frame-control',
+      'end-frame-control',
+      'pose-control',
+      'depth-control',
+      'edge-control',
+      'segmentation-control',
+      'region-mask',
+      'motion-track',
+      'reference-clip',
+      'foreground-layer',
+      'subject-layer',
+      'background-layer'
+    ])
+    if (
+      ['qwen-image-controlled-board', 'ltx2-controlled-shot'].includes(selected.workflowId) &&
+      (selectedMedia.length === 0 || selectedMedia.some((asset) => !controlKinds.has(asset.kind)))
+    ) {
+      setMessage(
+        'Select at least one approved control or reference asset. Ordinary output assets cannot be silently treated as controls.'
+      )
+      return
+    }
+    if (
+      selected.workflowId === 'ltx25-project-lora-adaptation' &&
+      (selectedMedia.length !== 1 || selectedMedia[0]?.kind !== 'adaptation-dataset')
+    ) {
+      setMessage('Select exactly one approved, rights-reviewed adaptation dataset manifest.')
+      return
+    }
+    if (
+      selected.workflowId === 'ltx25-project-lora-adaptation' &&
+      (!referenceBenchmarkFailed || !adaptationRightsConfirmed)
+    ) {
+      setMessage(
+        'Confirm both the failed reference-only benchmark and the dataset rights review before estimating adaptation.'
+      )
+      return
+    }
     setBusy(true)
     try {
       const result = await window.studio.production.estimateWorkflow({
@@ -1204,6 +1419,11 @@ export function GenerateRoom({
         selected,
         instruction.trim(),
         referenceText.trim(),
+        selectedAssets
+          .map((assetId) => workspace?.media.find((asset) => asset.assetId === assetId))
+          .filter((asset): asset is MediaAssetView => Boolean(asset)),
+        referenceBenchmarkFailed,
+        adaptationRightsConfirmed,
         seed,
         selected.requiresGpu ? gpuTypeId : null,
         selected.requiresGpu ? priceTier : null
@@ -1316,6 +1536,84 @@ export function GenerateRoom({
           </button>
         )}
       </header>
+
+      <div className="room-assistant-row">
+        <div>
+          <strong>Turn story intent into a production prompt</strong>
+          <span>
+            Generate names, visual prompts, voice direction, motion, controls, or foley plans.
+          </span>
+        </div>
+        <IdeaAssistant
+          project={project}
+          buttonLabel="Generate production ideas"
+          targets={[
+            {
+              id: 'job-name',
+              label: 'Clear job name',
+              taskKind: 'design_visual_generation',
+              instruction:
+                'Return one short, descriptive production-job name that identifies the subject, purpose, and shot or scene.',
+              currentValue: label,
+              onUse: setLabel
+            },
+            {
+              id: 'visual-prompt',
+              label: 'Image or board prompt',
+              taskKind: 'design_visual_generation',
+              instruction:
+                'Write a paste-ready visual prompt separating identity, rendering style, composition, expression/action, lighting, environment, continuity anchors, and things to avoid.',
+              currentValue: instruction,
+              onUse: setInstruction
+            },
+            {
+              id: 'voice-direction',
+              label: 'Voice design or dialogue delivery',
+              taskKind: 'design_voice_performance',
+              instruction:
+                'Write paste-ready voice or performance direction with original vocal qualities, speaking rhythm, emotion, pronunciation, and a useful calibration line.',
+              currentValue: instruction,
+              onUse: setInstruction
+            },
+            {
+              id: 'motion-prompt',
+              label: 'Movement and camera direction',
+              taskKind: 'plan_motion',
+              instruction:
+                'Write paste-ready movement and camera direction with performance beats, start/end state, shot duration, continuity constraints, and what must remain still.',
+              currentValue: instruction,
+              onUse: setInstruction
+            },
+            {
+              id: 'control-plan',
+              label: 'Advanced control plan',
+              taskKind: 'plan_advanced_controls',
+              instruction:
+                'Recommend the minimum pose, depth, edge, segmentation, mask, layer, start/end frame, motion-track, or reference controls needed and state why each matters.',
+              currentValue: instruction,
+              onUse: setInstruction
+            },
+            {
+              id: 'foley-plan',
+              label: 'Ambience, effects, and foley plan',
+              taskKind: 'plan_foley',
+              instruction:
+                'Create paste-ready, time-addressable ambience, effects, and foley direction. Preserve dialogue and music as separate layers.',
+              currentValue: instruction,
+              onUse: setInstruction
+            },
+            {
+              id: 'reference-transcript',
+              label: 'Reference-voice transcript guidance',
+              taskKind: 'design_voice_performance',
+              instruction:
+                'Explain how to transcribe the selected reference exactly and what pronunciation details to verify. Do not invent words that cannot be heard.',
+              currentValue: referenceText,
+              humanOnly: true
+            }
+          ]}
+        />
+      </div>
 
       {message && (
         <div className="safety-feedback" role="status">
@@ -1450,6 +1748,37 @@ export function GenerateRoom({
             />
           </label>
         )}
+        {selected?.workflowId === 'ltx25-project-lora-adaptation' && (
+          <fieldset className="asset-selector">
+            <legend>Adaptation safeguards</legend>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={referenceBenchmarkFailed}
+                onChange={(event) => setReferenceBenchmarkFailed(event.target.checked)}
+              />
+              <span>
+                I compared the reference-only workflow first and recorded that it did not meet the
+                approved benchmark. <RequiredMark />
+              </span>
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={adaptationRightsConfirmed}
+                onChange={(event) => setAdaptationRightsConfirmed(event.target.checked)}
+              />
+              <span>
+                I reviewed the dataset rights, consent, provenance, and project-only scope.{' '}
+                <RequiredMark />
+              </span>
+            </label>
+            <small>
+              These confirmations only permit an estimate. This candidate remains unable to start
+              paid work until its exact trainer, model, GPU, and regression fixtures qualify.
+            </small>
+          </fieldset>
+        )}
         {selected?.requiresGpu && (
           <div className="form-grid two-column">
             <label>
@@ -1526,6 +1855,17 @@ export function GenerateRoom({
               Select exactly two items in this order: 1) approved video, 2) approved dialogue audio.
               The selection numbers below show the order.
             </p>
+          )}
+          {['qwen-image-controlled-board', 'ltx2-controlled-shot'].includes(
+            selected?.workflowId ?? ''
+          ) && (
+            <p>
+              Select one or more approved control/reference items. Their kind and selection order
+              are saved in the job manifest; an unsupported kind blocks the estimate.
+            </p>
+          )}
+          {selected?.workflowId === 'ltx25-project-lora-adaptation' && (
+            <p>Select exactly one approved adaptation dataset manifest.</p>
           )}
           {approvedMedia.length === 0 ? (
             <p>No approved media yet. Prompt-only workflows can still be estimated.</p>

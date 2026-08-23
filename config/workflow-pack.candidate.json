@@ -247,6 +247,110 @@
       "notes": ["Produces evidence and warnings only; it cannot approve a take."]
     },
     {
+      "workflowId": "qwen-image-controlled-board",
+      "version": "1.0.0",
+      "label": "Control-guided image or storyboard frame",
+      "jobKind": "qwen-image",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 48,
+      "expectedRuntimeMinutes": 5,
+      "maximumRuntimeMinutes": 20,
+      "outputKind": "image",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Comfy-Org/Qwen-Image-2512/diffusion-fp8", "relativePath": "models/diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Comfy-Org/Qwen-Image/text-encoder-fp8", "relativePath": "models/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Comfy-Org/Qwen-Image/vae", "relativePath": "models/vae/qwen_image_vae.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "prompt", "label": "Visual direction", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "controlManifestJson", "label": "Engine-neutral control roles", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["Accepts only approved start/end, pose, depth, edge, segmentation, mask, layer, or reference assets declared compatible by the qualified workflow.", "Unsupported controls must block rather than be ignored."]
+    },
+    {
+      "workflowId": "ltx2-controlled-shot",
+      "version": "1.0.0",
+      "label": "LTX control-guided production shot",
+      "jobKind": "ltx-video-final",
+      "engine": "comfyui",
+      "qualificationState": "candidate",
+      "minimumVramGb": 80,
+      "expectedRuntimeMinutes": 25,
+      "maximumRuntimeMinutes": 90,
+      "outputKind": "video",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Lightricks/LTX-2.5/distilled-transformer-bf16", "relativePath": "models/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/gemma4-text-encoder-bf16", "relativePath": "models/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/video-vae-bf16", "relativePath": "models/vae/ltx-2.5-video-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/audio-vae-bf16", "relativePath": "models/vae/ltx-2.5-audio-vae-bf16.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "motionPrompt", "label": "Movement and camera direction", "type": "string", "required": true, "maximumLength": 3000 },
+        { "key": "controlManifestJson", "label": "Engine-neutral control roles", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "durationSeconds", "label": "Shot length", "type": "number", "required": true, "minimum": 1, "maximum": 12 },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["Pose/depth/reference-video and IC-LoRA combinations remain locked until the exact LTX-2.5 adapter, nodes, workflow, GPU, and fixtures qualify together."]
+    },
+    {
+      "workflowId": "rights-aware-foley-generation",
+      "version": "1.0.0",
+      "label": "Rights-aware ambience, effects, and foley",
+      "jobKind": "foley",
+      "engine": "worker-python",
+      "qualificationState": "candidate",
+      "minimumVramGb": 24,
+      "expectedRuntimeMinutes": 8,
+      "maximumRuntimeMinutes": 30,
+      "outputKind": "audio",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [],
+      "parameters": [
+        { "key": "cueSheetJson", "label": "Time-addressable cue sheet", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "preserveDialogue", "label": "Preserve dialogue separately", "type": "boolean", "required": true },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["The audio-effects model/provider remains an open rights and quality selection; this candidate cannot run until a model, license, runner, and synchronized cue fixtures qualify.", "Generated sound remains a separate candidate layer and cannot replace dialogue or music."]
+    },
+    {
+      "workflowId": "ltx25-project-lora-adaptation",
+      "version": "1.0.0",
+      "label": "Optional project-scoped LTX LoRA adaptation",
+      "jobKind": "adaptation-train",
+      "engine": "worker-python",
+      "qualificationState": "candidate",
+      "minimumVramGb": 80,
+      "expectedRuntimeMinutes": 180,
+      "maximumRuntimeMinutes": 720,
+      "outputKind": "document",
+      "templatePath": null,
+      "templateSha256": null,
+      "allowedNodeTypes": [],
+      "requiredModels": [
+        { "modelId": "Lightricks/LTX-2.5/distilled-transformer-bf16", "relativePath": "models/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors", "sha256": null, "licenseReview": "required" },
+        { "modelId": "Lightricks/LTX-2.5/gemma4-text-encoder-bf16", "relativePath": "models/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors", "sha256": null, "licenseReview": "required" }
+      ],
+      "parameters": [
+        { "key": "datasetManifestJson", "label": "Rights-reviewed dataset manifest", "type": "string", "required": true, "maximumLength": 4000 },
+        { "key": "baseModel", "label": "Exact base model", "type": "string", "required": true, "maximumLength": 240 },
+        { "key": "triggerPhrase", "label": "Project trigger phrase", "type": "string", "required": true, "maximumLength": 120 },
+        { "key": "referenceBenchmarkFailed", "label": "Reference-only benchmark failed", "type": "boolean", "required": true },
+        { "key": "rightsConfirmed", "label": "Dataset rights reviewed", "type": "boolean", "required": true },
+        { "key": "seed", "label": "Repeatable seed", "type": "integer", "required": true, "minimum": 0, "maximum": 2147483647 }
+      ],
+      "notes": ["Training is never an automatic response to a failed generation.", "Promotion requires a rights-reviewed dataset, exact base model, cost approval, reference-only baseline comparison, regression review, project-only scope, and rollback proof."]
+    },
+    {
       "workflowId": "local-storyboard-animatic",
       "version": "1.0.0",
       "label": "Local timed storyboard animatic",

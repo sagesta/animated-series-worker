@@ -181,6 +181,7 @@ function consumerTypeForJob(
   if (kind === 'qwen3-tts') return 'voice'
   if (kind === 'animatic') return 'storyboard'
   if (['timeline-render', 'caption-export', 'foley'].includes(kind)) return 'timeline'
+  if (kind === 'adaptation-train') return 'image'
   if (kind === 'thumbnail-render') return 'thumbnail'
   if (kind === 'release-package') return 'release-package'
   return 'video'

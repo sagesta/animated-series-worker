@@ -2,19 +2,19 @@
 
 This matrix prevents requirements from becoming disconnected from architecture, implementation, tests, and user documentation. The documentation checker requires every `FR` and `NFR` defined in `PRD.md` to appear here.
 
-## Version 0.9 implementation overlay
+## Version 0.10 implementation overlay
 
 | Requirement slice | Current implementation | Remaining acceptance boundary |
 | --- | --- | --- |
-| FR-001–FR-010, FR-043–FR-048, FR-067–FR-068 | Projects, backup/migration, direction, protected writing providers, declarative skills, upstream import, proposals and canon are implemented | Live provider/long-form/representative-user evidence; higher-risk skill classes remain locked |
+| FR-001–FR-010, FR-043–FR-048, FR-067–FR-069 | Projects, backup/migration, direction, protected writing providers, declarative skills, upstream import, proposals, canon, and governed field-level idea assistance are implemented | Live provider/long-form/representative-user evidence; higher-risk skill classes remain locked |
 | FR-011–FR-023, FR-049–FR-051 | Media store, identity/edit/voice/video job contracts, approved-input lineage, local media protocol, viewing and approval are implemented | Exact remote workflow/model qualification and season-scale continuity |
 | FR-024–FR-034 | RunPod lifecycle, lease/idempotency/cost gates, worker gateway, preflight/watchdog, transfers, review and local finishing are implemented | Real Pod, model, Comfy, shutdown, recovery, concurrency, and long-form proof |
 | FR-035–FR-042 | Multi-project local control, deterministic timeline, captions, technical checks and release packaging are implemented | Clean-machine full-production acceptance and signed installer |
-| FR-052–FR-058 | Timed local storyboard/timeline and technical QC slice are implemented; advanced control packs, parallax, generated foley and adaptation remain planned | AT-042–AT-049 applicable live fixtures and future feature implementations |
-| FR-059–FR-066 | Release details, thumbnail render, human attestations and immutable manual package are implemented; analytics/learning remains planned | Real master-package proof and future separately authorized analytics |
+| FR-052–FR-058 | Timed local storyboard/timeline/QC plus control/layer/dataset asset roles, strict ordered control manifests, and locked control/foley/adaptation candidates are implemented | Typed control-pack/layer authoring depth, exact external engines/trainers, and AT-042–AT-049 live fixtures |
+| FR-059–FR-066 | Local release-profile revisions, Idea Library, release details, thumbnail, human attestations, immutable package, structured performance snapshots, and reviewed learning proposals are implemented | Profile sharing/research import, report-file parser/read-only OAuth decision, real evidence/master-package proof, full AT-050–AT-058 |
 | NFR-001–NFR-022 | Local boundaries, schemas, vaults, isolation, async jobs, documentation, qualification locks and human authority are implemented where applicable | Named external security, provider, quality, accessibility, signing, and clean-machine evidence |
 
-Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md), [STATUS.md](STATUS.md), and [BUILD_BACKLOG.md](BUILD_BACKLOG.md). The original design matrix below remains the requirement-to-acceptance map; “planned components” names the intended boundary even where version 0.9 now implements it.
+Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md), [STATUS.md](STATUS.md), and [BUILD_BACKLOG.md](BUILD_BACKLOG.md). The original design matrix below remains the requirement-to-acceptance map; “planned components” names the intended boundary even where version 0.10 now implements it.
 
 ## Functional requirements
 
@@ -56,6 +56,7 @@ Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODU
 | FR-066 | `YOUTUBE_RELEASE_WORKFLOW.md` readiness, `UX_SPEC.md`, `ARCHITECTURE.md` | readiness aggregator, prerequisite/probe registry | AT-058, AT-013, AT-026 |
 | FR-067 | `CREATIVE_DIRECTION_PROFILE.md`, `DOMAIN_MODEL.md`, `UX_SPEC.md`, `ARCHITECTURE.md` | `contracts`, `project-store`, renderer, creative-direction compiler, dependency engine, every consuming adapter | AT-059, AT-031, AT-054 |
 | FR-068 | `UX_SPEC.md`, `ARCHITECTURE.md`, `SECURITY_AND_RECOVERY.md` | renderer form-guidance components, trusted IPC/domain validators | AT-060, AT-035, security suite |
+| FR-069 | `UX_SPEC.md` project-aware assistant, `ARCHITECTURE.md` writing boundary, `API_CONTRACTS.md` writing/skill contracts | reusable renderer assistant, creative-writing service, provider adapters, skill runtime, project proposal store | AT-061, AT-036, AT-037, AT-054, security suite |
 
 ## Non-functional requirements
 

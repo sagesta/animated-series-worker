@@ -63,11 +63,16 @@ import {
   ProjectSummarySchema,
   RendererErrorInputSchema,
   ReviewMediaAssetInputSchema,
+  ReviewReleaseLearningInputSchema,
   RenderThumbnailInputSchema,
   RenderTimelineInputSchema,
   SaveProductionTimelineInputSchema,
+  SavePerformanceSnapshotInputSchema,
+  SaveProjectReleaseProfileInputSchema,
   SaveReleaseAttestationsInputSchema,
   SaveReleaseDetailsInputSchema,
+  SaveReleaseIdeaInputSchema,
+  SaveReleaseLearningInputSchema,
   SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema,
@@ -1231,6 +1236,83 @@ function registerIpcHandlers(): void {
       })
     }
     return FinishActionResultSchema.parse(requireReleaseStore().saveAttestations(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSaveReleaseProfile, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SaveProjectReleaseProfileInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the release-profile details.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(
+      requireReleaseStore().saveProjectReleaseProfile(input.data)
+    )
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSaveIdea, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SaveReleaseIdeaInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the Idea Library entry.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().saveIdea(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSavePerformanceSnapshot, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SavePerformanceSnapshotInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the performance evidence.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().savePerformanceSnapshot(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishSaveLearning, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = SaveReleaseLearningInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the learning proposal.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().saveLearning(input.data))
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishReviewLearning, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = ReviewReleaseLearningInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the learning review decision.'
+        }
+      })
+    }
+    return FinishActionResultSchema.parse(requireReleaseStore().reviewLearning(input.data))
   })
 
   ipcMain.handle(IPC_CHANNELS.finishCreateReleasePackage, (event, unknownInput: unknown) => {

@@ -9,7 +9,9 @@ import {
   type ReleaseDetails
 } from '@studio/contracts'
 import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
+import { IdeaAssistant } from './IdeaAssistant'
 import { ProductionReadinessStrip } from './ProductionRooms'
+import { ReleasePlanningPanel } from './ReleasePlanningPanel'
 
 const crockford = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 
@@ -561,6 +563,188 @@ export function FinishRoom({
           Review media first
         </button>
       </header>
+      <div className="room-assistant-row">
+        <div>
+          <strong>Get help with any editable finishing field</strong>
+          <span>
+            Generate timeline, caption, sound, thumbnail, title, description, tags, credit, and
+            end-screen ideas. Policy attestations remain human decisions.
+          </span>
+        </div>
+        <IdeaAssistant
+          project={project}
+          buttonLabel="Generate finishing and release ideas"
+          targets={[
+            {
+              id: 'timeline-name',
+              label: 'Timeline name',
+              taskKind: 'plan_edit_sound',
+              instruction:
+                'Return a short production timeline name that identifies the episode or film and edit stage.',
+              currentValue: timelineLabel,
+              onUse: setTimelineLabel
+            },
+            {
+              id: 'captions',
+              label: 'Editable caption draft',
+              taskKind: 'plan_edit_sound',
+              instruction:
+                'Using only dialogue or narration supplied in project context or the creator request, return caption rows as start seconds|end seconds|text. Do not invent unheard dialogue; mark missing timings for human correction.',
+              currentValue: captionSource,
+              onUse: setCaptionSource
+            },
+            {
+              id: 'sound-plan',
+              label: 'Timeline sound-layer plan',
+              taskKind: 'plan_edit_sound',
+              instruction:
+                'Plan dialogue placement, ambience, effects, foley, music placeholders, gain considerations, transitions, pacing, and human review checkpoints. Preserve approved dialogue separately.',
+              currentValue: selectedAudio
+                .map((assetId) => audioAssets.find((asset) => asset.assetId === assetId)?.label)
+                .filter(Boolean)
+                .join(', ')
+            },
+            {
+              id: 'foley',
+              label: 'Ambience, effects, and foley cue sheet',
+              taskKind: 'plan_foley',
+              instruction:
+                'Create a time-addressable cue sheet that separates ambience, synchronized effects, foley, dialogue, and music; include source/rights questions and intentional silence.',
+              currentValue: captionSource
+            },
+            {
+              id: 'master-name',
+              label: 'Master candidate name',
+              taskKind: 'plan_edit_sound',
+              instruction:
+                'Return one short, clear master-video candidate name including the production and revision purpose.',
+              currentValue: renderLabel,
+              onUse: setRenderLabel
+            },
+            {
+              id: 'thumbnail-name',
+              label: 'Thumbnail candidate name',
+              taskKind: 'plan_thumbnail',
+              instruction:
+                'Return a short internal candidate name that describes its subject and hypothesis without calling it an audience test.',
+              currentValue: thumbnailLabel,
+              onUse: setThumbnailLabel
+            },
+            {
+              id: 'thumbnail-words',
+              label: 'Truthful thumbnail words',
+              taskKind: 'plan_thumbnail',
+              instruction:
+                'Return one concise truthful thumbnail phrase, ideally two to five words and never more than 80 characters. It must represent the actual episode rather than manufacture a false event.',
+              currentValue: thumbnailHeadline,
+              onUse: setThumbnailHeadline
+            },
+            {
+              id: 'thumbnail-concept',
+              label: 'Thumbnail visual concept',
+              taskKind: 'plan_thumbnail',
+              instruction:
+                'Propose subject, expression/action, composition, contrast, optional words, small-card readability, continuity checks, and misleading-imagery risks using only truthful production facts.'
+            },
+            {
+              id: 'release-title',
+              label: 'YouTube title',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Return one truthful, compelling paste-ready title no longer than 100 characters. Avoid fake urgency, unsupported claims, keyword stuffing, and promises of views.',
+              currentValue: title,
+              onUse: setTitle
+            },
+            {
+              id: 'description',
+              label: 'YouTube description',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Write a truthful paste-ready description with a clear opening, factual episode summary, appropriate call to action, chapter/credit placeholders where evidence is missing, and no fabricated links or claims.',
+              currentValue: description,
+              onUse: setDescription
+            },
+            {
+              id: 'category',
+              label: 'Category guidance',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Recommend the best fitting official category from the facts supplied and explain the tradeoff. The creator must verify the current platform choice.',
+              currentValue: category,
+              onUse: setCategory
+            },
+            {
+              id: 'playlist',
+              label: 'Playlist name',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Return a concise playlist name that groups only genuinely related releases.',
+              currentValue: playlist,
+              onUse: setPlaylist
+            },
+            {
+              id: 'tags',
+              label: 'Relevant tags',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Return a conservative comma-separated list of relevant factual tags. Do not add unrelated trends, names, or claims.',
+              currentValue: tags,
+              onUse: setTags
+            },
+            {
+              id: 'hashtags',
+              label: 'Relevant hashtags',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Return a concise comma-separated list of no more than 15 directly relevant hashtags, each beginning with #.',
+              currentValue: hashtags,
+              onUse: setHashtags
+            },
+            {
+              id: 'credits',
+              label: 'Credits draft',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Create a clearly labelled credits template using only names, roles, sources, licenses, and links supplied by the creator. Leave explicit blanks instead of inventing attribution.',
+              currentValue: credits,
+              onUse: setCredits
+            },
+            {
+              id: 'end-screen',
+              label: 'End-screen and card notes',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Suggest a truthful end-screen plan and call to action that fits the story and channel promise without claiming nonexistent videos or links.',
+              currentValue: endScreenNotes,
+              onUse: setEndScreenNotes
+            },
+            {
+              id: 'made-for-kids',
+              label: 'Made-for-kids considerations',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Explain the current factors the creator should independently review. Do not choose yes or no, and do not infer the answer merely because the production is animated or has a creative age band.',
+              humanOnly: true
+            },
+            {
+              id: 'synthetic-disclosure',
+              label: 'Altered or synthetic disclosure considerations',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Explain which facts and current platform guidance the creator should check. Do not choose yes or no or provide legal advice.',
+              humanOnly: true
+            },
+            {
+              id: 'rights-review',
+              label: 'Rights and credits review checklist',
+              taskKind: 'plan_youtube_release',
+              instruction:
+                'Create a checklist covering voices, likeness, references, music, effects, fonts, source material, model/license evidence, and credits. Do not attest that any right exists.',
+              humanOnly: true
+            }
+          ]}
+        />
+      </div>
       {notice && (
         <div className="safety-feedback" role="status">
           {notice}
@@ -1009,6 +1193,14 @@ export function FinishRoom({
           ))}
         </section>
       </section>
+      {finish && (
+        <ReleasePlanningPanel
+          project={project}
+          workspace={finish}
+          onWorkspace={setFinish}
+          onNotice={setNotice}
+        />
+      )}
     </div>
   )
 }

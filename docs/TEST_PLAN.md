@@ -1,6 +1,6 @@
 # Test and acceptance plan
 
-Current implementation note (0.9.0): local configuration/syntax/type/unit/renderer and production-safety suites cover the implemented control plane. `gpu-qualification-evidence.template.json` and the guarded promotion tool now make external image/voice/video/lip/security/recovery/shutdown/cost evidence executable as a release gate; those live results do not yet exist. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): local configuration/syntax/type/unit/renderer and production-safety suites cover the implemented control plane, governed idea-assistant boundary, release planning/evidence/learning records, and non-billable advanced workflow definitions. `gpu-qualification-evidence.template.json` and the guarded promotion tool make external image/voice/video/lip/security/recovery/shutdown/cost evidence executable as a release gate; those live results do not yet exist. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Test philosophy
 
@@ -37,7 +37,18 @@ Maintain small, rights-safe fixtures:
 
 Creative benchmark references are locked by hash. Changing them is a test-version change documented in the changelog.
 
-## 3.1 Current development evidence — version 0.8.0
+## 3.1 Current development evidence — version 0.10.0
+
+| Evidence | Current result | Boundary |
+| --- | --- | --- |
+| Project-aware idea-assistant renderer test | Proves exact context and declarative-skill plan preview, controlled provider/model selection, one paid-text confirmation, schema-3 proposal use, and insertion only after a creator clicks the reviewed suggestion | Mock provider only; live quality/cost, keyboard/screen-reader audit, and representative-user AT-061 remain |
+| Release-store integration test | Proves release-profile revision ordering, source-labelled idea storage, immutable time-windowed metric evidence, missing-data warnings, rehearsal exclusion, evidence-linked learning proposal/review, and no cross-project leakage | Manual structured entry only; report-file parser, read-only OAuth, real channel evidence, profile sharing, and full AT-050/AT-056/AT-057 remain |
+| Workflow-registry/config test | Proves control-guided Qwen/LTX, rights-aware foley, and LTX adaptation definitions load only as template-less, non-billable candidates | No engine/model/trainer/license/GPU quality proof; all AT-043/AT-045/AT-047–AT-049 external gates remain |
+| Full local quality gate | Documentation, type checking, formatting, lint, unit/integration/renderer tests, and production build must all pass before packaging | Does not replace live providers, GPU qualification, signing, clean-machine, or long-form acceptance |
+
+The version-0.10 local suite passes 101 tests across 23 files. The new tests are a local regression slice of AT-061, AT-050, AT-056, AT-057, and the configuration-lock portion of AT-043/AT-045/AT-047/AT-048; they are not live provider, GPU, media-quality, OAuth, or platform evidence.
+
+## 3.2 Historical development evidence — version 0.8.0
 
 | Evidence | Current result | Boundary |
 | --- | --- | --- |
@@ -127,6 +138,7 @@ The suite contains 67 automated tests. The enhanced renderer paths provide a loc
 - **AT-039:** Run locked story, character, and script benchmarks through each supported writing profile; record quality review, token usage, actual API cost, context selection, and continuity differences before choosing defaults.
 - **AT-040:** Interrupt preview and proxy creation, then prove originals and manifests remain unchanged and local review recovers by rebuilding derived media.
 - **AT-041:** Change a locked character from one visual style to another, approve a new multi-view consistency board, and apply it separately to a shot, episode, and future season. Verify identity anchors remain acceptable, prior outputs/bindings are unchanged, only the selected scope becomes stale/rebound, and the impact/cost preview is accurate.
+- **AT-061:** Open the in-place assistant from representative empty and existing creative fields in Direction, World & Cast, Storyboard, Generate, Edit & Export, and Release. Verify the exact project context, selected controlled provider/model, applicable enabled skills and receipts, and one-request paid confirmation; save a proposal without changing the target, then apply only the creator-selected answer. Prove credentials, budgets, performance measurements, exact transcripts, approvals, canon, rights/policy attestations, GPU starts, and publishing cannot be written by the assistant, and human-only items expose explanation without an apply action.
 - **AT-042:** Assemble a timed animatic from locked storyboard frames and approved dialogue, revise one shot duration, and prove version history, total timing, captions, dependency impact, and deterministic rebuild remain correct without generating final video.
 - **AT-043:** Bind pose, depth, edge, mask, motion-track, start/end-frame, and reference-clip fixtures to neutral shots; compile supported roles exactly and reject unsupported, wrong-project, unapproved, rights-missing, dimension/time-base, and hash-mismatch controls before spend.
 - **AT-044:** Create a layered foreground/subject/background composite, detect a mask/occlusion defect, repair the derivative, and prove the approved source image is unchanged while deterministic parallax output and lineage remain valid.

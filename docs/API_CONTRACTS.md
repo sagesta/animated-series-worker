@@ -1,8 +1,8 @@
 # API and adapter contracts
 
-Current implementation note (0.9.0): typed desktop/preload production methods, RunPod lifecycle, worker authentication/capability/jobs/chunk transfers, local media, timeline, release, and readiness contracts are implemented. Candidate workflows remain non-billable until production qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): typed desktop/preload production methods, RunPod lifecycle, worker authentication/capability/jobs/chunk transfers, local media, timeline, release-profile/idea/performance/learning, release, and readiness contracts are implemented. Candidate workflows remain non-billable until production qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
-This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project lifecycle, immutable Audience & Creative Direction versions, verified backup/restore, no-cost cloud-account setup, protected writing-provider setup, exact context preview, and local structured proposals. Language-neutral JSON Schemas for worker/media contracts remain worker-phase work and must remain consistent with this document.
+This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project/production/release lifecycle, immutable Audience & Creative Direction and release-profile versions, verified backup/restore, cloud setup/orchestration, protected writing-provider setup, exact context/skill preview, local structured proposals, media/control roles, performance snapshots, and reviewed learnings. Worker HTTP shapes are validated at their boundaries and must remain consistent with this document.
 
 ## 1. Contract rules
 
@@ -48,8 +48,13 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `writing.previewContext(input)` | `studio:writing:preview-context` | Return the exact selected local context text, SHA-256, manifest source version, and selected creative-direction version/hash before disclosure |
 | `writing.generateDraft(request)` | `studio:writing:generate-draft` | Require explicit paid confirmation, call one enabled provider, validate structured output, and save a new local proposal with lineage |
 | `writing.listDrafts(projectId)` | `studio:writing:list-drafts` | List only valid proposal records inside the owning project without modifying damaged files |
+| `finish.saveReleaseProfile(input)` | `studio:finish:save-release-profile` | Append an immutable project-local packaging-profile revision using stale-write protection |
+| `finish.saveIdea(input)` | `studio:finish:save-idea` | Create or edit a project-scoped, source-labelled editorial idea without creating production work |
+| `finish.savePerformanceSnapshot(input)` | `studio:finish:save-performance-snapshot` | Append one immutable official/manual/rehearsal metric window, generate missing-data warnings, and exclude rehearsal from baselines |
+| `finish.saveLearning(input)` | `studio:finish:save-learning` | Save a proposed observation/inference/recommendation citing project-owned snapshot IDs |
+| `finish.reviewLearning(input)` | `studio:finish:review-learning` | Record one explicit human approval/rejection and reason; never trigger a creative, paid, or platform action |
 
-The preload exposes no generic `send`, listener, filesystem, shell, or provider-resource method. The main process validates that each call comes from the expected top frame and production/development application origin. A submitted API key crosses typed IPC for validation, is cleared from the successful form, and is never returned; success responses contain only opaque state, checked model identifiers, or aggregate cloud counts/prices. Action failures use stable safe codes and do not include provider payloads or the key.
+The preload exposes no generic `send`, listener, filesystem, shell, or provider-resource method. The main process validates that each call comes from the expected top frame and production/development application origin. A submitted API key crosses typed IPC for validation, is cleared from the successful form, and is never returned; success responses contain only opaque state, checked model identifiers, or aggregate cloud counts/prices. Action failures use stable safe codes and do not include provider payloads or the key. The field-level idea assistant adds no privileged IPC: it composes the existing `writing.getStatus`, `writing.previewContext`, `skills.previewPlan`, and confirmed `writing.generateDraft` methods, then changes renderer form state only after a creator chooses a proposal value.
 
 ### Planned surface
 
@@ -71,15 +76,15 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | `creativeQc.run/disposition/list` | Assistive evidence warnings without approval authority |
 | `audioEffects.generate/import/review/approve` | Rights-aware ambience/effects/foley versions |
 | `adaptation.estimate/authorize/train/evaluate/promote` | Explicit project-scoped LoRA candidate lifecycle |
-| `releaseProfile.createVersion/bind/list` | Versioned channel/series packaging guidance and explicit project binding |
-| `idea.create/importSignals/review/bind` | Source-labelled release idea backlog without automatic production authority |
+| `releaseProfile.copy/bind/listShared` | Future explicit cross-project channel-profile reuse; local project revisions are implemented |
+| `idea.importSignals/checkDuplicates` | Future source-file/API research and duplicate analysis; local source-labelled ideas are implemented |
 | `thumbnail.createCandidate/import/preview/validate/select` | Public-facing candidate lineage, deterministic layout, responsive preview, and selection |
 | `releaseDetails.draft/validate/select` | Title/description/chapter/caption/category/tag/playlist fields and factual support |
 | `releaseReadiness.run/attest/status` | Prerequisite, rights, policy, originality, and human-review gate with explicit paid-probe consent |
 | `releasePackage.preview/lock/verify/openFolder` | Immutable hash-inventoried manual-upload package and checklist |
-| `performance.attachVideo/import/status` | Manual platform identity and evidence-file import |
+| `performance.importFile/status` | Future evidence-file parsing; structured manual evidence storage is implemented |
 | `youtubeReadOnly.connect/status/collect/disconnect` | Optional least-privilege analytics only; no version-1 mutation surface |
-| `learning.list/review/applyProspectively` | Evidence-backed proposed constraints with explicit scope and human approval |
+| `learning.applyProspectively` | Future explicit compiler binding for an approved lesson; proposal/list/review is implemented and has no automatic effect |
 
 The renderer never receives a raw provider key. IPC validates caller, project scope, and payload schema.
 
@@ -100,7 +105,7 @@ interface GPUProvider {
 
 `createLease` must tag the provider resource with project, studio session, idempotency key, hard deadline, and worker-image version. A timeout is reconciled by tag before retry.
 
-Version 0.9.0 implements account/catalogue reads plus Pod list/get/create/start/stop/delete through `provider-runpod`; unique lease reconciliation prevents blind duplicate creation after uncertain responses. `production-orchestrator` owns estimates, exact cost approval, separate start confirmation, one-worker leases, capability checks, uploads, job polling, verified downloads, cancellation, purge/termination and audit closure. Candidate packs and absent readiness evidence still block every mutating paid path.
+The current source implements account/catalogue reads plus Pod list/get/create/start/stop/delete through `provider-runpod`; unique lease reconciliation prevents blind duplicate creation after uncertain responses. `production-orchestrator` owns estimates, exact cost approval, separate start confirmation, one-worker leases, capability checks, uploads, job polling, verified downloads, cancellation, purge/termination and audit closure. Candidate packs and absent readiness evidence still block every mutating paid path.
 
 ## 4. Media-engine interfaces
 
@@ -385,7 +390,7 @@ interface PerformanceEvidenceProvider {
 
 The version-1 YouTube evidence adapter, if O-009 enables it, is structurally incapable of inserting/updating/deleting videos, thumbnails, captions, playlists, schedules, or comments. OAuth scopes are allowlisted, stored through the credential vault, and never returned to the renderer. File imports pass schema, size, metric, date/window, channel/profile, duplicate, and content-safety validation before becoming evidence.
 
-`ThumbnailCandidateVersion`, `ReleaseDetailsVersion`, `ReleaseAttestationVersion`, `ReleasePackageVersion`, `PerformanceSnapshot`, and `LearningRecommendation` use strict versioned schemas. A candidate-review record cannot contain an experiment winner unless it cites an accepted platform-result artifact for the exact candidate hashes. A learning approval creates only a prospective, scope-limited constraint; no contract permits it to mutate a locked creative or release record or authorize a paid job.
+`ProjectReleaseProfile`, `ReleaseIdeaEntry`, `PerformanceSnapshot`, and `ReleaseLearning` now use strict schema-1 records in the project database beside existing thumbnail/release details/attestation/package records. A snapshot pins `youtube-analytics-2026-08`, source/window/collection time, nullable metric fields, warnings, and `baselineEligible`; only `rehearsal` is forced ineligible. A learning approval records review state/reason only; no current compiler consumes it automatically and no contract permits it to mutate a locked creative/release record, authorize a paid job, or alter YouTube.
 
 ## 8. Upstream adapter contract
 

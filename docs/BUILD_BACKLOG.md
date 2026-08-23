@@ -1,8 +1,8 @@
 # Master build and proof backlog
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
-Current source version: 0.9.0
+Current source version: 0.10.0
 
 ## 1. Status language
 
@@ -25,6 +25,7 @@ Writing code never manufactures model quality, license permission, provider shut
 | SEC-001 | Implemented | OS-protected provider/lease secrets, redacted logs/support, restricted media protocol | Packaged secret scan and clean-machine vault persistence |
 | DIRECTION-001 | Implemented | Immutable audience/niche/creative revisions consumed by writing | Live downstream quality evaluation |
 | WRITE-001 | Implemented | OpenAI/Anthropic/Gemini protected setup, stable catalogue, structured proposals, approvals, lineage | Live provider quality and actual price profiles |
+| IDEA-AI-001 | Implemented | Reusable project-aware idea assistant across applicable creative/planning fields with exact context/skill preview, paid-text confirmation, proposal lineage, review-only insertion, and human-only exclusions | Live provider quality, representative-user, accessibility, and actual-cost evidence |
 | SKILL-001 | Implemented declarative class | Project-scoped writing skills, plans, required-output validation, receipts, update revocation | Signed/general/executable/MCP classes remain future locked work |
 | UP-001/UP-002 | Implemented | Pinned upstream validation, import preview, normalized candidate acceptance | Representative long-form external fixture acceptance |
 | CONT-001 | Implemented | Versioned canon, active/superseded records, media parentage/dependencies/stale counts | Season-scale continuity drill |
@@ -43,6 +44,8 @@ Writing code never manufactures model quality, license permission, provider shut
 | CREATIVE-QC-001 | Implemented technical slice | FFprobe evidence report with human-only approval authority | Live usefulness/false-warning review |
 | EDIT-001 | Implemented | Deterministic local timeline, captions, thumbnail and master verification | Full-length interruption/performance run |
 | YT-META-001/YT-POLICY-001/YT-PACKAGE-001 | Implemented | Release details, human attestations, immutable hash-checked manual package | Real complete-package review |
+| YT-PROFILE-001 | Implemented local slice | Project-local immutable release-profile revisions and source-labelled Idea Library | Explicit cross-project profile copy/bind flow, signal import, duplicate/continuity analysis, representative-user proof |
+| YT-ANALYTICS-001/YT-LEARN-001 | Implemented local slice | Immutable structured official/manual/rehearsal metric snapshots, missing-data warnings, baseline exclusion, evidence-citing learning proposals, and human review | Report-file parser, optional read-only OAuth decision/implementation, comparative sufficiency rules, live evidence fixture |
 | MULTI-001 | Implemented control plane | Project isolation and up to three concurrent independent one-GPU jobs | Live isolation/combined-budget/recovery test |
 
 ## 3. Immediate release blockers, in order
@@ -61,19 +64,18 @@ Writing code never manufactures model quality, license permission, provider shut
 | 10 | PILOT-001 | Release-blocked | Produce and review a 60–90 second pilot, then a 20–35 minute episode and one-off film | Continuity, voice, motion, lip, audio, recovery and budget acceptance |
 | 11 | RELEASE-001 | Release-blocked | Package, sign and install on a clean Windows machine | Authenticode, install/upgrade/uninstall, accessibility and non-technical acceptance |
 
-## 4. Accepted post-version-0.9 work
+## 4. Version-0.10 feature foundations and retained locks
 
-These capabilities remain planned and must not be represented as current:
-
-- CONTROL-001: pose/depth/edge/segmentation/mask/motion/reference control packs;
-- LAYER-001: layered parallax authoring;
-- LTXADV-001: additional LTX control/repair/multishot profiles after compatible benchmarks;
-- FOLEY-001: rights-aware generated ambience/effects/foley engine;
-- ADAPT-001: optional project-scoped character/style adaptation with dataset rights and rollback;
-- YT-PROFILE-001/THUMB-ADV-001: richer channel research/idea library and generated thumbnail concepts;
-- YT-ANALYTICS-001/YT-LEARN-001: optional evidence-only performance import and human-approved future lessons;
-- PUBLISH-001: any private upload/scheduling connector, only after separate authorization and security review;
-- SKILL-TOOL-001: executable, remote, or MCP skill classes with sandboxing/timeouts/signatures.
+| Work package | State | Implemented outcome | Remaining boundary |
+| --- | --- | --- | --- |
+| CONTROL-001 | Implemented control-plane slice | Approved pose/depth/edge/segmentation/mask/start/end/motion/reference asset roles, ordered hash manifest, unsupported-role refusal, Qwen/LTX candidate definitions | Typed role-specific coordinate/time metadata, exact adapters/templates/nodes, rights fixtures, AT-043/AT-045 live proof |
+| LAYER-001 | Implemented foundation | Foreground/subject/background and region-mask media roles can be imported, reviewed, lineage-tracked, and planned with AI assistance | Dedicated non-destructive separation authoring, occlusion/safe-margin recipe and deterministic parallax acceptance AT-044 |
+| LTXADV-001 | Implemented candidate slice | Control-guided LTX-2.5 job definition and neutral manifest boundary | IC-LoRA/reference/multishot/DFR/upsample implementations only after exact compatibility benchmarks |
+| FOLEY-001 | Implemented candidate slice | Separate foley job/output kind, cue-plan assistance, dialogue-preservation parameter, and candidate workflow | Select/license/build a rights-safe model/runner, synchronized fixtures, AT-047 |
+| ADAPT-001 | Implemented candidate slice | Adaptation dataset/artifact roles, dataset manifest, explicit failed-reference and rights gates, project-scoped LTX candidate definition | Trainer/image qualification, evaluation/promotion/rollback lifecycle, live cost/regression proof AT-048/AT-049 |
+| THUMB-ADV-001 | Implemented local foundation | Deterministic thumbnail plus LLM concept/headline planning | Generated illustration candidate qualification and responsive comparison depth |
+| PUBLISH-001 | Planned and intentionally locked | No YouTube mutation surface exists | Separate post-version-1 authorization, OAuth/quota/private-first/duplicate/reconciliation/policy/audit review |
+| SKILL-TOOL-001 | Planned and intentionally locked | Declarative skills remain the only executable request influence | Signatures, sandbox, timeout, local/remote/MCP permission and secret-safety proof |
 
 Wan is not a backlog item for version 1. LatentSync is a targeted lip-repair postprocessor, not a replacement video engine.
 

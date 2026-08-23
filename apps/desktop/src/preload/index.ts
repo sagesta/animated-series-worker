@@ -46,11 +46,16 @@ import {
   ProjectSummarySchema,
   RendererErrorInputSchema,
   ReviewMediaAssetInputSchema,
+  ReviewReleaseLearningInputSchema,
   RenderThumbnailInputSchema,
   RenderTimelineInputSchema,
   SaveProductionTimelineInputSchema,
+  SavePerformanceSnapshotInputSchema,
+  SaveProjectReleaseProfileInputSchema,
   SaveReleaseAttestationsInputSchema,
   SaveReleaseDetailsInputSchema,
+  SaveReleaseIdeaInputSchema,
+  SaveReleaseLearningInputSchema,
   SupportBundleSummarySchema,
   SystemStatusSchema,
   UlidSchema,
@@ -323,6 +328,36 @@ const studioApi: StudioApi = {
       const safeInput = SaveReleaseAttestationsInputSchema.parse(input)
       return FinishActionResultSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.finishSaveAttestations, safeInput)
+      )
+    },
+    async saveReleaseProfile(input) {
+      const safeInput = SaveProjectReleaseProfileInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSaveReleaseProfile, safeInput)
+      )
+    },
+    async saveIdea(input) {
+      const safeInput = SaveReleaseIdeaInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSaveIdea, safeInput)
+      )
+    },
+    async savePerformanceSnapshot(input) {
+      const safeInput = SavePerformanceSnapshotInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSavePerformanceSnapshot, safeInput)
+      )
+    },
+    async saveLearning(input) {
+      const safeInput = SaveReleaseLearningInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishSaveLearning, safeInput)
+      )
+    },
+    async reviewLearning(input) {
+      const safeInput = ReviewReleaseLearningInputSchema.parse(input)
+      return FinishActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishReviewLearning, safeInput)
       )
     },
     async createReleasePackage(input) {

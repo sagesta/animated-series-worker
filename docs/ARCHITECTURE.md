@@ -1,6 +1,6 @@
 # System architecture
 
-Current implementation note (0.9.0): the local control plane, canon/media/release stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. Exact remote workflows and production receipts remain externally unqualified. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): the local control plane, governed field-level idea assistant, canon/media/release/performance/learning stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. Exact remote workflows and production receipts remain externally unqualified. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Architectural outcome
 
@@ -134,7 +134,7 @@ Versions are chosen and pinned during implementation spikes. “Latest” is nev
 
 ### Implemented boundary
 
-The current source implements `apps/desktop` plus `packages/contracts`, `packages/domain`, `packages/project-store`, `packages/credential-vault`, `packages/cloud-setup`, `packages/support-diagnostics`, `packages/creative-writing`, `packages/skill-runtime`, `packages/provider-openai`, `packages/provider-anthropic`, `packages/provider-gemini`, and the read-only portion of `packages/provider-runpod`. The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app` production protocol.
+The current source implements the secure desktop shell and local project/backup/diagnostic services plus provider-neutral writing, declarative skills, upstream import, canon/media/production/release stores, RunPod lifecycle orchestration, workflow/readiness registries, worker client/gateway, local media serving/finishing, and the renderer rooms described in [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md). The desktop window uses context isolation, sandboxing, disabled renderer Node integration, a restrictive content policy, a narrow schema-validated preload API, validated top-frame IPC callers, blocked new windows/navigation, and the `studio://app`/restricted `studio://media` protocols.
 
 The local project store currently provides:
 
@@ -148,19 +148,20 @@ The local project store currently provides:
 - Explicit v1→v2 migration preview, mandatory verified backup, stale-preview refusal, atomic manifest activation, matching SQLite history/hash update, and rollback after injected pre/post-activation/database failures.
 - Immutable project-local Audience & Creative Direction sidecar versions under `bibles/creative-direction/versions`; older projects can add revision 1 without changing their manifest schema.
 
-The RunPod key is submitted through one schema-validated IPC call, validated through RunPod API v2, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod counts/rate, current catalogue rates, and setup progress. No provider mutation or billable endpoint exists in the application.
+The RunPod key is submitted through one schema-validated IPC call, validated through the current RunPod API, encrypted by Electron `safeStorage`, and stored as encrypted bytes under application user data rather than any project. The renderer receives only connection state, aggregate Pod/rate/catalogue data and setup progress. Pod create/start/stop/delete is confined to the main-process provider/orchestrator path and remains unreachable until a qualified production pack/readiness receipt, exact estimate, maximum-cost approval, separate start confirmation, concurrency limit, and lease reconciliation all pass.
 
 OpenAI, Anthropic, and Google Gemini use separate encrypted vault files and one non-secret atomic settings record. Settings schema 2 adds Gemini while retaining schema-1 OpenAI/Anthropic reads. Each adapter first uses its authenticated model-list read for connection validation; the setup service intersects that live list with the release-controlled catalogue before exposing any choice. A confirmed provider-neutral request is compiled from the user's instruction plus the exact previewed project-context snapshot, including the selected creative-direction version by default, then sent through OpenAI Responses, Anthropic Messages, or Gemini GenerateContent with a strict creative-draft JSON shape. The result is validated locally and written as a new proposal under the owning project's `provenance/writing` folder. Schema-3 proposals add the exact skill-plan hash, plan items, and execution receipts while schema-1/schema-2 proposals remain readable. Price remains explicitly uncalculated until benchmarked pricing profiles exist.
 
 The first `packages/skill-runtime` slice accepts only strict declarative JSON packages. Installation copies the candidate to quarantine, limits its size, parses it without execution, computes SHA-256, refuses changed contents under the same version, stores the package outside projects, and leaves every project grant empty. Settings can enable a compatible version for an explicit project. The Creative Room matches task kinds, blocks unsupported permissions and incompatible required versions, previews a stable plan hash, refuses a stale plan, compiles the exact instructions into the provider request, validates declared minimum/required proposal sections, and writes input/output/package hashes plus provider-linked receipts. Updating a skill version revokes its project grants; removing it from active use keeps stored package evidence and historical proposal receipts. Signature verification, richer general JSON-Schema evaluation, explicit update-diff/rollback UI, and all executable/local-tool/remote-tool/MCP classes remain unimplemented and locked.
 
-Archive UI, future-migration registry/upgrade breadth, incremental/release archives, broader diagnostic coverage/retention and packaged scans, clean-machine restore, and continuity asset versions remain Phase 1 work. Live writing benchmarks, actual model-cost profiles, canon promotion/version comparison, higher-risk external-skill classes, in-app media serving/players, provider create/reconcile/terminate, worker authentication/watchdog, network model storage, ComfyUI, Qwen, TTS, LTX, and media jobs remain unimplemented. Timed animatics, control packs, layered parallax generation, advanced LTX profiles, creative-assist QC, audio-effects/foley, project-scoped adaptation, YouTube release profiles/ideas/thumbnails/details/packages, policy attestations, analytics import, and learning are also documented only and remain unimplemented.
+Remaining local depth includes archive UI, broader future-migration/incremental-backup support, packaged diagnostic/secret scans, explicit cross-project release-profile copy/bind, report-file analytics parsing, richer layer/control authoring, and higher-risk signed/executable/remote/MCP skill classes. Exact Qwen/LTX/LatentSync/control/foley/adaptation runtime templates, model/trainer/license decisions, GPU quality/recovery/shutdown evidence, live writing benchmarks/prices, clean-machine signing/acceptance, and long-form production remain external or release gates. Candidate definitions never count as media-engine qualification.
 
 ## 6. Local component responsibilities
 
 ### Desktop renderer
 
 - Presents guided project setup including Audience & Creative Direction, overview revision, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens.
+- Provides one reusable idea-assistant dialog beside applicable creative/planning text fields. It displays exact context, provider/model, and skill plan; it can apply only a creator-selected suggestion and renders evidence/attestation fields explanation-only or leaves them entirely outside the assistant.
 - Owns reusable presentation-only form guidance: visible required markers, live length/range state, invalid styling, and accessible correction summaries. It keeps actions available until work is actually running, but it never replaces main-process/domain schema validation.
 - Never receives raw provider secrets.
 - Communicates only through typed Electron IPC exposed by the preload boundary.
@@ -212,7 +213,7 @@ Archive UI, future-migration registry/upgrade breadth, incremental/release archi
 
 ### Writing-provider adapters
 
-- Accept a neutral task such as `develop_character`, `outline_episode`, `draft_scene`, `rewrite_dialogue`, or `check_continuity` plus explicitly selected local context versions.
+- Accept a neutral task such as character/story drafting or creative-direction, visual, voice, motion, control, edit/sound, foley, adaptation, thumbnail, release, and evidence-analysis planning plus explicitly selected local context versions.
 - Compile the task to the selected provider API without storing provider conversation state as the project source of truth.
 - Return schema-validated draft proposals, usage, cost metadata, model identity, and safe errors; only a reviewed studio operation can create a canonical version.
 - Obtain provider credentials in the main process immediately before the call. The renderer and skill runtime receive only opaque provider status.
@@ -248,12 +249,12 @@ Version 0.8.0 implements the declarative portion above with two deliberately nar
 
 ### YouTube release and learning
 
-- A versioned release profile is separate from the series style/story bible and can be bound only to explicitly selected projects. Ideas, metadata, thumbnails, analytics, and learnings remain project/profile scoped.
+- The current immutable release-profile revision is local to one project and separate from the series style/story bible. Ideas, metadata, thumbnails, performance snapshots, and learnings remain project scoped; a future shared-channel profile requires an explicit copy/bind contract rather than hidden reuse.
 - The Thumbnail Room uses approved project assets and the image adapter for visual work, then applies exact text/layout locally. Candidate comparison is not represented as an audience experiment without imported platform evidence.
 - The release-details service validates title/description/tags/language/category fields and creates chapters from the locked final timeline. It supplies deterministic warnings, not a universal ranking score.
 - The policy/rights gate requires human audience, applicable synthetic-media, truthfulness, originality, rights/credits, and full-watch attestations. Models and defaults have no attestation authority.
 - The packager writes a new hash-inventoried release directory containing master, captions, selected thumbnail, details, chapters, credits, attestations, QC, checklist, and manifests; a locked version is immutable.
-- The optional analytics adapter is read-only and least privilege. A file importer is available without an account connection. Snapshots and recommendations are separate immutable records; only a reviewed approval can create a prospective learning constraint.
+- Version 0.10 accepts structured manual official/report/rehearsal evidence without an account connection. Snapshots pin source, time window, collection time, metric-definition version, missing-data warnings, and baseline eligibility. Learning proposals cite snapshots and remain separate until human approval/rejection. Report-file parsing and an optional least-privilege read-only adapter remain future boundaries.
 - No version-1 service has a video/thumbnail/caption insert, update, schedule, delete, playlist-mutation, or public-publish operation.
 
 ### Previsualization and control assets
@@ -263,6 +264,8 @@ Version 0.8.0 implements the declarative portion above with two deliberately nar
 - The layer service derives or imports foreground/subject/background plates, masks, occlusion order, and camera-safe margins while retaining the original image unchanged.
 - Engine adapters declare supported control roles. Unsupported combinations fail before estimate/authorization rather than being ignored.
 
+Version 0.10 implements the storage/UI foundation as explicit media roles and creates an ordered ID/kind/label/hash manifest from selected approved controls. It registers Qwen-image and LTX control workflows only as non-billable candidates. Typed coordinate/time-basis metadata, layer authoring, and exact adapter/template qualification remain open.
+
 ### Creative QC and audio effects
 
 - Creative-QC adapters may compare approved references, expected continuity facts, script text, audio, and output frames to produce timestamped evidence and confidence-labelled warnings.
@@ -270,11 +273,15 @@ Version 0.8.0 implements the declarative portion above with two deliberately nar
 - Audio-effects adapters generate or import ambience, effects, and foley as independent media versions. Dialogue, music, room tone, and generated effects remain separate timeline layers.
 - Speech recognition is a verifier against the approved line, not the source of captions or canonical dialogue.
 
+The current foley slice provides planning assistance, a separate `foley` job/output class, dialogue-preservation input, effect media lineage, and a non-billable workflow definition. It does not select or license an audio model, claim synchronization quality, or run paid work.
+
 ### Optional adaptation
 
 - Adaptation jobs use only an explicitly approved, rights-reviewed project dataset and an exact base-model revision.
 - The trained LoRA or equivalent artifact is project-scoped, hashed, benchmarked against the reference-only baseline, and rejected if it regresses identity, style range, composition, safety, runtime, or cost beyond the accepted threshold.
 - A production workflow never starts training implicitly because a generation failed.
+
+The current candidate input requires exactly one approved adaptation-dataset manifest plus explicit reference-only-benchmark-failed and dataset-rights confirmations before estimate. The candidate still has no qualified trainer/template and therefore cannot start paid work or promote an artifact.
 
 ## 7. Remote worker architecture
 

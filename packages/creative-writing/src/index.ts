@@ -390,6 +390,7 @@ export class WritingSetupService {
 }
 
 const taskLabels = {
+  design_creative_direction: 'audience and creative direction design',
   develop_character: 'character development',
   build_world: 'world building',
   outline_episode: 'episode outlining',
@@ -397,10 +398,21 @@ const taskLabels = {
   draft_scene: 'scene drafting',
   rewrite_dialogue: 'dialogue rewriting',
   check_continuity: 'continuity checking',
+  design_visual_generation: 'image and visual-generation direction',
+  design_voice_performance: 'character voice and performance direction',
+  plan_motion: 'shot movement and camera planning',
+  plan_advanced_controls: 'pose, depth, edge, mask, layer, and motion-control planning',
+  plan_edit_sound: 'timeline, caption, and sound-layer planning',
+  plan_foley: 'ambience, effects, and foley cue planning',
+  plan_adaptation: 'optional project adaptation planning',
+  plan_thumbnail: 'truthful thumbnail concept planning',
+  analyze_performance: 'evidence-only post-release performance analysis',
   plan_youtube_release: 'YouTube release packaging and search discovery planning'
 } as const
 
 const taskGuidance: Record<WritingTaskKind, string> = {
+  design_creative_direction:
+    'Propose a coherent audience, niche, genres, tone, themes, viewer promise, cultural setting, boundaries, format, visual direction, honest YouTube positioning, non-copying comparables, and distinctive angle. Treat the result as creative guidance, never a platform or legal declaration.',
   develop_character:
     'Define motives, contradictions, relationships, voice, visual anchors, and development risks.',
   build_world:
@@ -415,6 +427,24 @@ const taskGuidance: Record<WritingTaskKind, string> = {
     'Preserve plot facts while improving character-specific voice, subtext, rhythm, and speakability.',
   check_continuity:
     'Separate confirmed conflicts, possible risks, missing facts, and suggested repairs. Do not silently rewrite canon.',
+  design_visual_generation:
+    'Create paste-ready visual prompts grounded in the selected project direction. Separate identity anchors, rendering style, composition, lighting, environment, continuity requirements, and things to avoid. Do not imitate a living artist or claim rights that were not supplied.',
+  design_voice_performance:
+    'Define an original character voice, speaking rhythm, emotional range, pronunciation needs, calibration lines, and line-delivery direction. Do not suggest cloning a real person or using a reference without consent.',
+  plan_motion:
+    'Describe subject movement, camera movement, performance beats, timing, start/end states, continuity locks, and failure risks for short animated shots. Keep vendor-specific parameters separate from creative intent.',
+  plan_advanced_controls:
+    'Recommend only the controls that materially reduce ambiguity: start/end frames, pose, depth, edges, segmentation, masks, layers, motion tracks, or rights-cleared reference clips. State each control purpose, source, scope, and compatibility question.',
+  plan_edit_sound:
+    'Plan visual order, shot durations, dialogue placement, ambience, effects, music placeholders, caption cues, transitions, pacing checks, and final review checkpoints. Preserve approved dialogue as a separate source.',
+  plan_foley:
+    'Create a time-addressable ambience, effects, and foley cue plan. Separate diegetic and non-diegetic sound, identify rights/source needs, preserve dialogue and music, and flag sounds that need human review.',
+  plan_adaptation:
+    'First challenge whether a project-scoped adaptation is necessary. If it may be, define the failed reference-only benchmark, rights-cleared dataset, captions/tags, base model, scope, evaluation, regression risks, cost limit, promotion threshold, and rollback. Never imply training is already authorized.',
+  plan_thumbnail:
+    'Propose truthful thumbnail concepts based only on the production facts supplied. Include subject, expression/action, composition, short optional words, contrast, small-card readability, continuity checks, and misleading-imagery risks.',
+  analyze_performance:
+    'Separate observations from inferences and recommendations. Cite the supplied metric/time-window evidence, identify missing or low-sample data, compare only compatible releases, state confidence, and never change live metadata, canon, media, or spend.',
   plan_youtube_release:
     'Propose three truthful titles no longer than 100 characters, one description no longer than 5000 characters, tags, up to 15 hashtags, chapters beginning at 0:00, thumbnail concepts that accurately represent the video, credits, made-for-kids questions, and synthetic-media disclosure questions. Never promise views or fabricate keywords.'
 }

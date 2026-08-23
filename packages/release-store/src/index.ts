@@ -18,14 +18,23 @@ import {
   FinishActionResultSchema,
   FinishWorkspaceSchema,
   LockProductionTimelineInputSchema,
+  PerformanceSnapshotSchema,
   ProductionTimelineSchema,
+  ProjectReleaseProfileSchema,
   ReleaseAttestationsSchema,
   ReleaseDetailsSchema,
+  ReleaseIdeaEntrySchema,
+  ReleaseLearningSchema,
   ReleasePackageFileSchema,
   ReleasePackageSchema,
+  ReviewReleaseLearningInputSchema,
+  SavePerformanceSnapshotInputSchema,
   SaveProductionTimelineInputSchema,
+  SaveProjectReleaseProfileInputSchema,
   SaveReleaseAttestationsInputSchema,
   SaveReleaseDetailsInputSchema,
+  SaveReleaseIdeaInputSchema,
+  SaveReleaseLearningInputSchema,
   TimelineAudioCueSchema,
   TimelineClipSchema,
   UlidSchema,
@@ -34,9 +43,14 @@ import {
   type FinishWorkspace,
   type LockProductionTimelineInput,
   type ProductionTimeline,
+  type ReviewReleaseLearningInput,
+  type SavePerformanceSnapshotInput,
   type SaveProductionTimelineInput,
+  type SaveProjectReleaseProfileInput,
   type SaveReleaseAttestationsInput,
-  type SaveReleaseDetailsInput
+  type SaveReleaseDetailsInput,
+  type SaveReleaseIdeaInput,
+  type SaveReleaseLearningInput
 } from '@studio/contracts'
 import { createUlid } from '@studio/domain'
 import type { ProductionStore } from '@studio/production-store'
@@ -225,6 +239,18 @@ export class ReleaseStore {
         ReleaseAttestationsSchema.parse
       )
       const releasePackages = this.readAll(database, 'release_packages', ReleasePackageSchema.parse)
+      const releaseProfiles = this.readAll(
+        database,
+        'project_release_profiles',
+        ProjectReleaseProfileSchema.parse
+      ).sort((left, right) => right.revision - left.revision)
+      const ideas = this.readAll(database, 'release_ideas', ReleaseIdeaEntrySchema.parse)
+      const performanceSnapshots = this.readAll(
+        database,
+        'performance_snapshots',
+        PerformanceSnapshotSchema.parse
+      )
+      const learnings = this.readAll(database, 'release_learnings', ReleaseLearningSchema.parse)
       const production = this.productionStore.getWorkspace(projectId)
       const blockers: string[] = []
       if (!timelines.some((timeline) => timeline.state === 'locked'))
@@ -250,6 +276,10 @@ export class ReleaseStore {
         releaseDetails,
         attestations,
         releasePackages,
+        releaseProfiles,
+        ideas,
+        performanceSnapshots,
+        learnings,
         blockers
       })
     } finally {
@@ -509,6 +539,310 @@ export class ReleaseStore {
     }
   }
 
+  saveProjectReleaseProfile(unknownInput: SaveProjectReleaseProfileInput): FinishActionResult {
+    try {
+      const input = SaveProjectReleaseProfileInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const database = this.openDatabase(project.workspacePath)
+      try {
+        const previous = input.profileId
+          ? parseRow(
+              database
+                .prepare('SELECT record_json FROM project_release_profiles WHERE profile_id = ?')
+                .get(input.profileId) as unknown as JsonRow | undefined,
+              ProjectReleaseProfileSchema.parse,
+              'That release-profile version was not found.'
+            )
+          : null
+        if (previous && previous.projectId !== input.projectId)
+          throw new ReleaseStoreError('unsafe-path', 'Release profiles cannot cross projects.')
+        if (previous && previous.updatedAt !== input.expectedUpdatedAt)
+          throw new ReleaseStoreError(
+            'stale-data',
+            'The release profile changed. Reload before creating a new version.'
+          )
+        const now = this.now().toISOString()
+        const record = ProjectReleaseProfileSchema.parse({
+          schemaVersion: 1,
+          profileId: createUlid(this.now().getTime()),
+          projectId: input.projectId,
+          revision: this.nextRevision(database, 'project_release_profiles'),
+          name: input.name,
+          audience: input.audience,
+          language: input.language,
+          region: input.region,
+          timezone: input.timezone,
+          channelPromise: input.channelPromise,
+          packagingVoice: input.packagingVoice,
+          visualDirection: input.visualDirection,
+          defaultCta: input.defaultCta,
+          defaultCredits: input.defaultCredits,
+          blockedClaims: [...new Set(input.blockedClaims)],
+          blockedTopics: [...new Set(input.blockedTopics)],
+          category: input.category,
+          playlistConvention: input.playlistConvention,
+          createdAt: now,
+          updatedAt: now
+        })
+        database
+          .prepare(
+            'INSERT INTO project_release_profiles (profile_id, revision, record_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+          )
+          .run(
+            record.profileId,
+            record.revision,
+            JSON.stringify(record),
+            record.createdAt,
+            record.updatedAt
+          )
+        return FinishActionResultSchema.parse({
+          ok: true,
+          workspace: this.getWorkspace(input.projectId)
+        })
+      } finally {
+        database.close()
+      }
+    } catch (error) {
+      const safe = safeError(error)
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: { code: safe.code, message: safe.message }
+      })
+    }
+  }
+
+  saveIdea(unknownInput: SaveReleaseIdeaInput): FinishActionResult {
+    try {
+      const input = SaveReleaseIdeaInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const database = this.openDatabase(project.workspacePath)
+      try {
+        const existing = input.ideaId
+          ? parseRow(
+              database
+                .prepare('SELECT record_json FROM release_ideas WHERE idea_id = ?')
+                .get(input.ideaId) as unknown as JsonRow | undefined,
+              ReleaseIdeaEntrySchema.parse,
+              'That release idea was not found.'
+            )
+          : null
+        if (existing && existing.projectId !== input.projectId)
+          throw new ReleaseStoreError('unsafe-path', 'Release ideas cannot cross projects.')
+        const now = this.now().toISOString()
+        const record = ReleaseIdeaEntrySchema.parse({
+          schemaVersion: 1,
+          ideaId: existing?.ideaId ?? createUlid(this.now().getTime()),
+          projectId: input.projectId,
+          title: input.title,
+          premise: input.premise,
+          sourceType: input.sourceType,
+          sourceLabel: input.sourceLabel,
+          rationale: input.rationale,
+          continuityNotes: input.continuityNotes,
+          status: input.status,
+          createdAt: existing?.createdAt ?? now,
+          updatedAt: now
+        })
+        database
+          .prepare(
+            `INSERT INTO release_ideas (idea_id, record_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?)
+             ON CONFLICT(idea_id) DO UPDATE SET record_json = excluded.record_json, updated_at = excluded.updated_at`
+          )
+          .run(record.ideaId, JSON.stringify(record), record.createdAt, record.updatedAt)
+        return FinishActionResultSchema.parse({
+          ok: true,
+          workspace: this.getWorkspace(input.projectId)
+        })
+      } finally {
+        database.close()
+      }
+    } catch (error) {
+      const safe = safeError(error)
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: { code: safe.code, message: safe.message }
+      })
+    }
+  }
+
+  savePerformanceSnapshot(unknownInput: SavePerformanceSnapshotInput): FinishActionResult {
+    try {
+      const input = SavePerformanceSnapshotInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const database = this.openDatabase(project.workspacePath)
+      try {
+        if (
+          input.releaseId &&
+          !database
+            .prepare('SELECT 1 FROM release_packages WHERE release_id = ?')
+            .get(input.releaseId)
+        )
+          throw new ReleaseStoreError(
+            'not-found',
+            'That release package is not in this production.'
+          )
+        const warnings = [...input.missingDataWarnings]
+        for (const [key, value] of Object.entries(input.metrics)) {
+          if (value === null) warnings.push(`${key} was not supplied by the selected report.`)
+        }
+        const hasComparisonMetric = Object.entries(input.metrics).some(
+          ([key, value]) => key !== 'views' && value !== null
+        )
+        if (input.metrics.views < 100)
+          warnings.push(
+            'Low sample: fewer than 100 views. This snapshot is retained but excluded from learning baselines.'
+          )
+        if (!hasComparisonMetric)
+          warnings.push(
+            'No comparison metric beyond views was supplied. This snapshot is retained but excluded from learning baselines.'
+          )
+        if (input.source === 'rehearsal')
+          warnings.push('Rehearsal evidence is always excluded from learning baselines.')
+        const createdAt = this.now().toISOString()
+        const record = PerformanceSnapshotSchema.parse({
+          schemaVersion: 1,
+          snapshotId: createUlid(this.now().getTime()),
+          projectId: input.projectId,
+          releaseId: input.releaseId,
+          youtubeVideoId: input.youtubeVideoId,
+          source: input.source,
+          windowStart: input.windowStart,
+          windowEnd: input.windowEnd,
+          collectedAt: input.collectedAt,
+          metricDefinitionVersion: 'youtube-analytics-2026-08',
+          metrics: input.metrics,
+          missingDataWarnings: [...new Set(warnings)],
+          evidenceNotes: input.evidenceNotes,
+          baselineEligible:
+            input.source !== 'rehearsal' && input.metrics.views >= 100 && hasComparisonMetric,
+          createdAt
+        })
+        database
+          .prepare(
+            'INSERT INTO performance_snapshots (snapshot_id, record_json, created_at) VALUES (?, ?, ?)'
+          )
+          .run(record.snapshotId, JSON.stringify(record), record.createdAt)
+        return FinishActionResultSchema.parse({
+          ok: true,
+          workspace: this.getWorkspace(input.projectId)
+        })
+      } finally {
+        database.close()
+      }
+    } catch (error) {
+      const safe = safeError(error)
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: { code: safe.code, message: safe.message }
+      })
+    }
+  }
+
+  saveLearning(unknownInput: SaveReleaseLearningInput): FinishActionResult {
+    try {
+      const input = SaveReleaseLearningInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const database = this.openDatabase(project.workspacePath)
+      try {
+        const knownSnapshots = new Map(
+          this.readAll(database, 'performance_snapshots', PerformanceSnapshotSchema.parse).map(
+            (snapshot) => [snapshot.snapshotId, snapshot]
+          )
+        )
+        if (input.snapshotIds.some((snapshotId) => !knownSnapshots.has(snapshotId)))
+          throw new ReleaseStoreError(
+            'not-found',
+            'Every learning must cite local performance evidence.'
+          )
+        if (
+          input.snapshotIds.some((snapshotId) => !knownSnapshots.get(snapshotId)?.baselineEligible)
+        )
+          throw new ReleaseStoreError(
+            'approval-required',
+            'Learning proposals can cite only baseline-eligible official evidence. Keep low-sample or rehearsal snapshots as observations until sufficient evidence exists.'
+          )
+        const createdAt = this.now().toISOString()
+        const record = ReleaseLearningSchema.parse({
+          schemaVersion: 1,
+          learningId: createUlid(this.now().getTime()),
+          projectId: input.projectId,
+          snapshotIds: [...new Set(input.snapshotIds)],
+          observation: input.observation,
+          inference: input.inference,
+          recommendation: input.recommendation,
+          confidence: input.confidence,
+          scope: input.scope,
+          status: 'proposed',
+          reviewReason: null,
+          createdAt,
+          reviewedAt: null
+        })
+        database
+          .prepare(
+            'INSERT INTO release_learnings (learning_id, record_json, created_at, updated_at) VALUES (?, ?, ?, ?)'
+          )
+          .run(record.learningId, JSON.stringify(record), record.createdAt, record.createdAt)
+        return FinishActionResultSchema.parse({
+          ok: true,
+          workspace: this.getWorkspace(input.projectId)
+        })
+      } finally {
+        database.close()
+      }
+    } catch (error) {
+      const safe = safeError(error)
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: { code: safe.code, message: safe.message }
+      })
+    }
+  }
+
+  reviewLearning(unknownInput: ReviewReleaseLearningInput): FinishActionResult {
+    try {
+      const input = ReviewReleaseLearningInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const database = this.openDatabase(project.workspacePath)
+      try {
+        const existing = parseRow(
+          database
+            .prepare('SELECT record_json FROM release_learnings WHERE learning_id = ?')
+            .get(input.learningId) as unknown as JsonRow | undefined,
+          ReleaseLearningSchema.parse,
+          'That learning proposal was not found.'
+        )
+        if (existing.projectId !== input.projectId)
+          throw new ReleaseStoreError('unsafe-path', 'Learning evidence cannot cross projects.')
+        if (existing.status !== 'proposed')
+          throw new ReleaseStoreError('approval-required', 'That learning already has a decision.')
+        const reviewed = ReleaseLearningSchema.parse({
+          ...existing,
+          status: input.decision,
+          reviewReason: input.reason,
+          reviewedAt: this.now().toISOString()
+        })
+        database
+          .prepare(
+            'UPDATE release_learnings SET record_json = ?, updated_at = ? WHERE learning_id = ?'
+          )
+          .run(JSON.stringify(reviewed), reviewed.reviewedAt, reviewed.learningId)
+        return FinishActionResultSchema.parse({
+          ok: true,
+          workspace: this.getWorkspace(input.projectId)
+        })
+      } finally {
+        database.close()
+      }
+    } catch (error) {
+      const safe = safeError(error)
+      return FinishActionResultSchema.parse({
+        ok: false,
+        error: { code: safe.code, message: safe.message }
+      })
+    }
+  }
+
   createReleasePackage(unknownInput: CreateReleasePackageInput): FinishActionResult {
     let packageRoot: string | null = null
     try {
@@ -751,8 +1085,32 @@ export class ReleaseStore {
         record_json TEXT NOT NULL,
         created_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS project_release_profiles (
+        profile_id TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL,
+        record_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS release_ideas (
+        idea_id TEXT PRIMARY KEY,
+        record_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS performance_snapshots (
+        snapshot_id TEXT PRIMARY KEY,
+        record_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS release_learnings (
+        learning_id TEXT PRIMARY KEY,
+        record_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
       INSERT OR IGNORE INTO schema_migrations (version, applied_at)
-        VALUES (4, CURRENT_TIMESTAMP);
+        VALUES (5, CURRENT_TIMESTAMP);
     `)
     return database
   }
@@ -769,7 +1127,15 @@ export class ReleaseStore {
 
   private readAll<T>(
     database: DatabaseSync,
-    table: 'production_timelines' | 'release_details' | 'release_attestations' | 'release_packages',
+    table:
+      | 'production_timelines'
+      | 'release_details'
+      | 'release_attestations'
+      | 'release_packages'
+      | 'project_release_profiles'
+      | 'release_ideas'
+      | 'performance_snapshots'
+      | 'release_learnings',
     parser: (value: unknown) => T
   ): T[] {
     return (
@@ -779,7 +1145,10 @@ export class ReleaseStore {
     ).map((row) => parseRow(row, parser, `A ${table} record is damaged.`))
   }
 
-  private nextRevision(database: DatabaseSync, table: 'release_details'): number {
+  private nextRevision(
+    database: DatabaseSync,
+    table: 'release_details' | 'project_release_profiles'
+  ): number {
     const row = database
       .prepare(`SELECT COALESCE(MAX(revision), 0) AS revision FROM ${table}`)
       .get() as unknown as { revision: number }

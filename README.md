@@ -2,7 +2,7 @@
 
 Animated Series Studio is a local-first production application for creating repeatable 2D and 3D-look animated YouTube series and one-off films with rented GPU compute.
 
-Version 0.9.0 implements the local production control plane: isolated series/film projects; guided creative direction; protected OpenAI, Anthropic, Gemini, and RunPod connections; skill-aware writing proposals; versioned canon and media approvals; storyboards; in-app image/audio/video review; governed Qwen image, Qwen3-TTS, LTX-2.5, and LatentSync job definitions; official RunPod lifecycle orchestration; an authenticated headless ComfyUI worker; resumable verified transfers; local FFmpeg timelines/captions/thumbnails; and an immutable manual YouTube upload package. Paid generation remains deliberately locked because this checkout has a candidate workflow pack, not fabricated GPU/model/license/quality/shutdown evidence. See [production implementation and qualification](docs/PRODUCTION_IMPLEMENTATION.md).
+Version 0.10.0 implements the local production control plane: isolated series/film projects; guided creative direction; protected OpenAI, Anthropic, Gemini, and RunPod connections; project-aware idea assistance beside applicable creative/planning fields; skill-aware writing proposals; versioned canon and media approvals; storyboards; in-app image/audio/video review; governed Qwen image, Qwen3-TTS, LTX-2.5, LatentSync, control, foley, and optional-adaptation job definitions; official RunPod lifecycle orchestration; an authenticated headless ComfyUI worker; resumable verified transfers; local FFmpeg timelines/captions/thumbnails; project-scoped release profiles/ideas/performance/learning; and an immutable manual YouTube upload package. Paid generation remains deliberately locked because this checkout has a candidate workflow pack, not fabricated GPU/model/license/quality/shutdown evidence. See [production implementation and qualification](docs/PRODUCTION_IMPLEMENTATION.md).
 
 ## Locked baseline
 
@@ -13,13 +13,14 @@ Version 0.9.0 implements the local production control plane: isolated series/fil
 - Qwen-Image/Qwen-Image-Edit is the initial image family; Qwen3-TTS is the initial voice family.
 - RunPod is the first GPU provider. A provider interface prevents permanent lock-in.
 - OpenAI Responses, Anthropic Messages, and Gemini GenerateContent are the bring-your-own-key writing providers behind a neutral creative-writing interface; text API usage is billed separately from RunPod GPU usage.
-- Version 0.9.0 offers only its checked stable writing catalogue: GPT-5.6 Terra/Sol/Luna, Claude Sonnet 5/Opus 5/Haiku 4.5, and Gemini 3.7 Flash/3.5 Flash-Lite. Balanced is a starting tier, not a task benchmark winner.
+- Version 0.10.0 offers only its checked stable writing catalogue: GPT-5.6 Terra/Sol/Luna, Claude Sonnet 5/Opus 5/Haiku 4.5, and Gemini 3.7 Flash/3.5 Flash-Lite. Balanced is a starting tier, not a task benchmark winner.
 - Required inputs display an asterisk and live minimum/range guidance. Missing or invalid information opens a clear correction popup; it never silently leaves the primary action grey or starts a provider/GPU operation.
 - Every project has an immutable versioned Audience & Creative Direction profile. It guides later stages but never becomes canon, copies a comparable work, or answers YouTube's separate made-for-kids and disclosure attestations.
 - External creative skills are versioned and permissioned. The studio routes applicable enabled skills and records exact execution receipts, so an attached required skill cannot be silently ignored.
+- The project-aware idea assistant uses that same protected provider/context/skill path for creative text fields. It creates reviewable proposals and has no authority over keys, measurements, transcripts, approvals, rights/policy declarations, canon, spending, GPU starts, or publishing.
 - Images, audio, and videos are reviewed inside Animated Series Studio. ComfyUI runs headlessly as an internal worker engine rather than the required viewing interface.
-- Timed local storyboard editing, deterministic finishing, and warning-only technical QC are implemented. Advanced pose/depth/edge/mask/motion controls, layered parallax, model-generated foley, and project-scoped adaptation remain post-qualification work.
-- YouTube delivery includes versioned release profiles, an Idea Library, truthful public-thumbnail candidates, factual release details and timeline chapters, explicit audience/disclosure/originality/rights review, and an immutable manual-upload package. Version 1 does not auto-publish; optional analytics are read-only/evidence-based and cannot change creative work automatically.
+- Timed local storyboard editing, deterministic finishing, warning-only technical QC, advanced control/layer media roles, engine-neutral control manifests, and locked candidate definitions for control-guided generation, foley, and project adaptation are implemented. Their real model/workflow/training execution remains post-qualification work.
+- YouTube delivery includes project-local versioned release profiles, an Idea Library, truthful public-thumbnail candidates, factual release details and timeline chapters, explicit audience/disclosure/originality/rights review, structured official/manual/rehearsal performance snapshots, human-reviewed future lessons, and an immutable manual-upload package. Version 1 does not auto-publish; analytics evidence cannot change creative work automatically.
 - Production workers never repair themselves with “Install Missing Nodes”; exact dependencies are built, tested, pinned, and rollback-capable before billing begins.
 - The upstream `shuohao-skills` project is a pinned Git submodule under `vendor/` and is never edited in place.
 - A 20–35 minute episode is assembled from approved generated motion, lip-synced dialogue, reusable loops, held frames, pans, reaction shots, sound, and editorial timing. The system does not assume that every second must be newly generated video.
@@ -34,7 +35,7 @@ Version 0.9.0 implements the local production control plane: isolated series/fil
 6. [Audience and creative direction](docs/CREATIVE_DIRECTION_PROFILE.md)
 7. [Master build backlog](docs/BUILD_BACKLOG.md)
 8. [Production implementation and qualification](docs/PRODUCTION_IMPLEMENTATION.md)
-8. [YouTube release, packaging, and learning workflow](docs/YOUTUBE_RELEASE_WORKFLOW.md)
+9. [YouTube release, packaging, and learning workflow](docs/YOUTUBE_RELEASE_WORKFLOW.md)
 
 ## Repository boundary
 
@@ -42,9 +43,9 @@ Version 0.9.0 implements the local production control plane: isolated series/fil
 animated-series-studio/
 ├── apps/desktop/                 current Electron main/preload + React application
 ├── packages/                     contracts, domain/store, secure vault, writing/provider adapters, diagnostics, cloud setup
-├── worker/                       planned remote GPU worker image and gateway
-├── workflows/                    planned versioned ComfyUI/LTX workflows
-├── config/                       current locks and future runtime defaults
+├── worker/                       candidate remote GPU worker image and gateway
+├── workflows/                    versioned candidate ComfyUI/LTX workflow resources
+├── config/                       current locks, candidates, and runtime defaults
 ├── docs/                         authoritative product/build documentation
 ├── scripts/                      maintenance and verification tools
 └── vendor/shuohao-skills/        pinned upstream dependency (Git submodule)
@@ -86,11 +87,11 @@ node scripts/check-docs.mjs
 | Series/film project storage | Create/list/open, immutable project-local creative-direction revisions, schema-2/backward-compatible schema-1 data, guided backed-up v1→v2 migration with rollback tests, verified full backup/non-overwriting restore, and single-writer protection implemented; archive/future migrations, incremental archives, and clean-machine recovery remain |
 | Diagnostics and support | Structured pre-write redaction and local-only support JSON implemented/tested; broader worker/skill coverage, retention, and packaged scan remain |
 | RunPod provider | Official Pod list/get/create/start/stop/delete, catalogue, lease reconciliation, cost/start gates and limits implemented; live provider qualification pending |
-| Writing providers and external skills | Protected OpenAI/Anthropic/Gemini connections, controlled model catalogue, proposal drafting, and project-scoped declarative skill installation/planning/receipts are implemented with local mocked tests; live benchmark/cost profiles and higher-risk executable/MCP skill classes remain locked |
+| Writing providers and external skills | Protected OpenAI/Anthropic/Gemini connections, controlled model catalogue, project-wide creative-field idea assistance, proposal drafting, and project-scoped declarative skill installation/planning/receipts are implemented with local mocked tests; live benchmark/cost profiles and higher-risk executable/MCP skill classes remain locked |
 | Remote GPU worker | Docker/model bootstrap/gateway/loopback ComfyUI/preflight/watchdog/transfers/runners implemented; image build and live qualification pending |
 | In-app media review | Restricted local image/audio/video review and approval implemented |
-| Animatic, advanced controls, creative QC, foley, and optional adaptation | Local storyboard/timeline and technical QC implemented; advanced controls, generated foley, and adaptation remain planned |
+| Animatic, advanced controls, creative QC, foley, and optional adaptation | Local storyboard/timeline/QC, control/layer/dataset media roles, ordered manifests, and candidate workflows are implemented; exact control adapters, foley model, trainer, and live benchmarks remain release-blocked |
 | YouTube thumbnails, release details, policy review, and upload package | Local thumbnail/details/attestations/hash-checked manual package implemented; automatic upload absent |
-| YouTube performance evidence and learning | Manual/read-only design documented; not implemented; no automatic creative or paid action |
+| YouTube performance evidence and learning | Structured project-local manual evidence snapshots and human-approved/rejected learning proposals implemented; report-file parsing and optional read-only OAuth remain future work; no automatic creative or paid action |
 | LTX/Qwen workflows | Governed candidate packs/runners implemented; exact API workflows, model/license hashes and live benchmarks pending |
 | Production readiness | Correctly locked until controlled promotion evidence exists |

@@ -1,6 +1,6 @@
 # End-to-end production workflow
 
-Current implementation note (0.9.0): the creator-facing rooms and local records now implement proposal-to-canon, storyboard/media approval, governed generation preparation, review, local finishing, attestations, and manual upload packaging. Paid work remains locked until the exact worker passes external qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.0): the creator-facing rooms and local records implement project-aware field assistance, proposal-to-canon, storyboard/media approval, governed generation preparation, review, local finishing, release-profile/idea/performance/learning planning, attestations, and manual upload packaging. Paid work remains locked until the exact worker passes external qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Production shape
 
@@ -70,7 +70,9 @@ Select a pilot scene that is difficult enough to be honest. A silent landscape s
 
 ## 4. Stage 1 — story development and upstream import
 
-Choose a connected OpenAI, Anthropic, or Gemini writing profile from the version-0.7.0 approved catalogue and select the local context the request may use. The current profile revision is selected by default. The app previews the exact manifest and direction text plus hashes, shows the instruction minimum and paid-confirmation requirement, and opens a no-charge correction summary when anything is unresolved. A valid approved request is schema-validated and saved locally as a schema-2 proposal with provider/model, source versions, token usage, uncalculated dollar cost, and `Skills used: none`. Balanced/deep/economy labels explain intended use but do not replace the planned task benchmark. The provider remains a drafting assistant; it cannot approve canon. Selective acceptance into versioned local facts and the matched external-skill plan/receipts remain the next writing/skill slices, not current behavior.
+Choose a connected OpenAI, Anthropic, or Gemini writing profile from the controlled catalogue and select the local context the request may use. The current direction revision is selected by default. The app previews the exact manifest/direction text and hashes, the applicable project-enabled declarative-skill plan, instruction minimum, and paid-confirmation requirement. A valid request is schema-validated and saved locally as a schema-3 proposal with provider/model, source versions, token usage, uncalculated dollar cost, exact plan hash, and execution receipts. Balanced/deep/economy labels explain intended use but do not replace a task benchmark. The provider remains a drafting assistant; only a separate reviewed promotion can create canon.
+
+The same governed path is available beside applicable text fields throughout Direction, World & Cast, Storyboard, Generate, Edit & Export, and Release. It can propose character/world/style/voice/motion/control/foley/thumbnail/release/learning text, but it cannot fill a secret, measurement, exact source transcript, approval, canon fact, rights/policy attestation, cost limit, GPU confirmation, or publishing action. A suggestion remains a saved proposal until the creator deliberately inserts and then saves it through the destination form.
 
 Use the exact selected direction revision with the pinned upstream skills and other enabled compatible skills where they help:
 
@@ -82,7 +84,7 @@ Use the exact selected direction revision with the pinned upstream skills and ot
 
 The studio copies imported source files unchanged, records the upstream commit, runs upstream validation, and generates a normalization preview. A required skill that fails, times out, produces invalid output, or lacks an execution receipt blocks that creative job until the creator retries or explicitly changes the plan.
 
-Every future story, character, art, script, storyboard, and shot-recipe task records the profile version/hash it used. The adapter converts the neutral profile into each skill's expected input; it does not modify `vendor/shuohao-skills` or assume one storyboard paragraph can fully determine identity, staging, motion, dialogue timing, and engine controls.
+Every current writing/idea request records the selected profile version/hash in its exact context snapshot. Future upstream/media compilers must continue pinning it. The adapter does not modify `vendor/shuohao-skills` or assume one storyboard paragraph can fully determine identity, staging, motion, dialogue timing, and engine controls.
 
 For long-form episodes, the creator and studio then organize material into acts/sequences. The upstream short-drama cut cadence is a suggestion, not the final pacing law. The normalized episode may contain longer holds and editorial construction while retaining story evidence and IDs.
 

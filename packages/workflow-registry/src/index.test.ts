@@ -1,6 +1,6 @@
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { WorkflowRegistry, WorkflowRegistryError, idempotencyKey } from './index'
@@ -139,5 +139,23 @@ describe('locked workflow registry', () => {
     expect(estimate.expectedTotalUsd).toBeCloseTo(0.1333, 3)
     expect(estimate.maximumTotalUsd).toBeCloseTo(0.4, 3)
     expect(estimate.gpuCount).toBe(2)
+  })
+
+  it('loads advanced control, foley, and adaptation definitions as non-billable candidates', () => {
+    const registry = new WorkflowRegistry(
+      resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')
+    )
+    const expected = [
+      'qwen-image-controlled-board',
+      'ltx2-controlled-shot',
+      'rights-aware-foley-generation',
+      'ltx25-project-lora-adaptation'
+    ]
+    for (const workflowId of expected) {
+      const workflow = registry.get(workflowId, '1.0.0')
+      expect(workflow.qualificationState).toBe('candidate')
+      expect(workflow.templatePath).toBeNull()
+      expect(workflow.templateSha256).toBeNull()
+    }
   })
 })
