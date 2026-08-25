@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "candidateCreatedAt": "2026-08-22T12:00:00.000Z",
+  "candidateCreatedAt": "2026-08-25T12:00:00.000Z",
   "qualificationState": "candidate",
   "components": {
     "comfyUi": {
@@ -11,9 +11,20 @@
       "repository": "https://github.com/Lightricks/ComfyUI-LTXVideo.git",
       "commit": "15d09abb5a187a8dcaea2fc31fe51ee96e6c9d0d"
     },
+    "comfyTransformers": {
+      "version": "5.14.1",
+      "reason": "The reviewed LTX-2 runtime excludes Transformers 5.15 because its Gemma support regressed. The worker verifies this exact 5.14 patch after installing the open-ended ComfyUI requirements."
+    },
+    "kornia": {
+      "version": "0.8.2",
+      "reason": "The pinned LTX custom node imports pyramid.pad, which is absent from Kornia 0.8.3. The worker build verifies this import before an image can be published."
+    },
     "qwen3Tts": {
       "repository": "https://github.com/QwenLM/Qwen3-TTS.git",
-      "commit": "022e286b98fbec7e1e916cb940cdf532cd9f488e"
+      "commit": "022e286b98fbec7e1e916cb940cdf532cd9f488e",
+      "environment": "isolated-system-site-packages-venv",
+      "systemAudioRuntime": "sox with libsox-fmt-all",
+      "buildCheck": "sox --version; from qwen_tts import Qwen3TTSModel"
     },
     "qwenImage": {
       "repository": "https://github.com/QwenLM/Qwen-Image.git",
@@ -21,7 +32,19 @@
     },
     "latentSync": {
       "repository": "https://github.com/bytedance/LatentSync.git",
-      "commit": "a229c3948406bc2cf6eaf4873e662e70c6a04746"
+      "commit": "a229c3948406bc2cf6eaf4873e662e70c6a04746",
+      "pythonVersion": "3.10",
+      "reason": "The pinned upstream setup declares Python 3.10.13, so the worker uses the maintained Python 3.10 line; its mediapipe 0.10.11 dependency has no Python 3.12 wheel."
+    },
+    "ltxTrainer": {
+      "repository": "https://github.com/Lightricks/LTX-2.git",
+      "commit": "400fd31054597515f47125691032c04b1c3ee24e",
+      "version": "1.2.0",
+      "uvVersion": "0.12.5",
+      "cudaRuntime": "13.2",
+      "minimumNvidiaDriverMajor": 595,
+      "environment": "isolated-venv",
+      "buildCheck": "import ltx_core, ltx_trainer; process_dataset.py --help; train.py --help"
     }
   },
   "requiredBeforeQualification": [

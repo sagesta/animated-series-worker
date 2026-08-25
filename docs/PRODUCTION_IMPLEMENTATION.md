@@ -1,8 +1,8 @@
 # Production implementation and qualification guide
 
-Version: 0.10.0
+Version: 0.10.1
 
-Last updated: 2026-08-23
+Last updated: 2026-08-25
 
 Status: implemented local control plane; paid generation locked pending controlled GPU qualification
 
@@ -22,18 +22,18 @@ The application is a local-first Windows production control room for multiple an
 - a governed GPU workflow catalogue for Qwen image generation/editing, Qwen3-TTS, LTX-2.5 motion/dialogue, LatentSync lip repair, warning-only technical QC, plus deliberately locked candidates for control-guided Qwen/LTX, separate foley, and optional project adaptation;
 - official RunPod Pod lifecycle calls, lease reconciliation, one-GPU-per-job concurrency, cost approval, separate start confirmation, hard deadlines, idle shutdown, cancellation, provider termination, and audit-preserving worker-close records;
 - an authenticated worker gateway with ComfyUI bound to `127.0.0.1:8188`, allowlisted workflow IDs, parameter schemas, node allowlists, exact templates, verified model paths, resumable 4 MiB file transfers, output hashes, purge, and recovery;
-- deterministic local FFmpeg installation, rough-cut rendering, editable SRT/VTT captions, thumbnails, local technical verification, project-local versioned release profiles/ideas/performance/learning records, immutable release records, and a verified manual YouTube upload package.
+- deterministic local FFmpeg installation, rough-cut rendering, editable SRT/VTT captions, thumbnails, local technical verification, project-local versioned release profiles/ideas/performance/learning records, bounded official-report CSV import with file/row provenance, immutable release records, and a verified manual YouTube upload package.
 
 The source implementation is broad, but the shipped candidate deliberately has no production workflow pack. It cannot start paid generation until the external qualification gate in section 8 produces exact evidence. This is a safety property, not unfinished button wiring.
 
 ## 2. Plain-language creator flow
 
-1. Create a series or one-off film. Its files and history stay separate from every other project.
-2. Complete the Audience & Creative Direction profile. Required fields have asterisks, live length/range help, and a correction popup.
-3. Connect a writing provider and optionally enable reviewed writing skills for this project.
-4. Create proposals for the bible, characters, world, outline, scenes, dialogue, continuity, storyboard plan, and YouTube release strategy. Beside applicable fields, use **Generate ideas** to see the exact project context, provider/model, and skills before approving one text request; a suggestion changes nothing until you choose it.
-5. Review and promote only accepted proposal sections into versioned canon. Revisions do not erase prior facts.
-6. Import or generate character boards, style boards, environment boards, storyboard frames, voice references, and other source media. Approve only usable assets.
+1. Start with a story idea or existing text script. Choose series/film, optional title, and language. The app creates a separate local project without an AI or GPU charge. The optional detailed wizard remains available.
+2. Creator Mode derives the next missing stage from durable state. Its default surface shows that one step, one primary action, a compact creative-approval bar, and GPU state. A collapsed eight-checkpoint production run projects story package, character/location references, storyboard frames, voices/dialogue, video shots, locked local edit/captions, verified master, and worker cleanup from active canon, approved media, saved jobs/timelines, and reported active workers.
+3. Connect one protected writing provider and optionally enable reviewed writing skills. For each text stage, the app attaches the source, settings, active direction and all active canon automatically, then selects the saved controlled model and declared fallbacks.
+4. The Create action states the selected service, potential text billing, no-GPU boundary, and any fallback count; clicking that action is the explicit request approval. A provider result remains a proposal and changes nothing until the creator reviews and promotes its exact fingerprint.
+5. Earlier stages can be revisited as new revisions. Existing approved facts and outputs are never overwritten. Detailed rooms and field-level **Generate ideas** remain available through Advanced Studio for precise intervention.
+6. Import or generate character boards, style boards, environment boards, storyboard frames, voice references, and other source media. Approve only usable assets. The secondary one-off asset tool can prefill Image, Video, Audio, Composition, or local Assemble work after its prerequisites exist; opening that handoff neither estimates nor starts a job.
 7. Build a timed storyboard/animatic locally before expensive motion work. The storyboard defines intent; the locked job also carries the exact approved files, canon versions, workflow version, parameters, seed, and cost limit needed to reproduce execution.
 8. In Generate, choose one operation. The app validates required input count and order, displays compatible GPUs, and calculates expected and maximum cost without renting anything. Advanced controls are serialized as ordered approved roles/hashes; unsupported roles block. Adaptation additionally requires an approved dataset plus explicit benchmark-failure and rights confirmations.
 9. Approve that exact maximum. This saves a local record but still does not start a GPU.
@@ -54,14 +54,14 @@ The source implementation is broad, but the shipped candidate deliberately has n
 | Targeted mouth/timing repair | LatentSync 1.6 isolated Python runner | A post-process repair tool, not a second video-generation engine; video first and approved audio second |
 | Control-guided board/shot | Qwen/LTX candidate definitions | Neutral start/end/pose/depth/edge/segmentation/mask/motion/reference roles compile to ordered manifests; paid execution stays locked until exact adapters qualify |
 | Ambience/effects/foley | Rights-aware candidate contract | Stays separate from dialogue/music; exact model, license, runner, timing and quality fixtures remain unresolved |
-| Optional project adaptation | LTX-2.5 LoRA candidate contract | Requires one rights-reviewed project dataset and recorded failed reference-only benchmark; trainer/evaluation/promotion remains locked |
+| Optional project adaptation | Official pinned LTX trainer and LTX-2.5 LoRA candidate contract | The local builder binds 4–100 approved samples by ID/hash/caption/rights/consent and requires a recorded failed reference-only benchmark; live trainer/evaluation/promotion remains locked |
 | Editorial, captions, thumbnail, package | Local FFmpeg and deterministic file operations | No rented GPU and only approved inputs |
 
 LTX Dub-It is not used in this baseline because the official feature guide validated it for LTX-2.3 while LTX-2.5 support was still in development. The isolated LatentSync path avoids silently mixing an incompatible LTX checkpoint into the main worker.
 
 ## 4. Local application boundaries
 
-The Electron main process owns files, SQLite, vault access, provider traffic, external processes, worker clients, and release writes. The sandboxed renderer receives only named, schema-validated preload methods. Saved secret values are never sent to it.
+The Electron main process owns files, SQLite, vault access, provider traffic, external processes, worker clients, and release writes. The sandboxed renderer receives only named, schema-validated preload methods. Saved secret values are never sent to it. Writing-provider model-list checks retain a 30-second ceiling, while confirmed structured drafts have a separate five-minute ceiling. Gemini short field suggestions use low thinking and longer production stages use medium thinking; a timeout saves no proposal and never triggers a hidden paid retry.
 
 Projects are authoritative local records. Cloud storage is a cache. Every imported or downloaded asset has a local SHA-256, immutable source lineage, project ID, state, and parent links. The `studio://media` protocol resolves only known project assets and supports media range requests without exposing arbitrary paths.
 
@@ -94,7 +94,7 @@ RunPod can still charge for retained persistent storage after compute stops. A P
 
 ## 6. Worker image and automatic setup
 
-`worker/Dockerfile` pins ComfyUI, the LTX custom nodes, Qwen3-TTS, and LatentSync source commits. Runtime dependencies are built into the image; the worker never installs custom nodes or accepts arbitrary commands during a job.
+`worker/Dockerfile` pins ComfyUI, the LTX custom nodes, Qwen3-TTS, LatentSync, and the official LTX trainer source commits. It pins Kornia 0.8.2 because the exact LTX node revision imports an API removed by 0.8.3, Transformers 5.14.1 because LTX excludes the regressed 5.15 line, and a Python 3.10 LatentSync environment because the pinned upstream setup declares 3.10.13 and its MediaPipe pin has no Python 3.12 wheel. Qwen3-TTS, LatentSync, and the trainer use separate environments so their dependencies cannot silently rewrite ComfyUI's runtime; the image also verifies Qwen's required `sox` executable and common codecs. Runtime dependencies are built into the image; the worker never installs custom nodes or accepts arbitrary commands during a job.
 
 The model installer reads only `config/model-install-manifest.*.json`. Each entry contains an allowlisted Hugging Face repository, immutable revision, source path, destination, license URL, and production hash. It rejects absolute/traversal destinations and undeclared repositories.
 
@@ -108,7 +108,11 @@ The ordinary creator does not set up the GPU every episode. A maintainer builds 
 
 ComfyUI is the execution engine, not the review interface. A production Comfy workflow must be an API-format prompt stored under `config/workflows`, have a SHA-256 in the production pack, and use only reviewed node types. The importer refuses UI-format/unsafe workflow content and records its exact node inventory.
 
+The candidate pack contains reviewed, hash-locked API graphs for Qwen character/storyboard frames, Qwen targeted edits, an LTX single-stage draft, an LTX two-stage final, native LTX audio-driven dialogue, control-guided Qwen, and control-guided LTX. Rights-aware foley and project adaptation have exact hash-locked runner contracts. All are structurally checked but remain non-billable candidates until the declared model files, GPU runtime, output quality, cost, rights, and shutdown evidence pass. Promotion is atomic across every core, advanced, and local-finishing entry: missing advanced evidence blocks the whole pack rather than silently producing a core-only release.
+
 At worker startup, preflight verifies GPU/VRAM, disk, ComfyUI commit, installed nodes, model hashes, workflow hashes, the normalized workflow-pack fingerprint, image digest, and a tiny loopback smoke workflow. The desktop repeats qualification against the selected workflow before uploading inputs.
+
+Local verification on 2026-08-25 built candidate `0.10.1-candidate.2` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. That evidence does not provide a registry digest/signature, any model hash, a compatible 18–80 GB benchmark, media quality, provider lifecycle, cost, or production promotion.
 
 The gateway accepts only a registered workflow/version and its declared parameters. `$PARAM:<key>` and `$INPUT:<index>` are the only template placeholders. Uploaded assets are size/hash checked, copied into a lease/job namespace under the Comfy input directory, and removed during purge. Outputs are copied into the job workspace and hashed before download.
 
@@ -118,11 +122,11 @@ The repository ships candidate pins, not fabricated production evidence. These n
 
 ```powershell
 .\scripts\New-GpuQualificationBundle.ps1
-.\scripts\Build-GpuWorker.ps1 -ImageName registry.example/studio-worker:0.9.0-candidate.1 -AllowCandidate
+.\scripts\Build-GpuWorker.ps1 -ImageName registry.example/studio-worker:0.10.1-candidate.2 -AllowCandidate
 node scripts\Import-ComfyWorkflow.mjs --workflow-id <id> --input <api-workflow.json>
 ```
 
-The controlled run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. The qualification Pod runs every required image, edit, voice, line-book, draft/final/dialogue motion, animated lip-sync fixture, security, resumable-transfer, reconciliation, shutdown, and cost test.
+The controlled run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. Qualification runs every required image, edit, voice, line-book, draft/final/native-audio/control motion, animated lip-sync, creative-QC, foley, adaptation, local-finishing, compatibility, security, resumable-transfer, reconciliation, shutdown, and cost test. Because the current controlled-shot and adaptation candidates declare 80 GB, the atomic run requires an 80 GB compatible GPU and the CUDA 13.2 trainer path requires an R595-or-newer NVIDIA driver.
 
 Promotion requires three external artifacts:
 
@@ -155,7 +159,7 @@ The promotion tool refuses stale pack fingerprints, model/source mismatches, nul
 
 The Finish room renders from an approved timeline, creates editable captions, renders a deterministic thumbnail from authorized imagery and text, verifies the master, records explicit human attestations, and creates an immutable manual-upload package with file hashes.
 
-It also stores immutable project-local release-profile revisions, source-labelled ideas, and time-windowed structured performance snapshots. Snapshots pin the metric-definition version, identify official/manual/rehearsal source, warn about missing metrics, and exclude rehearsal values from baselines. A learning proposal cites snapshot IDs and separates observation, inference, recommendation, confidence, and scope; only a creator can approve or reject it with a reason. This implementation accepts structured manual entry. A report-file parser and optional read-only OAuth connector remain separate future work.
+It also stores immutable project-local release-profile revisions, source-labelled ideas, and time-windowed structured performance snapshots. Snapshots pin the metric-definition version, identify official/manual/rehearsal source, warn about missing metrics, and exclude rehearsal values from baselines. The official-report path parses a bounded YouTube Analytics CSV, rejects unsafe/ambiguous rows, records the file SHA-256 and selected row, and leaves values reviewable before saving. A learning proposal cites snapshot IDs and separates observation, inference, recommendation, confidence, and scope; only a creator can approve or reject it with a reason. Optional read-only OAuth remains separate future work.
 
 Title and description validation uses current YouTube field limits. The package retains disclosure and rights decisions, but the app does not decide made-for-kids status or whether a synthetic-content disclosure legally applies. It does not auto-publish, promise ranking, keyword-stuff, or call local variants a real audience experiment.
 
@@ -163,13 +167,13 @@ Title and description validation uses current YouTube field limits. The package 
 
 The following are deliberately not claimed complete on this development machine:
 
-- the candidate Docker image has not been built here because Docker is unavailable;
-- official ComfyUI example workflows still require API-format export, safe parameter binding, and controlled benchmark import;
+- the candidate Docker image exists locally and passed model-free preflight, but it has not been pushed by immutable registry digest, signed, or run with the declared production models;
+- the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
 - model hashes and commercial-use license decisions have not been recorded;
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
 - no 20–35 minute pilot episode or one-off film has passed human continuity, motion, lip, audio, recovery, and budget acceptance;
 - the Windows artifact is not yet a signed production installer and has not passed a clean-machine non-technical acceptance run;
-- report-file analytics import, optional read-only YouTube OAuth, and automatic YouTube publishing remain outside this release; structured local performance evidence and human-reviewed learning are implemented without any account mutation.
+- optional read-only YouTube OAuth and automatic YouTube publishing remain outside this release; checked CSV import, structured local performance evidence, and human-reviewed learning are implemented without any account mutation.
 
 These are release evidence tasks, not permission to bypass the locks. [BUILD_BACKLOG.md](BUILD_BACKLOG.md) remains the ledger until they pass.
 

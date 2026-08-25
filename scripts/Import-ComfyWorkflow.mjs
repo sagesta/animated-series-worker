@@ -42,15 +42,25 @@ const workflow = pack.workflows?.find((item) => item.workflowId === values['work
 if (!workflow || workflow.engine !== 'comfyui') fail('The selected ID is not a candidate ComfyUI workflow.')
 const prompt = JSON.parse(readFileSync(inputPath, 'utf8'))
 if (!prompt || Array.isArray(prompt) || typeof prompt !== 'object') fail('The file is not a ComfyUI API-format prompt object.')
+if (Array.isArray(prompt.nodes) || Array.isArray(prompt.links)) {
+  fail('The file uses ComfyUI UI format. Export the workflow in API format before import.')
+}
 const nodes = Object.values(prompt)
 if (nodes.length < 1 || nodes.length > 500) fail('The workflow node count is outside the reviewed limit.')
 const allowedParameters = new Set(workflow.parameters.map((parameter) => parameter.key))
+const reviewedNodeTypes = new Set(workflow.allowedNodeTypes ?? [])
+if (reviewedNodeTypes.size < 1) {
+  fail('The candidate must declare its reviewed node-type allowlist before workflow import.')
+}
 const nodeTypes = new Set()
 for (const node of nodes) {
   if (!node || typeof node !== 'object' || typeof node.class_type !== 'string' || !node.inputs || typeof node.inputs !== 'object') {
     fail('Every API workflow node must contain class_type and inputs.')
   }
   nodeTypes.add(node.class_type)
+}
+for (const nodeType of nodeTypes) {
+  if (!reviewedNodeTypes.has(nodeType)) fail(`The workflow uses an unauthorized node type: ${nodeType}.`)
 }
 visit(prompt, (value) => {
   if (typeof value !== 'string') return

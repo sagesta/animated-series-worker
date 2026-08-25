@@ -189,6 +189,23 @@ describe('timeline and manual release package', () => {
       ])
     )
     expect(packaged.workspace.blockers).toEqual([])
+    const releasePackage = packaged.workspace.releasePackages[0]!
+    const resolved = release.resolveReleasePackagePath({
+      projectId: project.manifest.id,
+      releaseId: releasePackage.releaseId
+    })
+    expect(resolved).toMatchObject({ ok: true })
+    if (!resolved.ok) throw new Error(resolved.error.message)
+    writeFileSync(join(resolved.path, 'manifest.json'), '{"tampered":true}\n')
+    expect(
+      release.resolveReleasePackagePath({
+        projectId: project.manifest.id,
+        releaseId: releasePackage.releaseId
+      })
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'integrity-failed' }
+    })
     projects.close()
   })
 
@@ -314,6 +331,47 @@ describe('timeline and manual release package', () => {
     expect(evidence.missingDataWarnings).toEqual(
       expect.arrayContaining(['shares was not supplied by the selected report.'])
     )
+
+    const missingReport = release.savePerformanceSnapshot({
+      projectId: project.manifest.id,
+      releaseId: null,
+      youtubeVideoId: 'Lantern_003',
+      source: 'official-report',
+      windowStart: '2026-08-01',
+      windowEnd: '2026-08-07',
+      collectedAt: now.toISOString(),
+      metrics: evidence.metrics,
+      missingDataWarnings: [],
+      evidenceNotes: 'The creator selected official report evidence without importing its file.'
+    })
+    expect(missingReport).toMatchObject({ ok: false, error: { code: 'invalid-input' } })
+
+    const importedReport = release.savePerformanceSnapshot({
+      projectId: project.manifest.id,
+      releaseId: null,
+      youtubeVideoId: 'Lantern_003',
+      source: 'official-report',
+      windowStart: '2026-08-01',
+      windowEnd: '2026-08-07',
+      collectedAt: now.toISOString(),
+      metrics: evidence.metrics,
+      reportProvenance: {
+        fileName: 'YouTube Analytics.csv',
+        fileSha256: 'a'.repeat(64),
+        importedAt: now.toISOString(),
+        rowNumber: 2
+      },
+      missingDataWarnings: [],
+      evidenceNotes: 'The creator reviewed row two from the checked official report file.'
+    })
+    if (!importedReport.ok) throw new Error(importedReport.error.message)
+    const importedEvidence = importedReport.workspace.performanceSnapshots.find(
+      (item) => item.youtubeVideoId === 'Lantern_003'
+    )
+    expect(importedEvidence).toMatchObject({
+      youtubeVideoId: 'Lantern_003',
+      reportProvenance: { fileName: 'YouTube Analytics.csv', rowNumber: 2 }
+    })
 
     const lowSample = release.savePerformanceSnapshot({
       projectId: project.manifest.id,

@@ -111,7 +111,7 @@ export const CreateProjectInputSchema = z
       .max(240, 'Duration must be four hours or less.'),
     visualDirection: VisualDirectionSchema,
     sourceMode: SourceModeSchema,
-    pilotBrief: z.string().trim().max(4000).optional().default(''),
+    pilotBrief: z.string().trim().max(100_000).optional().default(''),
     creativeDirection: CreativeDirectionInputSchema
   })
   .strict()
@@ -128,7 +128,7 @@ const ProjectManifestFields = {
   targetDurationMinutes: z.number().int().min(1).max(240),
   visualDirection: VisualDirectionSchema,
   sourceMode: SourceModeSchema,
-  pilotBrief: z.string().max(4000),
+  pilotBrief: z.string().max(100_000),
   deliveryProfileId: z.string().min(1),
   budgetPolicyId: z.string().min(1),
   folderName: z.string().min(1).max(100),
@@ -885,7 +885,8 @@ export const WritingContextSelectionSchema = z
   .object({
     includeProjectBrief: z.boolean(),
     includeProductionSettings: z.boolean(),
-    includeCreativeDirection: z.boolean()
+    includeCreativeDirection: z.boolean(),
+    includeApprovedCanon: z.boolean().default(true)
   })
   .strict()
 export type WritingContextSelection = z.infer<typeof WritingContextSelectionSchema>
@@ -921,7 +922,7 @@ export const WritingDraftRequestSchema = z
     provider: WritingProviderSchema,
     model: z.string().trim().min(1).max(200),
     profile: WritingProfileSchema,
-    maxOutputTokens: z.number().int().min(256).max(4_000),
+    maxOutputTokens: z.number().int().min(256).max(12_000),
     skillPlanSha256: Sha256Schema,
     paidConfirmed: z.literal(true)
   })
@@ -942,8 +943,8 @@ export const WritingProviderDraftInputSchema = z
   .object({
     model: z.string().min(1).max(200),
     systemInstruction: z.string().min(1).max(12_000),
-    userPrompt: z.string().min(1).max(30_000),
-    maxOutputTokens: z.number().int().min(256).max(4_000)
+    userPrompt: z.string().min(1).max(120_000),
+    maxOutputTokens: z.number().int().min(256).max(12_000)
   })
   .strict()
 export type WritingProviderDraftInput = z.infer<typeof WritingProviderDraftInputSchema>
@@ -1018,17 +1019,29 @@ const WritingCreativeDirectionSourceVersionSchema = z
   })
   .strict()
 
+const WritingCanonSourceVersionSchema = z
+  .object({
+    kind: z.literal('approved-canon'),
+    id: UlidSchema,
+    schemaVersion: z.literal(1),
+    revision: z.number().int().positive(),
+    updatedAt: z.string().datetime({ offset: true }),
+    sha256: Sha256Schema
+  })
+  .strict()
+
 export const WritingSourceVersionSchema = z.discriminatedUnion('kind', [
   WritingManifestSourceVersionSchema,
-  WritingCreativeDirectionSourceVersionSchema
+  WritingCreativeDirectionSourceVersionSchema,
+  WritingCanonSourceVersionSchema
 ])
 export type WritingSourceVersion = z.infer<typeof WritingSourceVersionSchema>
 
 export const WritingContextPreviewSchema = z
   .object({
-    text: z.string().min(1).max(20_000),
+    text: z.string().min(1).max(100_000),
     sha256: Sha256Schema,
-    sourceVersions: WritingSourceVersionSchema.array().min(1).max(2)
+    sourceVersions: WritingSourceVersionSchema.array().min(1).max(102)
   })
   .strict()
 export type WritingContextPreview = z.infer<typeof WritingContextPreviewSchema>
@@ -1091,10 +1104,23 @@ const WritingDraftRecordV3Schema = z
   })
   .strict()
 
+const WritingDraftRecordV4Schema = z
+  .object({
+    schemaVersion: z.literal(4),
+    ...WritingDraftRecordFields,
+    contextSelection: WritingContextSelectionSchema,
+    sourceVersions: WritingSourceVersionSchema.array().min(1).max(102),
+    skillPlanSha256: Sha256Schema,
+    skillsPlanned: ExternalSkillPlanItemSchema.array(),
+    skillsUsed: ExternalSkillExecutionReceiptSchema.array()
+  })
+  .strict()
+
 export const WritingDraftRecordSchema = z.discriminatedUnion('schemaVersion', [
   WritingDraftRecordV1Schema,
   WritingDraftRecordV2Schema,
-  WritingDraftRecordV3Schema
+  WritingDraftRecordV3Schema,
+  WritingDraftRecordV4Schema
 ])
 export type WritingDraftRecord = z.infer<typeof WritingDraftRecordSchema>
 
@@ -1160,7 +1186,7 @@ export const ApprovalDecisionSchema = z
     projectId: UlidSchema,
     subjectType: z.enum(['canon', 'asset', 'take', 'timeline', 'release-package']),
     subjectId: UlidSchema,
-    decision: z.enum(['approved', 'rejected', 'changes-requested']),
+    decision: z.enum(['approved', 'rejected', 'changes-requested', 'held']),
     reason: z.string().trim().min(3).max(2_000),
     confirmation: z.literal(true),
     decidedAt: z.string().datetime({ offset: true }),
@@ -1295,7 +1321,16 @@ export const MediaAssetSchema = z
     origin: z.enum(['imported', 'generated', 'assembled']),
     jobId: UlidSchema.nullable(),
     parentAssetIds: UlidSchema.array().max(2_500),
-    state: z.enum(['candidate', 'approved', 'rejected', 'superseded']),
+    copiedFrom: z
+      .object({
+        projectId: UlidSchema,
+        assetId: UlidSchema,
+        sha256: Sha256Schema
+      })
+      .strict()
+      .nullable()
+      .optional(),
+    state: z.enum(['candidate', 'approved', 'rejected', 'held', 'superseded']),
     width: z.number().int().positive().nullable(),
     height: z.number().int().positive().nullable(),
     durationMs: z.number().int().positive().nullable(),
@@ -1327,12 +1362,98 @@ export const ChooseMediaAssetInputSchema = RegisterMediaAssetInputSchema.omit({
 }).strict()
 export type ChooseMediaAssetInput = z.infer<typeof ChooseMediaAssetInputSchema>
 
+export const AdaptationRightsBasisSchema = z.enum(['owned-original', 'licensed-for-model-training'])
+export type AdaptationRightsBasis = z.infer<typeof AdaptationRightsBasisSchema>
+
+export const AdaptationResolutionBucketSchema = z.enum([
+  '576x576x1',
+  '576x576x49',
+  '768x448x1',
+  '768x448x49'
+])
+export type AdaptationResolutionBucket = z.infer<typeof AdaptationResolutionBucketSchema>
+
+export const CreateAdaptationDatasetSampleInputSchema = z
+  .object({
+    assetId: UlidSchema,
+    caption: z
+      .string()
+      .trim()
+      .min(10, 'Describe what this sample teaches in at least 10 characters.')
+      .max(1_500),
+    rightsBasis: AdaptationRightsBasisSchema,
+    licenseReference: z.string().trim().min(3).max(300).nullable(),
+    consentConfirmed: z.literal(true)
+  })
+  .strict()
+  .superRefine((sample, context) => {
+    if (sample.rightsBasis === 'licensed-for-model-training' && !sample.licenseReference) {
+      context.addIssue({
+        code: 'custom',
+        path: ['licenseReference'],
+        message: 'Add the license or permission reference that allows model training.'
+      })
+    }
+    if (sample.rightsBasis === 'owned-original' && sample.licenseReference !== null) {
+      context.addIssue({
+        code: 'custom',
+        path: ['licenseReference'],
+        message: 'Owned original samples do not use a third-party license reference.'
+      })
+    }
+  })
+export type CreateAdaptationDatasetSampleInput = z.infer<
+  typeof CreateAdaptationDatasetSampleInputSchema
+>
+
+export const CreateAdaptationDatasetInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    label: z.string().trim().min(3).max(240),
+    purpose: z.string().trim().min(10).max(500),
+    projectScopeOnly: z.literal(true),
+    humanRightsReviewConfirmed: z.literal(true),
+    trainingSteps: z.number().int().min(100).max(2_000),
+    learningRate: z.number().min(0.000001).max(0.001),
+    resolutionBuckets: AdaptationResolutionBucketSchema.array().min(1).max(4),
+    samples: CreateAdaptationDatasetSampleInputSchema.array().min(4).max(100)
+  })
+  .strict()
+  .superRefine((input, context) => {
+    if (new Set(input.resolutionBuckets).size !== input.resolutionBuckets.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['resolutionBuckets'],
+        message: 'Choose each training size only once.'
+      })
+    }
+    if (new Set(input.samples.map((sample) => sample.assetId)).size !== input.samples.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['samples'],
+        message: 'Each approved sample can appear only once.'
+      })
+    }
+  })
+export type CreateAdaptationDatasetInput = z.infer<typeof CreateAdaptationDatasetInputSchema>
+
+export const CopyMediaAssetInputSchema = z
+  .object({
+    sourceProjectId: UlidSchema,
+    sourceAssetId: UlidSchema,
+    targetProjectId: UlidSchema,
+    label: z.string().trim().min(1).max(240),
+    confirmation: z.literal(true)
+  })
+  .strict()
+export type CopyMediaAssetInput = z.infer<typeof CopyMediaAssetInputSchema>
+
 export const ReviewMediaAssetInputSchema = z
   .object({
     projectId: UlidSchema,
     assetId: UlidSchema,
     expectedSha256: Sha256Schema,
-    decision: z.enum(['approved', 'rejected', 'changes-requested']),
+    decision: z.enum(['approved', 'rejected', 'changes-requested', 'held']),
     reason: z.string().trim().min(3).max(2_000),
     confirmation: z.literal(true)
   })
@@ -1407,6 +1528,8 @@ export const ProductionJobInputSchema = z
     workflowVersion: z.string().trim().min(1).max(80),
     inputAssetIds: UlidSchema.array().max(50),
     canonIds: UlidSchema.array().max(50),
+    parentJobId: UlidSchema.nullable().optional(),
+    retakeOfAssetId: UlidSchema.nullable().optional(),
     parameters: z.record(
       z.string().min(1).max(100),
       z.union([z.string().max(4_000), z.number().finite(), z.boolean(), z.null()])
@@ -1453,6 +1576,8 @@ export const ProductionJobRecordSchema = z
     workflowVersion: z.string().min(1).max(80),
     inputAssetIds: UlidSchema.array().max(50),
     canonIds: UlidSchema.array().max(50),
+    parentJobId: UlidSchema.nullable().default(null),
+    retakeOfAssetId: UlidSchema.nullable().default(null),
     parameters: ProductionJobInputSchema.shape.parameters,
     idempotencyKey: z.string().regex(/^[a-f0-9]{64}$/),
     estimate: CostEstimateSchema,
@@ -1757,6 +1882,36 @@ export const CreateReleasePackageInputSchema = z
   .strict()
 export type CreateReleasePackageInput = z.infer<typeof CreateReleasePackageInputSchema>
 
+export const OpenReleasePackageInputSchema = z
+  .object({
+    projectId: UlidSchema,
+    releaseId: UlidSchema
+  })
+  .strict()
+export type OpenReleasePackageInput = z.infer<typeof OpenReleasePackageInputSchema>
+
+export const OpenReleasePackageResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true) }).strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      error: z
+        .object({
+          code: z.enum([
+            'invalid-input',
+            'not-found',
+            'integrity-failed',
+            'unsafe-path',
+            'unknown'
+          ]),
+          message: z.string().min(1).max(600)
+        })
+        .strict()
+    })
+    .strict()
+])
+export type OpenReleasePackageResult = z.infer<typeof OpenReleasePackageResultSchema>
+
 export const ProjectReleaseProfileSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -1841,6 +1996,42 @@ export const PerformanceMetricsSchema = z
   .strict()
 export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>
 
+export const YouTubePerformanceReportRowSchema = z
+  .object({
+    rowNumber: z.number().int().min(2).max(502),
+    youtubeVideoId: z.string().regex(/^[A-Za-z0-9_-]{6,32}$/),
+    videoTitle: z.string().trim().min(1).max(500).nullable(),
+    metrics: PerformanceMetricsSchema,
+    missingDataWarnings: z.array(z.string().trim().min(1).max(500)).max(20)
+  })
+  .strict()
+export type YouTubePerformanceReportRow = z.infer<typeof YouTubePerformanceReportRowSchema>
+
+export const YouTubePerformanceReportPreviewSchema = z
+  .object({
+    fileName: z
+      .string()
+      .trim()
+      .min(5)
+      .max(255)
+      .refine((value) => !/[\\/]/.test(value) && value.toLowerCase().endsWith('.csv'), {
+        message: 'The report filename is not safe.'
+      }),
+    fileSha256: Sha256Schema,
+    importedAt: z.string().datetime({ offset: true }),
+    rows: z.array(YouTubePerformanceReportRowSchema).min(1).max(500)
+  })
+  .strict()
+export type YouTubePerformanceReportPreview = z.infer<typeof YouTubePerformanceReportPreviewSchema>
+
+export const PerformanceReportProvenanceSchema = YouTubePerformanceReportPreviewSchema.pick({
+  fileName: true,
+  fileSha256: true,
+  importedAt: true
+})
+  .extend({ rowNumber: z.number().int().min(2).max(502) })
+  .strict()
+
 export const PerformanceSnapshotSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -1854,6 +2045,7 @@ export const PerformanceSnapshotSchema = z
     collectedAt: z.string().datetime({ offset: true }),
     metricDefinitionVersion: z.literal('youtube-analytics-2026-08'),
     metrics: PerformanceMetricsSchema,
+    reportProvenance: PerformanceReportProvenanceSchema.nullable().default(null),
     missingDataWarnings: z.array(z.string().trim().min(1).max(500)).max(20),
     evidenceNotes: z.string().trim().min(10).max(4_000),
     baselineEligible: z.boolean(),
@@ -1872,7 +2064,7 @@ export const SavePerformanceSnapshotInputSchema = PerformanceSnapshotSchema.omit
   message: 'The performance window must end on or after its start date.',
   path: ['windowEnd']
 })
-export type SavePerformanceSnapshotInput = z.infer<typeof SavePerformanceSnapshotInputSchema>
+export type SavePerformanceSnapshotInput = z.input<typeof SavePerformanceSnapshotInputSchema>
 
 export const ReleaseLearningSchema = z
   .object({
@@ -2348,6 +2540,8 @@ export const IPC_CHANNELS = {
   productionGetWorkspace: 'studio:production:get-workspace',
   productionPromoteDraft: 'studio:production:promote-draft',
   productionImportMedia: 'studio:production:import-media',
+  productionCreateAdaptationDataset: 'studio:production:create-adaptation-dataset',
+  productionCopyMedia: 'studio:production:copy-media',
   productionReviewMedia: 'studio:production:review-media',
   productionPlanJob: 'studio:production:plan-job',
   productionApproveJob: 'studio:production:approve-job',
@@ -2365,9 +2559,11 @@ export const IPC_CHANNELS = {
   finishSaveReleaseProfile: 'studio:finish:save-release-profile',
   finishSaveIdea: 'studio:finish:save-idea',
   finishSavePerformanceSnapshot: 'studio:finish:save-performance-snapshot',
+  finishChoosePerformanceReport: 'studio:finish:choose-performance-report',
   finishSaveLearning: 'studio:finish:save-learning',
   finishReviewLearning: 'studio:finish:review-learning',
   finishCreateReleasePackage: 'studio:finish:create-release-package',
+  finishOpenReleasePackage: 'studio:finish:open-release-package',
   finishGetLocalMediaStatus: 'studio:finish:get-local-media-status',
   finishInstallLocalMediaTools: 'studio:finish:install-local-media-tools',
   finishRenderTimeline: 'studio:finish:render-timeline',
@@ -2424,6 +2620,8 @@ export interface StudioApi {
     getWorkspace(projectId: string): Promise<ProductionWorkspaceSummary>
     promoteDraft(input: PromoteWritingDraftInput): Promise<CanonActionResult>
     importMedia(input: ChooseMediaAssetInput): Promise<MediaActionResult>
+    createAdaptationDataset(input: CreateAdaptationDatasetInput): Promise<MediaActionResult>
+    copyMedia(input: CopyMediaAssetInput): Promise<MediaActionResult>
     reviewMedia(input: ReviewMediaAssetInput): Promise<MediaActionResult>
     planJob(input: ProductionJobInput): Promise<ProductionJobActionResult>
     approveJob(input: ProductionJobApprovalInput): Promise<ProductionJobActionResult>
@@ -2445,9 +2643,11 @@ export interface StudioApi {
     saveReleaseProfile(input: SaveProjectReleaseProfileInput): Promise<FinishActionResult>
     saveIdea(input: SaveReleaseIdeaInput): Promise<FinishActionResult>
     savePerformanceSnapshot(input: SavePerformanceSnapshotInput): Promise<FinishActionResult>
+    choosePerformanceReport(): Promise<YouTubePerformanceReportPreview | null>
     saveLearning(input: SaveReleaseLearningInput): Promise<FinishActionResult>
     reviewLearning(input: ReviewReleaseLearningInput): Promise<FinishActionResult>
     createReleasePackage(input: CreateReleasePackageInput): Promise<FinishActionResult>
+    openReleasePackage(input: OpenReleasePackageInput): Promise<OpenReleasePackageResult>
     getLocalMediaStatus(): Promise<LocalMediaRuntimeStatus>
     installLocalMediaTools(input: InstallLocalMediaToolsInput): Promise<LocalMediaInstallResult>
     renderTimeline(input: RenderTimelineInput): Promise<LocalMediaActionResult>

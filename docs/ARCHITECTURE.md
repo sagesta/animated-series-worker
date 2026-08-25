@@ -1,6 +1,6 @@
 # System architecture
 
-Current implementation note (0.10.0): the local control plane, governed field-level idea assistant, canon/media/release/performance/learning stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. Exact remote workflows and production receipts remain externally unqualified. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): the default quick idea/script intake and Creator Mode stage controller, local control plane, governed field-level idea assistant, canon/media/release/performance/learning stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. Exact remote workflows and production receipts remain externally unqualified. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Architectural outcome
 
@@ -117,7 +117,7 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Local services | Electron-bundled Node.js/TypeScript | Matches upstream `.mjs` tooling and desktop runtime |
 | Durable index | SQLite through `node:sqlite` | Local transactions without a separately compiled native add-on; canonical files remain portable |
 | Canonical contracts | Runtime Zod now; JSON Schema target | Validates current TypeScript IPC/manifests while preserving a language-neutral worker target |
-| Worker gateway | Python 3.12 service | Matches LTX/Qwen ecosystems and provides a narrow authenticated API |
+| Worker gateway | Node gateway plus isolated Python runtimes | Keeps the authenticated API narrow while pinning ComfyUI/Qwen to the base runtime, LatentSync to upstream-compatible Python 3.10, and the official LTX trainer to its own environment |
 | Workflow engine | ComfyUI bound to loopback | Versionable graphs and current model integration without exposing its UI publicly |
 | Media processing | FFmpeg/ffprobe | Deterministic assembly, normalization, probing, and export |
 | Worker packaging | Docker image pinned by digest | Repeatable GPU setup with no per-session installation |
@@ -154,18 +154,32 @@ OpenAI, Anthropic, and Google Gemini use separate encrypted vault files and one 
 
 The first `packages/skill-runtime` slice accepts only strict declarative JSON packages. Installation copies the candidate to quarantine, limits its size, parses it without execution, computes SHA-256, refuses changed contents under the same version, stores the package outside projects, and leaves every project grant empty. Settings can enable a compatible version for an explicit project. The Creative Room matches task kinds, blocks unsupported permissions and incompatible required versions, previews a stable plan hash, refuses a stale plan, compiles the exact instructions into the provider request, validates declared minimum/required proposal sections, and writes input/output/package hashes plus provider-linked receipts. Updating a skill version revokes its project grants; removing it from active use keeps stored package evidence and historical proposal receipts. Signature verification, richer general JSON-Schema evaluation, explicit update-diff/rollback UI, and all executable/local-tool/remote-tool/MCP classes remain unimplemented and locked.
 
-Remaining local depth includes archive UI, broader future-migration/incremental-backup support, packaged diagnostic/secret scans, explicit cross-project release-profile copy/bind, report-file analytics parsing, richer layer/control authoring, and higher-risk signed/executable/remote/MCP skill classes. Exact Qwen/LTX/LatentSync/control/foley/adaptation runtime templates, model/trainer/license decisions, GPU quality/recovery/shutdown evidence, live writing benchmarks/prices, clean-machine signing/acceptance, and long-form production remain external or release gates. Candidate definitions never count as media-engine qualification.
+Remaining local depth includes archive UI, broader future-migration/incremental-backup support, packaged diagnostic/secret scans, explicit cross-project release-profile copy/bind, richer layer/control authoring, comparative analytics sufficiency, and higher-risk signed/executable/remote/MCP skill classes. Optional read-only OAuth, model/license decisions, GPU quality/recovery/shutdown evidence for the exact Qwen/LTX/LatentSync/control/foley/adaptation candidates, live writing benchmarks/prices, clean-machine signing/acceptance, and long-form production remain external or release gates. Candidate definitions never count as media-engine qualification.
 
 ## 6. Local component responsibilities
 
 ### Desktop renderer
 
-- Presents guided project setup including Audience & Creative Direction, overview revision, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens.
+- Presents quick idea/script intake and one default Creator Mode that derives the next incomplete story-plan, cast, world, screenplay, storyboard, look, voice, proof, master, or release stage from the latest workspace summary; projects that state onto a resumable eight-checkpoint story-to-master-and-cleanup run; and offers one-off asset preparation only as a secondary handoff.
+- Presents detailed project setup, Audience & Creative Direction, overview revision, bible, episode, shot, review, cost, export, Thumbnail Room, Release Details, readiness, and post-release evidence screens when the guided path or Advanced Studio requests them.
 - Provides one reusable idea-assistant dialog beside applicable creative/planning text fields. It displays exact context, provider/model, and skill plan; it can apply only a creator-selected suggestion and renders evidence/attestation fields explanation-only or leaves them entirely outside the assistant.
 - Owns reusable presentation-only form guidance: visible required markers, live length/range state, invalid styling, and accessible correction summaries. It keeps actions available until work is actually running, but it never replaces main-process/domain schema validation.
 - Never receives raw provider secrets.
 - Communicates only through typed Electron IPC exposed by the preload boundary.
 - Keeps technical details behind an optional expert drawer.
+
+### Creator-stage controller
+
+- Is a renderer-side presentation controller over durable project, writing, skill, canon, media, job, and release services; it is not a second project database or a privileged autonomous agent.
+- Presents one derived next step and one primary request action. The compact seven creative-approval stages, complete eight-checkpoint production run, earlier available stages, exact provider/context depth, one-off asset tools, and studio-managed readiness checks are progressively disclosed rather than competing with the current decision.
+- Computes creative progress from active canon and approved media. The complete run additionally reads approved media kinds, persisted job state, locked local timelines, captions, master evidence, and reported active workers. UI navigation state cannot mark a stage complete.
+- Builds a task-specific instruction for production plan, full cast, world/location book, long screenplay, shot plan, animation look, original voice book, or release strategy; source/context/skill compilation and provider calls still occur through the trusted existing services.
+- Selects the saved connected provider/model first and orders available controlled fallbacks. The approval copy states that a fallback can mean more than one billed text request. Provider unavailability, timeout, rate limit, or unsupported model can advance to the next declared candidate; validation, skill, project, or security failures do not.
+- Uses up to 12,000 output tokens for long screenplay/storyboard work and keeps the combined protected input bounded. A quick-start source is capped at 60,000 characters so production settings and approved canon retain context room.
+- Stores every result through the normal proposal store. Exact hash promotion through the production store is the only way the controller advances a canon-backed stage.
+- Treats visual/audio production as a supervised handoff: approved boards, voice lines, motion proofs, jobs, and master determine progress; the normal estimate, maximum-cost approval, worker-start confirmation, review, and qualification locks remain authoritative.
+- Prepares one-off Image, Video, Audio, Composition, or Assemble intent only after its durable prerequisites exist. Remote intent pre-fills an allowlisted workflow, media-output role, label, and direction in the existing generation controller; local assembly pre-fills the finish controller. The renderer intent has no authority to estimate, approve, queue, retry, or rent compute.
+- Can reveal existing detailed rooms through Advanced Studio but cannot bypass their validators, rights decisions, policy attestations, spend gates, or publishing boundary.
 
 ### Desktop main process
 
@@ -214,6 +228,7 @@ Remaining local depth includes archive UI, broader future-migration/incremental-
 ### Writing-provider adapters
 
 - Accept a neutral task such as character/story drafting or creative-direction, visual, voice, motion, control, edit/sound, foley, adaptation, thumbnail, release, and evidence-analysis planning plus explicitly selected local context versions.
+- Keep model-list/connection checks on a 30-second bound and use a separate five-minute bound for confirmed structured writing so long project context or schema-constrained reasoning is not mistaken for a dead connection. Gemini uses low thinking for short field suggestions and medium thinking for longer production stages; other adapters retain their provider-neutral request shape.
 - Compile the task to the selected provider API without storing provider conversation state as the project source of truth.
 - Return schema-validated draft proposals, usage, cost metadata, model identity, and safe errors; only a reviewed studio operation can create a canonical version.
 - Obtain provider credentials in the main process immediately before the call. The renderer and skill runtime receive only opaque provider status.
@@ -254,7 +269,7 @@ Version 0.8.0 implements the declarative portion above with two deliberately nar
 - The release-details service validates title/description/tags/language/category fields and creates chapters from the locked final timeline. It supplies deterministic warnings, not a universal ranking score.
 - The policy/rights gate requires human audience, applicable synthetic-media, truthfulness, originality, rights/credits, and full-watch attestations. Models and defaults have no attestation authority.
 - The packager writes a new hash-inventoried release directory containing master, captions, selected thumbnail, details, chapters, credits, attestations, QC, checklist, and manifests; a locked version is immutable.
-- Version 0.10 accepts structured manual official/report/rehearsal evidence without an account connection. Snapshots pin source, time window, collection time, metric-definition version, missing-data warnings, and baseline eligibility. Learning proposals cite snapshots and remain separate until human approval/rejection. Report-file parsing and an optional least-privilege read-only adapter remain future boundaries.
+- Version 0.10 accepts structured manual/rehearsal evidence and bounded official-report CSV imports without an account connection. The trusted process records file hash/selected row but never returns its path. Snapshots pin source, time window, collection time, metric-definition version, missing-data warnings, and baseline eligibility. Learning proposals cite snapshots and remain separate until human approval/rejection. An optional least-privilege read-only adapter remains a future boundary.
 - No version-1 service has a video/thumbnail/caption insert, update, schedule, delete, playlist-mutation, or public-publish operation.
 
 ### Previsualization and control assets
@@ -281,7 +296,7 @@ The current foley slice provides planning assistance, a separate `foley` job/out
 - The trained LoRA or equivalent artifact is project-scoped, hashed, benchmarked against the reference-only baseline, and rejected if it regresses identity, style range, composition, safety, runtime, or cost beyond the accepted threshold.
 - A production workflow never starts training implicitly because a generation failed.
 
-The current candidate input requires exactly one approved adaptation-dataset manifest plus explicit reference-only-benchmark-failed and dataset-rights confirmations before estimate. The candidate still has no qualified trainer/template and therefore cannot start paid work or promote an artifact.
+The current candidate input requires exactly one approved adaptation-dataset manifest plus explicit reference-only-benchmark-failed and exact-job rights confirmations before estimate. The local builder records 4–100 approved samples by ordered asset ID/hash/caption/rights/consent, and the worker contract binds the official pinned LTX trainer in an isolated environment. The trainer/image has not passed build/live quality, cost, regression, promotion, or rollback qualification, so the candidate cannot start paid work or promote an artifact.
 
 ## 7. Remote worker architecture
 
@@ -405,6 +420,7 @@ A compatibility matrix in `config/` will declare tested combinations. The UI may
 | Upstream/model update fails | Return to previous pin and leave current productions unchanged |
 | Migration fails | Restore automatic pre-migration backup and retain incident report |
 | Writing provider fails or changes response shape | Preserve the local task/context, record safe error/usage where available, and retry or switch provider only with a new draft lineage |
+| Confirmed writing request exceeds its five-minute bound | Abort the local request, save no proposal, keep the unchanged input available for an explicit retry, and do not silently issue another potentially billed call |
 | Creative-direction version is missing, damaged, or belongs to another project | Refuse that version, preserve older valid versions, and require a project-owned selection or repair before affected generation |
 | Required skill fails or is ignored | Fail the creative job, preserve diagnostics without secrets, and require retry, compatible skill version, or explicit plan change |
 | Preview/proxy generation fails | Keep the verified original unchanged and rebuild only the derived review media locally |

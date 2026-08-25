@@ -46,6 +46,8 @@
     "vitest.config.ts",
     "apps/**/*.ts",
     "apps/**/*.tsx",
-    "packages/**/*.ts"
+    "packages/**/*.ts",
+    "scripts/**/*.ts",
+    "worker/**/*.ts"
   ]
 }

@@ -1,8 +1,8 @@
 # Implementation and release plan
 
-Version: 0.10.0
+Version: 0.10.1
 
-Last updated: 2026-08-23
+Last updated: 2026-08-25
 
 ## 1. Outcome
 
@@ -21,14 +21,15 @@ The local application and locked production architecture are implemented. Delive
 | 7. Review and finishing | Output import/review, deterministic local timeline, captions, thumbnail, technical verification | `local-media`, `local-production`, `release-store`, Finish room |
 | 8. Manual release | Release details, human attestations, immutable YouTube upload package | `release-store`, Finish room |
 | 9. Qualification enforcement | Candidate-only controlled mode, evidence bundle, guarded atomic promotion, readiness verification | `production-readiness`, qualification/promotion scripts |
-| 10. Guided ideas and release learning | Field-level governed proposal assistant, release-profile versions, Idea Library, performance snapshots, reviewed prospective learnings | renderer, `creative-writing`, `release-store`, contracts |
-| 11. Future-feature foundations | Neutral control/layer/dataset asset roles and locked control-guided Qwen/LTX, separate foley, and adaptation candidate definitions | contracts, production store/orchestrator, candidate workflow pack |
+| 10. Guided ideas and release learning | Field-level governed proposal assistant, release-profile versions, Idea Library, checked official-report CSV import, performance snapshots, reviewed prospective learnings | renderer, `creative-writing`, `release-store`, contracts |
+| 11. Advanced candidate foundations | Neutral control/layer/dataset roles, hash-locked control-guided Qwen/LTX graphs, exact model-free foley runner, rights-reviewed adaptation dataset builder, and official isolated LTX trainer candidate | contracts, production store/orchestrator, worker, candidate workflow pack |
+| 12. Resumable creator workflow | One recommended next step plus an eight-checkpoint story-to-master/cleanup projection and secondary prerequisite-gated Image/Video/Audio/Composition/Assemble handoff | Creator Mode, Generate room, Finish room, canon/media/job/timeline/worker summaries |
 
 ## 3. Gate A — controlled remote qualification
 
 Prerequisites:
 
-1. Import reviewed API-format Qwen and LTX workflows.
+1. Reverify the imported API-format Qwen/LTX workflow hashes and reviewed node inventories against the built image.
 2. Complete model/transitive-license review.
 3. Build and push the exact candidate worker image.
 4. Run model bootstrap and retain its hash receipt.

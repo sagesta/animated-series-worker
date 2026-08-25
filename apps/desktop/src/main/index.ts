@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join, relative, resolve, sep } from 'node:path'
+import { basename, join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
   app,
@@ -12,6 +12,7 @@ import {
   net,
   protocol,
   safeStorage,
+  shell,
   type OpenDialogOptions,
   type IpcMainInvokeEvent
 } from 'electron'
@@ -24,6 +25,8 @@ import {
   CloudGuardrailsSchema,
   CanonActionResultSchema,
   ChooseMediaAssetInputSchema,
+  CopyMediaAssetInputSchema,
+  CreateAdaptationDatasetInputSchema,
   CreateProjectInputSchema,
   ExternalSkillActionResultSchema,
   ExternalSkillPlanPreviewInputSchema,
@@ -42,6 +45,8 @@ import {
   LocalMediaActionResultSchema,
   LocalMediaInstallResultSchema,
   LocalMediaRuntimeStatusSchema,
+  OpenReleasePackageInputSchema,
+  OpenReleasePackageResultSchema,
   ProductionJobActionResultSchema,
   ProductionJobApprovalInputSchema,
   ProductionJobDetailsSchema,
@@ -88,7 +93,8 @@ import {
   WritingProviderEnabledInputSchema,
   WritingProviderInputSchema,
   WritingSettingsActionResultSchema,
-  WritingSettingsStatusSchema
+  WritingSettingsStatusSchema,
+  YouTubePerformanceReportPreviewSchema
 } from '@studio/contracts'
 import { CloudSettingsStore, CloudSetupService, toCloudActionError } from '@studio/cloud-setup'
 import {
@@ -106,7 +112,7 @@ import { RunPodClient } from '@studio/provider-runpod'
 import { ProductionOrchestrator } from '@studio/production-orchestrator'
 import { verifyProductionReadiness } from '@studio/production-readiness'
 import { LocalProductionService } from '@studio/local-production'
-import { ReleaseStore } from '@studio/release-store'
+import { parseYouTubePerformanceReport, ReleaseStore } from '@studio/release-store'
 import {
   ProductionStore,
   buildMediaImportInput,
@@ -1020,6 +1026,66 @@ function registerIpcHandlers(): void {
     return MediaActionResultSchema.parse(result)
   })
 
+  ipcMain.handle(IPC_CHANNELS.productionCopyMedia, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = CopyMediaAssetInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return MediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the copy details.'
+        }
+      })
+    }
+    const result = await requireProductionStore().copyMedia(input.data)
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'production',
+      eventName: result.ok ? 'production.media.copied' : 'production.media.copy-failed',
+      message: result.ok
+        ? 'An approved media item was explicitly copied into another production for fresh review.'
+        : 'A cross-production media copy was refused without changing either production.',
+      context: {
+        sourceProjectId: input.data.sourceProjectId,
+        targetProjectId: input.data.targetProjectId,
+        result: result.ok ? 'candidate' : result.error.code
+      }
+    })
+    return MediaActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.productionCreateAdaptationDataset, (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = CreateAdaptationDatasetInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return MediaActionResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the adaptation dataset decisions.'
+        }
+      })
+    }
+    const result = requireProductionStore().createAdaptationDataset(input.data)
+    recordDiagnostic({
+      level: result.ok ? 'info' : 'warning',
+      area: 'production',
+      eventName: result.ok
+        ? 'production.adaptation-dataset.created'
+        : 'production.adaptation-dataset.refused',
+      message: result.ok
+        ? 'A project-scoped rights-reviewed adaptation manifest was created locally.'
+        : 'An adaptation manifest was refused without changing approved media.',
+      context: {
+        projectId: input.data.projectId,
+        sampleCount: input.data.samples.length,
+        result: result.ok ? 'candidate-review' : result.error.code
+      }
+    })
+    return MediaActionResultSchema.parse(result)
+  })
+
   ipcMain.handle(IPC_CHANNELS.productionReviewMedia, (event, unknownInput: unknown) => {
     assertTrustedSender(event)
     const input = ReviewMediaAssetInputSchema.safeParse(unknownInput)
@@ -1285,6 +1351,34 @@ function registerIpcHandlers(): void {
     return FinishActionResultSchema.parse(requireReleaseStore().savePerformanceSnapshot(input.data))
   })
 
+  ipcMain.handle(IPC_CHANNELS.finishChoosePerformanceReport, async (event) => {
+    assertTrustedSender(event)
+    const options: OpenDialogOptions = {
+      title: 'Choose a YouTube Analytics report',
+      buttonLabel: 'Check report',
+      properties: ['openFile'],
+      filters: [{ name: 'YouTube Analytics CSV', extensions: ['csv'] }]
+    }
+    const selection = mainWindow
+      ? await dialog.showOpenDialog(mainWindow, options)
+      : await dialog.showOpenDialog(options)
+    if (selection.canceled || selection.filePaths.length === 0) return null
+    try {
+      const filePath = selection.filePaths[0]!
+      return YouTubePerformanceReportPreviewSchema.parse(
+        parseYouTubePerformanceReport({
+          fileName: basename(filePath),
+          bytes: readFileSync(filePath),
+          importedAt: new Date().toISOString()
+        })
+      )
+    } catch (error) {
+      throw new Error(
+        `That report could not be read safely. ${error instanceof Error ? error.message : 'Export a CSV from YouTube Analytics and try again.'} No evidence was saved.`
+      )
+    }
+  })
+
   ipcMain.handle(IPC_CHANNELS.finishSaveLearning, (event, unknownInput: unknown) => {
     assertTrustedSender(event)
     const input = SaveReleaseLearningInputSchema.safeParse(unknownInput)
@@ -1341,6 +1435,34 @@ function registerIpcHandlers(): void {
       }
     })
     return FinishActionResultSchema.parse(result)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.finishOpenReleasePackage, async (event, unknownInput: unknown) => {
+    assertTrustedSender(event)
+    const input = OpenReleasePackageInputSchema.safeParse(unknownInput)
+    if (!input.success) {
+      return OpenReleasePackageResultSchema.parse({
+        ok: false,
+        error: {
+          code: 'invalid-input',
+          message: input.error.issues[0]?.message ?? 'Check the release package selection.'
+        }
+      })
+    }
+    const resolved = requireReleaseStore().resolveReleasePackagePath(input.data)
+    if (!resolved.ok) return OpenReleasePackageResultSchema.parse(resolved)
+    const openError = await shell.openPath(resolved.path)
+    return OpenReleasePackageResultSchema.parse(
+      openError
+        ? {
+            ok: false,
+            error: {
+              code: 'unknown',
+              message: 'The verified upload folder could not be opened. Try again.'
+            }
+          }
+        : { ok: true }
+    )
   })
 
   ipcMain.handle(IPC_CHANNELS.finishGetLocalMediaStatus, (event) => {
@@ -1788,6 +1910,12 @@ void app
     creativeWritingService = new CreativeWritingService({
       setup: writingSetupService,
       projectStore,
+      canonSource: {
+        listActiveCanon: (projectId) =>
+          requireProductionStore()
+            .getWorkspace(projectId)
+            .canon.filter((record) => record.state === 'active')
+      },
       skillPlanner: skillRegistry
     })
     recordDiagnostic({

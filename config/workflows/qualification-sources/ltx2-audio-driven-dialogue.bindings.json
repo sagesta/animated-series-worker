@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "https://github.com/Lightricks/ComfyUI-LTXVideo.git",
+  "sourceCommit": "15d09abb5a187a8dcaea2fc31fe51ee96e6c9d0d",
+  "sourceWorkflow": "example_workflows/2.5/LTX-2.5_A2V_Two_Stage_Distilled.json",
+  "bindings": [
+    {
+      "classType": "LoadImage",
+      "title": "LoadImage",
+      "input": "image",
+      "value": "$INPUT:0"
+    },
+    {
+      "classType": "LoadAudio",
+      "title": "Audio input",
+      "input": "audio",
+      "value": "$INPUT:1"
+    },
+    {
+      "classType": "CLIPTextEncode",
+      "title": "CLIP Text Encode (Positive Prompt)",
+      "input": "text",
+      "value": "$PARAM:motionPrompt"
+    },
+    {
+      "classType": "ComfyNotNode",
+      "title": "Not (use image > bypass_i2v)",
+      "input": "value",
+      "value": true
+    },
+    {
+      "classType": "RandomNoise",
+      "occurrence": 0,
+      "input": "noise_seed",
+      "value": "$PARAM:seed"
+    },
+    {
+      "classType": "RandomNoise",
+      "occurrence": 1,
+      "input": "noise_seed",
+      "value": "$PARAM:seed"
+    }
+  ]
+}

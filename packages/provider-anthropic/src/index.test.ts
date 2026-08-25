@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AnthropicClient } from './index'
 
 const draft = {
@@ -8,6 +8,10 @@ const draft = {
   continuityQuestions: [],
   suggestedNextSteps: ['Name the oldest district.']
 }
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('AnthropicClient', () => {
   it('uses the free model list with required Anthropic headers', async () => {
@@ -36,6 +40,7 @@ describe('AnthropicClient', () => {
   })
 
   it('uses current structured output configuration and maps token usage', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
     let body: Record<string, unknown> = {}
     const request = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
       body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -58,6 +63,7 @@ describe('AnthropicClient', () => {
     })
 
     expect(body).toMatchObject({ model: 'claude-sonnet-test', max_tokens: 800 })
+    expect(timeout).toHaveBeenCalledWith(300_000)
     expect(body.output_config).toMatchObject({ format: { type: 'json_schema' } })
     expect(result.output.title).toBe('Lantern City')
     expect(result.usage).toEqual({

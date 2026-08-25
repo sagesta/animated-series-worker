@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "ltx25-project-lora-adaptation",
+  "engine": "worker-python",
+  "runner": "python_runner.py:ltx_project_adaptation",
+  "trainer": {
+    "repository": "https://github.com/Lightricks/LTX-2.git",
+    "commit": "400fd31054597515f47125691032c04b1c3ee24e",
+    "package": "ltx-trainer",
+    "version": "1.2.0"
+  },
+  "inputs": {
+    "order": [
+      "one rights-reviewed adaptation manifest",
+      "four to one hundred approved image or video samples"
+    ],
+    "manifest": {
+      "schemaVersion": 1,
+      "projectScopeOnly": true,
+      "humanRightsReviewConfirmed": true,
+      "rightsBasis": ["owned-original", "licensed-for-model-training"],
+      "consentConfirmedPerSample": true,
+      "recordsAssetIdentityPerSample": true,
+      "recordsAndVerifiesSha256PerSample": true,
+      "everySampleDeclaredExactlyOnce": true
+    }
+  },
+  "parameters": {
+    "baseModel": {
+      "requiredValue": "Lightricks/LTX-2.5"
+    },
+    "referenceBenchmarkFailed": {
+      "requiredValue": true
+    },
+    "rightsConfirmed": {
+      "requiredValue": true
+    },
+    "triggerPhrase": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{2,59}$"
+    },
+    "trainingSteps": {
+      "minimum": 100,
+      "maximum": 2000
+    },
+    "learningRate": {
+      "minimum": 0.000001,
+      "maximum": 0.001
+    }
+  },
+  "requiredModels": [
+    "Lightricks/LTX-2.5/dev-transformer-bf16",
+    "Lightricks/LTX-2.5/gemma4-text-encoder-bf16",
+    "Lightricks/LTX-2.5/video-vae-bf16",
+    "Lightricks/LTX-2.5/audio-vae-bf16"
+  ],
+  "outputs": [
+    {
+      "name": "project-lora.safetensors",
+      "recordsSha256": true
+    },
+    {
+      "name": "adaptation-training-config.json",
+      "recordsExactTrainingConfiguration": true
+    },
+    {
+      "name": "adaptation-manifest.json",
+      "projectScopeOnly": true,
+      "humanReviewRequired": true,
+      "promotionState": "candidate-review-required"
+    }
+  ],
+  "safety": {
+    "networkAccess": false,
+    "offlineModelLoading": true,
+    "shellCommands": false,
+    "automaticPromotion": false,
+    "crossProjectUse": false
+  }
+}

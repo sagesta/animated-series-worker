@@ -1,6 +1,6 @@
 # Image, voice, video, audio, and delivery pipeline
 
-Current implementation note (0.10.0): governed candidate definitions and runners cover Qwen image/edit, Qwen3-TTS, LTX-2.5, LatentSync lip repair, technical QC, verified local media review, and deterministic timeline/captions/thumbnail/master/package operations. The media store now recognizes control/layer/adaptation roles and the candidate pack includes control-guided Qwen/LTX, separate foley, and project adaptation definitions. Remote creative engines still require exact workflow/model/license/quality qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): governed candidate definitions and runners cover Qwen image/edit, Qwen3-TTS, LTX-2.5, LatentSync lip repair, technical QC, verified type-matched local media review, and deterministic timeline/captions/thumbnail/master/package operations. The media store recognizes control/layer/adaptation roles; the candidate pack includes hash-locked control-guided Qwen/LTX graphs, an exact model-free foley runner, and a rights-reviewed project dataset builder bound to the official pinned LTX trainer. Remote creative engines still require model/license/GPU/quality/cost qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Pipeline policy
 
@@ -246,7 +246,7 @@ Audio layers:
 - Current LTX Foley evidence is validated on LTX-2.3 rather than the selected LTX-2.5 baseline, so it remains a Phase 0/7 benchmark candidate behind `AudioEffectsEngine`.
 - Failed or near-silent generated effects can produce new candidates within a bounded budget; they never overwrite a cue or trigger unlimited seed retries.
 
-Version 0.10 adds field-level cue-plan assistance, a separate `foley` job kind, an `effect` output role, `preserveDialogue: true`, and a candidate workflow. Because no exact rights-reviewed model, runner, template, license decision, or synchronized fixture has been selected, the registry keeps this workflow non-billable.
+Version 0.10 adds field-level cue-plan assistance, a separate `foley` job kind, an `effect` output role, `preserveDialogue: true`, a hash-locked contract, and an exact model-free procedural WAV runner. The registry keeps it non-billable until synchronized fixtures prove usefulness, timing, dialogue preservation, rights behavior, output quality, and cost on the built worker.
 
 The mix pipeline stores editable layer sources and creates a derived master. Initial web-delivery target is approximately -14 to -16 LUFS integrated with true peak no higher than -1 dBTP; the exact profile is confirmed during the pilot and recorded rather than silently changed.
 
@@ -310,7 +310,7 @@ Runtime ComfyUI Manager installation, package updates, model downloads, and Git 
 
 ## 11. Optional project adaptation
 
-Version 0.10 adds `adaptation-dataset`/`adaptation-artifact` media roles and a non-billable LTX-2.5 LoRA candidate. Before even estimating it, the UI requires exactly one approved dataset manifest and explicit confirmation that the reference-only benchmark failed and dataset rights/provenance/project scope were reviewed. The candidate has no qualified trainer/template and cannot be queued or promoted.
+Version 0.10 adds `adaptation-dataset`/`adaptation-artifact` media roles and a non-billable LTX-2.5 LoRA candidate. The UI assembles 4–100 approved project images/videos into an ordered manifest whose samples retain asset ID, SHA-256, caption, rights basis/reference, consent, resolution bucket, and creator confirmations; the worker rehashes every uploaded sample and refuses any order/ID/hash change. Before estimating, the UI also requires a recorded failed reference-only benchmark and exact-job rights confirmations. The hash-locked contract invokes the official pinned LTX trainer in an isolated environment, but build/live training, evaluation, promotion, rollback, regression, cost, and license evidence remain required before it can queue paid work.
 
 Use an adaptation only after the reference-only locked image/video benchmark fails the agreed identity/style threshold:
 

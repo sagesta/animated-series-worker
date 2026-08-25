@@ -4,6 +4,92 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Added — 2026-08-25 (production completion candidate and executable local proof)
+
+- Added reviewed, converted, hash-locked candidate graphs for native LTX audio-driven dialogue and control-guided Qwen/LTX, plus exact hash-locked runner contracts for rights-aware model-free foley and project-scoped LTX adaptation. The importer now rejects UI-format and unauthorized-node content while the converter preserves only reviewed API semantics.
+- Added the official pinned LTX trainer in its own worker environment and a creator-facing adaptation intake that assembles 4–100 approved project samples with ordered asset IDs, SHA-256 values, captions, resolution buckets, per-sample rights/consent, and project-only confirmations. The worker rehashes each uploaded sample and refuses a changed order, identity, or reviewed file.
+- Added five bounded public-domain novel excerpts with source metadata and genre/length variation. All five pass the pinned outline and character chunk boundaries; empty, one-character, exact 500,000-character, malformed, missing-field, extra-field, and broken-JSON cases exercise the validator/process boundaries without network access.
+- Added bounded YouTube Analytics CSV import in the trusted desktop process. It handles quoted fields, durations, percentages, optional metrics, and explicit total rows; rejects unsafe filenames, oversize/malformed/ambiguous/duplicate rows; records the file SHA-256 and selected row; and keeps saving as a separate creator decision.
+- Added real Electron acceptance paths for verified backup/delete/restore with approved lineage, direct cross-project refusal followed by explicit reviewed copy, and immutable release packaging with byte count and SHA-256 verification for every output file. Existing first-run, 1280×720 disclosure, and keyboard correction-summary paths remain in the same suite.
+- Added a branded, high-contrast application icon and verified the transparent 32×32 icon embedded in the packaged Windows executable.
+- Corrected the supplied Ofibox reference to its intended meaning: workflow, not visual styling. Creator Mode now presents one resumable production run—approved story package, character/location references, storyboard frames, voices/dialogue, video shots, local edit/sound/captions, verified master, and worker cleanup—while the first incomplete checkpoint remains the single primary action. Image, video, audio, composition, and local assembly are available only as a collapsed one-off asset/repair path; their handoff reuses the governed estimate, approval, qualification, and separate-start controls.
+- Tightened imported-media integrity so a valid file is still refused when its MIME type does not match the selected production role. Removed ordinary Settings/package displays of local paths.
+- Updated the worker compatibility pins: Transformers 5.14.1 avoids the reviewed LTX 5.15 regression, Kornia remains 0.8.2 for the pinned pyramid API, LatentSync uses the upstream-declared Python 3.10 line because `mediapipe==0.10.11` has no Python 3.12 wheel, and Qwen3-TTS now verifies its `sox` executable and common codecs.
+- Bound the worker's reported release identity to the built image tag so capability evidence cannot silently retain the Dockerfile's default candidate label.
+- Closed a promotion-gate gap: the evidence receipt and promotion tool now require native-audio LTX, Qwen/LTX controls, creative QC, foley, adaptation, local finishing, node security, download resume, and trainer CUDA/driver compatibility, then promote every candidate workflow atomically instead of excluding the advanced tier.
+- Bumped the complete runtime/workflow/model candidate to `0.10.1-candidate.2`; build and qualification scripts now derive the reported worker release from the selected image tag/pack instead of a stale hard-coded label.
+- Built the exact candidate under WSL2 Docker and passed a model-free ComfyUI/gateway smoke on the local 4 GB GPU. Preflight now reports ComfyUI CUDA separately from the NVIDIA driver and captured the exact local image ID, 965 node types, nine workflow hashes, zero model hashes, authentication refusal/readiness, and loopback-only host binding. The local image has no registry digest/signature and does not satisfy model, quality, cloud-lifecycle, cost, or production qualification.
+- Rebuilt the branded unsigned NSIS candidate from the final source, recorded its SHA-256, and repeated the isolated-profile launch smoke with four Electron processes.
+
+User impact: the creator sees how the entire film or episode moves from story to a recovered local master and can resume at the first unfinished checkpoint after reopening. A one-off asset can be prepared without abandoning the main run or silently starting work. The app keeps its own visual language and safety model; advanced control, sound, adaptation, analytics, recovery/copy/package, and typed-import behavior remain available. These additions do not unlock or start paid GPU work.
+
+Data/migration impact: performance snapshots gain optional report-file provenance and existing rows parse with `null`; other database tables remain additive/on-demand. Candidate workflow/runtime hashes changed, so prior unqualified images are obsolete. No model weight, license acceptance, RunPod Pod, channel connection, upload, or production receipt was created.
+
+Documentation impact: synchronized implementation, media, YouTube, API/domain, UX, test, traceability, backlog, status, README, and changelog records with the exact local evidence and remaining external gates.
+
+Rollback: close the app and return to the prior 0.10.1 build. Existing projects and older performance rows remain readable. Do not promote or reuse a worker built from an older candidate pack; retain failed build logs as evidence rather than treating them as qualification.
+
+### Fixed — 2026-08-24 (writing requests and simpler creator flow)
+
+- Fixed the confirmed Gemini failure in local diagnostics: three healthy writing requests were being aborted by the app's shared 30-second connection timeout. Model-list checks remain bounded to 30 seconds, while confirmed OpenAI, Anthropic, and Gemini structured drafts now have a separate five-minute ceiling. Short Gemini field suggestions use low thinking and longer production stages use medium thinking.
+- Rebuilt the project-aware field assistant as one compact column. It now selects the saved provider/model automatically, asks only what the creator wants, summarizes the included project context, keeps exact text/skills under one optional disclosure, uses the clearly billed Generate action as the request confirmation, and replaces the form with the returned suggestion. Provider/model/depth selectors, the duplicate billing checkbox, giant always-visible context, and empty second pane were removed from the ordinary path.
+- Simplified Creator Mode to one derived next step, one primary action, a compact progress bar, and GPU state. The seven-stage map, earlier available stages, proposal detail, and readiness checklist are collapsed until requested; the technical sidebar was removed. The action itself states the selected writing service, possible billing/fallback count, and no-GPU boundary.
+- Fixed the optional **Story controls** recovery-screen crash on a fresh installation with no connected writing profile. The room now shows the intended connection handoff instead of dereferencing a missing default model.
+
+User impact: a normal writing task is no longer killed after 30 seconds, and the default creation experience exposes the decision the creator needs now instead of provider, model, canon, skill, and readiness controls. A timed-out request still saves no proposal, changes no project field or canon, and does not trigger a hidden paid retry.
+
+Data/migration impact: none. Existing projects, approved canon/media, proposal history, provider keys/settings, skills, jobs, and release records are unchanged. No live provider request or GPU job was run while implementing this fix; mocked contract/renderer tests cover the timing and interaction boundaries.
+
+Documentation impact: synchronized architecture, UX, implementation, backlog, traceability, provider sources, tests, status, README, and changelog with WRITE-002 and the updated AT-061/AT-062 behavior.
+
+Rollback: close the app and return to the prior 0.10.1 build. Existing local data and protected credentials remain readable. An already submitted external text request cannot be cancelled by rolling back the UI, so wait for it or check provider activity before changing builds.
+
+### Fixed — 2026-08-24 (installed-app continuation and core media qualification assets)
+
+- Made RunPod GPU-catalogue parsing tolerant of current numeric strings, nullable display fields, and unrelated malformed catalogue entries. A refresh now distinguishes a successful account check from an unavailable price catalogue and never implies that prices were checked when they were not.
+- Added reviewed API-format candidate graphs for Qwen Image 2512 character/storyboard frames, Qwen Image Edit 2511 targeted corrections, LTX-2.5 single-stage motion proofs, and LTX-2.5 two-stage final video. Their hashes and exact node allowlists are recorded in the candidate pack, and their node/input structures were checked against the pinned ComfyUI runtime.
+- Fixed a reproducible pinned LTX custom-node startup failure by locking Kornia 0.8.2 and verifying the required pyramid imports during the worker build. Qwen3-TTS now runs in a dedicated virtual environment with a build-time import check so its dependencies cannot silently replace ComfyUI's runtime.
+- Split core production qualification from advanced native audio-driven LTX, control-guided generation, foley, and adaptation. The promotion gate can now qualify the practical 48 GB-or-less creator path while advanced candidates remain locked and excluded from the production pack until their own evidence exists.
+
+User impact: the installed app can read more current RunPod catalogue responses honestly, and the one-time worker candidate now contains the concrete image/edit/draft/final workflow assets needed for a real qualification run. TTS plus LatentSync remains the core approved-dialogue/lip-repair route; advanced native audio-driven video is not falsely treated as ready.
+
+Data/migration impact: application version advances to 0.10.1. Existing projects, canon, media, provider credentials, approvals, and jobs are unchanged. Candidate hashes and runtime pins change, so any earlier unpromoted worker candidate is obsolete. No model, Pod, GPU charge, license acceptance, or production receipt was created.
+
+Documentation impact: synchronized the implementation/status/operations/test records with the four concrete candidate graphs, dependency isolation, core-versus-advanced qualification boundary, and remaining live proof.
+
+Rollback: close the app and return to the installed 0.10.0 build. Existing project data and protected credentials remain readable. Do not reuse a 0.10.1 candidate worker with the older pack because the integrity hashes deliberately differ.
+
+### Fixed — 2026-08-23 (guided question decisions and production-setup handoff)
+
+- Replaced the read-only “Questions and cautions” list with one plain-language answer field per question, a “Let AI recommend” choice, required guidance, and a single action that prepares the answers as a reviewable revision request. Unanswered questions produce a correction popup and no provider call.
+- Corrected the Creator Mode production handoff. A creator who still needs to connect RunPod or save spending limits is sent to Settings with an actionable button label. Once both creator-owned steps are complete, the app remains in Creator Mode, shows the five-part readiness checklist, states that no manual Pod is needed, and explains the studio-managed storage, worker, and shutdown proof instead of repeatedly redirecting to Settings. Its informational popup uses status language and **Close**, not correction language that implies the creator made a mistake.
+
+User impact: creative cautions now have an obvious resolution path, and a connected creator can distinguish their completed setup from release-engineering qualification without entering a Settings loop or creating a Pod manually.
+
+Data/migration impact: none. Question answers remain local UI state until the creator explicitly confirms a new writing request; production readiness continues to use the existing protected status contract. The patch does not unlock a workflow, create a Pod, call a provider, or alter approved canon/media.
+
+Documentation impact: synchronized the UX specification, test plan, status, and changelog with the guided-question and readiness-handoff behavior.
+
+Rollback: close the app and return to the previous 0.10 build. Existing projects and protected credentials are unchanged. Any revision already sent to a writing provider remains an ordinary confirmed request and cannot be cancelled by a UI rollback.
+
+### Added — 2026-08-23 (default Creator Mode and minimal idea/script intake)
+
+- Added a non-technical quick start with two clear paths: a short story idea or an existing pasted/uploaded text script. It asks only for series/film, optional title, language, and source; shows required markers/live guidance/correction popup; reads supported text files locally; creates safe AI-to-review placeholders; and makes no provider or GPU call.
+- Added Creator Mode as the default project workspace. It derives the next incomplete stage from durable canon and approved media and guides production blueprint, full cast, world/location book, long screenplay, shot-by-shot storyboard, animation look, original voice/performance book, visual/audio proofs, master, YouTube release strategy, and final export.
+- Creator Mode automatically attaches project source, production settings, the active creative-direction revision, all active approved canon, and applicable enabled skills. It selects the saved connected controlled model first and declares fallback behavior; the confirmation warns that unavailable fallbacks can mean multiple billed text requests. No text stage starts a GPU.
+- AI output remains visibly a proposal. Only explicit approval of its exact stored fingerprint creates a canon revision and advances progress. Earlier stages can be revisited without overwriting history.
+- Added a visual/audio production handoff that distinguishes approved character/style, original voice, motion/lip-sync, and master proof; routes setup/review/production exceptions in plain language; and preserves separate estimate, maximum-cost, qualification, and worker-start gates.
+- Simplified default navigation to Productions, Create, Review, Edit & Export, and Settings. Story, World & Cast, Storyboard, and Generation controls are behind an optional Advanced Studio toggle. The production overview now routes ordinary work back through the guided path.
+- Raised protected writing output capacity from 4,000 to 12,000 tokens for full screenplay/storyboard stages and limited quick-start source text to 60,000 characters so approved canon and production settings retain bounded context room.
+
+User impact: a creator can begin with the story rather than a technical form and make only meaningful review decisions while the app supplies models, skills, context, canon and stage order. Detailed controls remain available when wanted.
+
+Data/migration impact: project creation and canon/media stores remain backward compatible. The project brief contract accepts larger text, writing requests may request up to 12,000 output tokens after explicit billing disclosure, and no automatic migration is required. No provider call, GPU, model download, media generation, or external publication occurred while implementing this change.
+
+Documentation impact: added FR-070, NFR-023, AT-062, and D-051; synchronized PRD, UX, architecture, workflow, implementation, traceability, status, test plan, README, and changelog with Creator Mode and its preserved safety boundaries.
+
+Rollback: close the app and return to the previous 0.10 build. Existing projects, approved canon, media, provider keys, skills, jobs, and release records remain unchanged. Quick-start projects are ordinary projects and still open in detailed rooms. Reverting the UI cannot cancel an already approved provider request or external worker, so verify provider activity separately before rollback.
+
 ### Added — 2026-08-23 (version 0.10 project-wide idea assistance and governed future-feature foundations)
 
 - Added one reusable project-aware idea assistant throughout Audience & Creative Direction, World & Cast, Storyboard, Generate, Edit & Export, and Release planning. It can propose character, relationship, world, location, prop, style, voice, motion, control, foley, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text through the existing protected GPT/Claude/Gemini contract and compatible enabled declarative skills.

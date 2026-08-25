@@ -6,13 +6,13 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 
 | Requirement slice | Current implementation | Remaining acceptance boundary |
 | --- | --- | --- |
-| FR-001–FR-010, FR-043–FR-048, FR-067–FR-069 | Projects, backup/migration, direction, protected writing providers, declarative skills, upstream import, proposals, canon, and governed field-level idea assistance are implemented | Live provider/long-form/representative-user evidence; higher-risk skill classes remain locked |
+| FR-001–FR-010, FR-043–FR-048, FR-067–FR-070 | Projects, quick idea/script intake, default Creator Mode, backup/migration, direction, protected writing providers, declarative skills, upstream import, proposals, canon, and governed field-level idea assistance are implemented | Live provider/long-form/representative-user evidence; higher-risk skill classes remain locked |
 | FR-011–FR-023, FR-049–FR-051 | Media store, identity/edit/voice/video job contracts, approved-input lineage, local media protocol, viewing and approval are implemented | Exact remote workflow/model qualification and season-scale continuity |
 | FR-024–FR-034 | RunPod lifecycle, lease/idempotency/cost gates, worker gateway, preflight/watchdog, transfers, review and local finishing are implemented | Real Pod, model, Comfy, shutdown, recovery, concurrency, and long-form proof |
 | FR-035–FR-042 | Multi-project local control, deterministic timeline, captions, technical checks and release packaging are implemented | Clean-machine full-production acceptance and signed installer |
-| FR-052–FR-058 | Timed local storyboard/timeline/QC plus control/layer/dataset asset roles, strict ordered control manifests, and locked control/foley/adaptation candidates are implemented | Typed control-pack/layer authoring depth, exact external engines/trainers, and AT-042–AT-049 live fixtures |
-| FR-059–FR-066 | Local release-profile revisions, Idea Library, release details, thumbnail, human attestations, immutable package, structured performance snapshots, and reviewed learning proposals are implemented | Profile sharing/research import, report-file parser/read-only OAuth decision, real evidence/master-package proof, full AT-050–AT-058 |
-| NFR-001–NFR-022 | Local boundaries, schemas, vaults, isolation, async jobs, documentation, qualification locks and human authority are implemented where applicable | Named external security, provider, quality, accessibility, signing, and clean-machine evidence |
+| FR-052–FR-058 | Timed local storyboard/timeline/QC; control/layer/dataset roles; strict ordered control manifests; hash-locked control graphs; exact foley runner; rights-reviewed dataset builder; official isolated LTX trainer candidate; and an atomic all-tier promotion gate are implemented | Typed control-pack/layer authoring depth, live external compatibility/quality/cost, adaptation promotion/rollback, and AT-042–AT-049 fixtures |
+| FR-059–FR-066 | Local release-profile revisions, Idea Library, release details, thumbnail, human attestations, immutable package, bounded official-report CSV parsing/provenance, structured snapshots, and reviewed learning proposals are implemented | Profile sharing/research signals, optional read-only OAuth decision, real evidence/master proof, full AT-050–AT-058 |
+| NFR-001–NFR-023 | Local boundaries, schemas, vaults, isolation, async jobs, progressive disclosure, documentation, qualification locks and human authority are implemented where applicable | Named external security, provider, quality, accessibility, signing, and clean-machine evidence |
 
 Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md), [STATUS.md](STATUS.md), and [BUILD_BACKLOG.md](BUILD_BACKLOG.md). The original design matrix below remains the requirement-to-acceptance map; “planned components” names the intended boundary even where version 0.10 now implements it.
 
@@ -56,7 +56,8 @@ Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODU
 | FR-066 | `YOUTUBE_RELEASE_WORKFLOW.md` readiness, `UX_SPEC.md`, `ARCHITECTURE.md` | readiness aggregator, prerequisite/probe registry | AT-058, AT-013, AT-026 |
 | FR-067 | `CREATIVE_DIRECTION_PROFILE.md`, `DOMAIN_MODEL.md`, `UX_SPEC.md`, `ARCHITECTURE.md` | `contracts`, `project-store`, renderer, creative-direction compiler, dependency engine, every consuming adapter | AT-059, AT-031, AT-054 |
 | FR-068 | `UX_SPEC.md`, `ARCHITECTURE.md`, `SECURITY_AND_RECOVERY.md` | renderer form-guidance components, trusted IPC/domain validators | AT-060, AT-035, security suite |
-| FR-069 | `UX_SPEC.md` project-aware assistant, `ARCHITECTURE.md` writing boundary, `API_CONTRACTS.md` writing/skill contracts | reusable renderer assistant, creative-writing service, provider adapters, skill runtime, project proposal store | AT-061, AT-036, AT-037, AT-054, security suite |
+| FR-069 | `UX_SPEC.md` compact project-aware assistant and request timing, `ARCHITECTURE.md` writing boundary, `API_CONTRACTS.md` writing/skill contracts | single-column renderer assistant, saved-profile selection, collapsed exact context/skill disclosure, provider adapters, skill runtime, project proposal store | AT-061, AT-036, AT-037, AT-054, security suite |
+| FR-070 | `UX_SPEC.md` one-next-step Creator Mode, `ARCHITECTURE.md` creator orchestrator, `PRODUCTION_WORKFLOW.md` guided/resumable path | quick-start intake, creator-stage controller, compact progress/action surface, eight-checkpoint canon/media/job/timeline/worker projection, protected writing/context/skill services, prerequisite-gated one-off asset handoff, advanced rooms | AT-062, AT-001, AT-036, AT-060, AT-061 |
 
 ## Non-functional requirements
 
@@ -64,7 +65,7 @@ Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODU
 | --- | --- | --- | --- |
 | NFR-001 | `UX_SPEC.md` | packaged desktop and setup wizard | AT-013, AT-024, AT-035 |
 | NFR-002 | `CHANGE_CONTROL.md`, `UX_SPEC.md` impact/spend previews | domain, orchestrator, UI | AT-003, AT-008, AT-018, AT-028 |
-| NFR-003 | `ARCHITECTURE.md` §12, `SECURITY_AND_RECOVERY.md` | durable queues, reconciliation, backup | AT-004, AT-014–AT-016, AT-030 |
+| NFR-003 | `ARCHITECTURE.md` §12 and writing-provider timing, `SECURITY_AND_RECOVERY.md` | durable queues, reconciliation, backup, separate connection/draft timeouts | AT-004, AT-014–AT-016, AT-030, AT-061 |
 | NFR-004 | `DOMAIN_MODEL.md`, `API_CONTRACTS.md` artifact/manifest | project store, engines, worker | AT-020, AT-022, AT-025 |
 | NFR-005 | `SECURITY_AND_RECOVERY.md` §3–5 | credential vault, gateway, signed image | security suite, AT-013, AT-015 |
 | NFR-006 | `ARCHITECTURE.md` trust boundaries, `SECURITY_AND_RECOVERY.md` | project isolation, purge, scoped tokens | AT-002, AT-031, security suite |
@@ -84,6 +85,7 @@ Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODU
 | NFR-020 | `YOUTUBE_RELEASE_WORKFLOW.md`, `SOURCES.md`, `CHANGE_CONTROL.md` | versioned release rules, validation, attestation UI | AT-051–AT-055, security suite |
 | NFR-021 | `YOUTUBE_RELEASE_WORKFLOW.md`, `DOMAIN_MODEL.md`, `API_CONTRACTS.md` | performance snapshot and learning registry | AT-056, AT-057, isolation suite |
 | NFR-022 | `UX_SPEC.md`, `ARCHITECTURE.md` | renderer form guidance, accessibility tests | AT-060, AT-035 |
+| NFR-023 | `UX_SPEC.md` one-next-step Creator Mode/navigation, `ARCHITECTURE.md` creator orchestrator | compact progress/action surface, creator-stage controller, collapsed optional depth, exception summaries, Advanced Studio boundary | AT-062, AT-035 |
 
 ## Historical implementation evidence — version 0.8.0
 

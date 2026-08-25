@@ -18,6 +18,7 @@ import {
   FinishActionResultSchema,
   FinishWorkspaceSchema,
   LockProductionTimelineInputSchema,
+  OpenReleasePackageInputSchema,
   PerformanceSnapshotSchema,
   ProductionTimelineSchema,
   ProjectReleaseProfileSchema,
@@ -42,6 +43,7 @@ import {
   type FinishActionResult,
   type FinishWorkspace,
   type LockProductionTimelineInput,
+  type OpenReleasePackageInput,
   type ProductionTimeline,
   type ReviewReleaseLearningInput,
   type SavePerformanceSnapshotInput,
@@ -54,6 +56,8 @@ import {
 } from '@studio/contracts'
 import { createUlid } from '@studio/domain'
 import type { ProductionStore } from '@studio/production-store'
+
+export { parseYouTubePerformanceReport } from './performance-report'
 
 interface ProjectLocation {
   manifest: { id: string }
@@ -682,6 +686,16 @@ export class ReleaseStore {
             'not-found',
             'That release package is not in this production.'
           )
+        if (input.source === 'official-report' && !input.reportProvenance)
+          throw new ReleaseStoreError(
+            'invalid-input',
+            'Choose and check the official report file before saving its evidence.'
+          )
+        if (input.source !== 'official-report' && input.reportProvenance)
+          throw new ReleaseStoreError(
+            'invalid-input',
+            'Report-file provenance can be attached only to official report evidence.'
+          )
         const warnings = [...input.missingDataWarnings]
         for (const [key, value] of Object.entries(input.metrics)) {
           if (value === null) warnings.push(`${key} was not supplied by the selected report.`)
@@ -712,6 +726,7 @@ export class ReleaseStore {
           collectedAt: input.collectedAt,
           metricDefinitionVersion: 'youtube-analytics-2026-08',
           metrics: input.metrics,
+          reportProvenance: input.reportProvenance,
           missingDataWarnings: [...new Set(warnings)],
           evidenceNotes: input.evidenceNotes,
           baselineEligible:
@@ -1010,6 +1025,85 @@ export class ReleaseStore {
         ok: false,
         error: { code: safe.code, message: safe.message }
       })
+    }
+  }
+
+  resolveReleasePackagePath(unknownInput: OpenReleasePackageInput):
+    | { ok: true; path: string }
+    | {
+        ok: false
+        error: {
+          code: 'invalid-input' | 'not-found' | 'integrity-failed' | 'unsafe-path' | 'unknown'
+          message: string
+        }
+      } {
+    try {
+      const input = OpenReleasePackageInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const database = this.openDatabase(project.workspacePath)
+      try {
+        const releasePackage = parseRow(
+          database
+            .prepare('SELECT record_json FROM release_packages WHERE release_id = ?')
+            .get(input.releaseId) as unknown as JsonRow | undefined,
+          ReleasePackageSchema.parse,
+          'That release package was not found.'
+        )
+        if (releasePackage.projectId !== input.projectId)
+          throw new ReleaseStoreError('unsafe-path', 'Release packages cannot cross projects.')
+        const packageRoot = resolve(
+          project.workspacePath,
+          ...releasePackage.relativePath.split('/')
+        )
+        if (
+          !isInside(project.workspacePath, packageRoot) ||
+          packageRoot === project.workspacePath ||
+          !existsSync(packageRoot) ||
+          !statSync(packageRoot).isDirectory()
+        )
+          throw new ReleaseStoreError(
+            'unsafe-path',
+            'The manual-upload folder is missing or outside this project.'
+          )
+        for (const file of releasePackage.files) {
+          if (basename(file.fileName) !== file.fileName)
+            throw new ReleaseStoreError(
+              'unsafe-path',
+              'A release package contains an unsafe file name.'
+            )
+          const filePath = resolve(packageRoot, file.fileName)
+          if (
+            !isInside(packageRoot, filePath) ||
+            !existsSync(filePath) ||
+            !statSync(filePath).isFile()
+          )
+            throw new ReleaseStoreError(
+              'integrity-failed',
+              'A release package file is missing. Create a new verified package.'
+            )
+          const status = statSync(filePath)
+          if (status.size !== file.byteSize || shaFile(filePath) !== file.sha256)
+            throw new ReleaseStoreError(
+              'integrity-failed',
+              'A release package file changed after it was locked. Create a new verified package.'
+            )
+        }
+        return { ok: true, path: packageRoot }
+      } finally {
+        database.close()
+      }
+    } catch (error) {
+      const safe = safeError(error)
+      return {
+        ok: false,
+        error: {
+          code:
+            safe.code === 'stale-data' || safe.code === 'approval-required'
+              ? 'integrity-failed'
+              : safe.code,
+          message: safe.message
+        }
+      }
     }
   }
 

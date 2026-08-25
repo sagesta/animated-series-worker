@@ -1,5 +1,11 @@
 import { useMemo, useState, type FormEvent, type JSX } from 'react'
-import type { FinishWorkspace, ProjectDetails, ReleaseLearning } from '@studio/contracts'
+import type {
+  FinishWorkspace,
+  ProjectDetails,
+  ReleaseLearning,
+  YouTubePerformanceReportPreview,
+  YouTubePerformanceReportRow
+} from '@studio/contracts'
 import { IdeaAssistant } from './IdeaAssistant'
 import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 
@@ -116,6 +122,8 @@ export function ReleasePlanningPanel({
   const [subscribers, setSubscribers] = useState('')
   const [retention30, setRetention30] = useState('')
   const [evidenceNotes, setEvidenceNotes] = useState('')
+  const [reportPreview, setReportPreview] = useState<YouTubePerformanceReportPreview>()
+  const [reportRowNumber, setReportRowNumber] = useState<number>()
 
   const [selectedSnapshots, setSelectedSnapshots] = useState<string[]>([])
   const [observation, setObservation] = useState('')
@@ -240,6 +248,8 @@ export function ReleasePlanningPanel({
       nextIssues.push('Views must be a whole number of zero or more.')
     if (windowEnd < windowStart)
       nextIssues.push('The evidence end date cannot be before its start date.')
+    if (snapshotSource === 'official-report' && !reportRowNumber)
+      nextIssues.push('Choose a checked video row from the official report file.')
     for (const [name, value] of [
       ['Impressions', impressions],
       ['Likes', likes],
@@ -293,10 +303,88 @@ export function ReleasePlanningPanel({
             subscribersGained: optionalWholeNumber(subscribers),
             retentionAt30SecondsPct: optionalPercentage(retention30)
           },
-          missingDataWarnings: [],
+          reportProvenance:
+            snapshotSource === 'official-report' && reportPreview && reportRowNumber
+              ? {
+                  fileName: reportPreview.fileName,
+                  fileSha256: reportPreview.fileSha256,
+                  importedAt: reportPreview.importedAt,
+                  rowNumber: reportRowNumber
+                }
+              : null,
+          missingDataWarnings:
+            snapshotSource === 'official-report' && reportPreview && reportRowNumber
+              ? (reportPreview.rows.find((row) => row.rowNumber === reportRowNumber)
+                  ?.missingDataWarnings ?? [])
+              : [],
           evidenceNotes
         })
       )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const applyReportRow = (row: YouTubePerformanceReportRow): void => {
+    const metric = (value: number | null): string => (value === null ? '' : String(value))
+    setReportRowNumber(row.rowNumber)
+    setVideoId(row.youtubeVideoId)
+    setSnapshotSource('official-report')
+    setViews(String(row.metrics.views))
+    setImpressions(metric(row.metrics.impressions))
+    setCtr(metric(row.metrics.impressionsClickThroughRatePct))
+    setAverageViewDuration(metric(row.metrics.averageViewDurationSeconds))
+    setWatchTime(metric(row.metrics.estimatedWatchTimeHours))
+    setLikes(metric(row.metrics.likes))
+    setComments(metric(row.metrics.comments))
+    setShares(metric(row.metrics.shares))
+    setSubscribers(metric(row.metrics.subscribersGained))
+    setRetention30(metric(row.metrics.retentionAt30SecondsPct))
+    setEvidenceNotes(
+      `Imported from the checked YouTube Analytics report ${reportPreview?.fileName ?? ''}, row ${row.rowNumber}. The studio recorded the file integrity fingerprint.`
+    )
+  }
+
+  const choosePerformanceReport = async (): Promise<void> => {
+    setBusy(true)
+    setIssues([])
+    try {
+      const preview = await window.studio.finish.choosePerformanceReport()
+      if (!preview) {
+        onNotice('No report was selected. No evidence was saved.')
+        return
+      }
+      setReportPreview(preview)
+      setReportRowNumber(undefined)
+      if (preview.rows.length === 1) {
+        const row = preview.rows[0]!
+        const metric = (value: number | null): string => (value === null ? '' : String(value))
+        setReportRowNumber(row.rowNumber)
+        setVideoId(row.youtubeVideoId)
+        setSnapshotSource('official-report')
+        setViews(String(row.metrics.views))
+        setImpressions(metric(row.metrics.impressions))
+        setCtr(metric(row.metrics.impressionsClickThroughRatePct))
+        setAverageViewDuration(metric(row.metrics.averageViewDurationSeconds))
+        setWatchTime(metric(row.metrics.estimatedWatchTimeHours))
+        setLikes(metric(row.metrics.likes))
+        setComments(metric(row.metrics.comments))
+        setShares(metric(row.metrics.shares))
+        setSubscribers(metric(row.metrics.subscribersGained))
+        setRetention30(metric(row.metrics.retentionAt30SecondsPct))
+        setEvidenceNotes(
+          `Imported from the checked YouTube Analytics report ${preview.fileName}, row ${row.rowNumber}. The studio recorded the file integrity fingerprint.`
+        )
+      }
+      onNotice(
+        preview.rows.length === 1
+          ? 'The official report was checked and its video row is ready for review. Nothing was saved yet.'
+          : `The official report was checked. Choose one of its ${preview.rows.length} video rows; nothing was saved yet.`
+      )
+    } catch {
+      setIssues([
+        'The report could not be checked. Export a CSV from YouTube Analytics and try again; no evidence was saved.'
+      ])
     } finally {
       setBusy(false)
     }
@@ -675,6 +763,53 @@ export function ReleasePlanningPanel({
             Copy values from YouTube Analytics or an official exported report. Rehearsal data is
             stored but excluded from baselines.
           </p>
+          <div className="report-import-card">
+            <div>
+              <strong>Have an official report file?</strong>
+              <p>
+                Import a YouTube Analytics CSV. The studio checks the columns, keeps its integrity
+                fingerprint privately, and lets you review the values before saving.
+              </p>
+            </div>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => void choosePerformanceReport()}
+            >
+              {busy ? 'Checking report…' : 'Import official report CSV'}
+            </button>
+          </div>
+          {reportPreview && (
+            <div className="report-preview" role="status">
+              <strong>{reportPreview.fileName}</strong>
+              <span>
+                Checked successfully · {reportPreview.rows.length}{' '}
+                {reportPreview.rows.length === 1 ? 'video row' : 'video rows'}
+              </span>
+              {reportPreview.rows.length > 1 && (
+                <label>
+                  Video row to use <RequiredMark />
+                  <select
+                    value={reportRowNumber ?? ''}
+                    onChange={(event) => {
+                      const row = reportPreview.rows.find(
+                        (candidate) => candidate.rowNumber === Number(event.target.value)
+                      )
+                      if (row) applyReportRow(row)
+                    }}
+                  >
+                    <option value="">Choose a video</option>
+                    {reportPreview.rows.map((row) => (
+                      <option key={row.rowNumber} value={row.rowNumber}>
+                        {row.videoTitle ?? row.youtubeVideoId} · {row.metrics.views} views
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
+          )}
           <label>
             Related release package
             <select
@@ -701,10 +836,16 @@ export function ReleasePlanningPanel({
             Evidence source <RequiredMark />
             <select
               value={snapshotSource}
-              onChange={(event) => setSnapshotSource(event.target.value as typeof snapshotSource)}
+              onChange={(event) => {
+                const source = event.target.value as typeof snapshotSource
+                setSnapshotSource(source)
+                if (source !== 'official-report') setReportRowNumber(undefined)
+              }}
             >
               <option value="manual-official">Manually copied official metrics</option>
-              <option value="official-report">Official report file</option>
+              <option value="official-report" disabled={!reportPreview}>
+                Checked official report file
+              </option>
               <option value="rehearsal">Rehearsal / simulated</option>
             </select>
           </label>

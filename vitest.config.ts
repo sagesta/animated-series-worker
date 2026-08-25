@@ -40,10 +40,12 @@ export default defineConfig({
     }
   },
   test: {
+    exclude: ['e2e/**', 'node_modules/**', 'out/**', 'dist/**'],
     environment: 'node',
-    pool: 'threads',
+    pool: 'forks',
     maxWorkers: 1,
     fileParallelism: false,
+    testTimeout: 10_000,
     coverage: {
       reporter: ['text', 'html']
     }

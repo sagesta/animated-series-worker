@@ -23,6 +23,8 @@ const reportPath = resolve(
 const modelRoot = resolve(process.env.STUDIO_MODEL_ROOT ?? '/workspace')
 const imageDigest = process.env.STUDIO_WORKER_IMAGE_DIGEST ?? ''
 const workerRelease = process.env.STUDIO_WORKER_RELEASE ?? 'development'
+const SMOKE_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAbSURBVBhXY/iwReO/yL59/xm+RgX8F1F2+w8AWtUJdcQQhKwAAAAASUVORK5CYII='
 
 if (!/^[a-f0-9]{64}$/.test(imageDigest))
   throw new Error('A verified worker image digest is required.')
@@ -93,14 +95,9 @@ async function runSmokeTest() {
   const inputRoot = resolve(process.env.STUDIO_COMFY_INPUT_ROOT ?? '/opt/ComfyUI/input')
   mkdirSync(inputRoot, { recursive: true })
   const inputName = `studio-smoke-${Date.now()}.png`
-  writeFileSync(
-    resolve(inputRoot, inputName),
-    Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wlq7p8AAAAASUVORK5CYII=',
-      'base64'
-    ),
-    { flag: 'wx' }
-  )
+  writeFileSync(resolve(inputRoot, inputName), Buffer.from(SMOKE_PNG_BASE64, 'base64'), {
+    flag: 'wx'
+  })
   const prompt = {
     1: { class_type: 'LoadImage', inputs: { image: inputName, upload: 'image' } },
     2: {
@@ -147,6 +144,11 @@ function command(command, args) {
 
 const systemStats = await waitForComfy()
 const nodes = await objectInfo()
+const nvidiaDriverVersion = command('nvidia-smi', [
+  '--query-gpu=driver_version',
+  '--format=csv,noheader'
+])
+const cudaVersion = command('python', ['-c', 'import torch; print(torch.version.cuda)'])
 const modelHashes = {}
 const workflowHashes = {}
 for (const workflow of pack.workflows) {
@@ -177,7 +179,18 @@ const report = {
   vramGb: Math.round(((device.vram_total ?? 0) / 1024 ** 3) * 10) / 10,
   freeDiskGb: Math.round(((fileSystem.bavail * fileSystem.bsize) / 1024 ** 3) * 10) / 10,
   pythonVersion: command('python', ['--version']),
-  cudaVersion: command('nvidia-smi', ['--query-gpu=driver_version', '--format=csv,noheader']),
+  cudaVersion,
+  nvidiaDriverVersion,
+  latentsyncPythonVersion: command('/opt/latentsync-venv/bin/python', ['--version']),
+  ltxTrainerPythonVersion: command('/opt/ltx-trainer-venv/bin/python', ['--version']),
+  ltxTrainerTorchVersion: command('/opt/ltx-trainer-venv/bin/python', [
+    '-c',
+    'import torch; print(torch.__version__)'
+  ]),
+  ltxTrainerCudaVersion: command('/opt/ltx-trainer-venv/bin/python', [
+    '-c',
+    'import torch; print(torch.version.cuda)'
+  ]),
   installedNodeTypes: Object.keys(nodes).sort(),
   modelHashes,
   workflowHashes,

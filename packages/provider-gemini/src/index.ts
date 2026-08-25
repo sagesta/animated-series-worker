@@ -33,7 +33,11 @@ export interface GeminiClientOptions {
   fetchImpl?: typeof fetch
   baseUrl?: string
   timeoutMs?: number
+  generationTimeoutMs?: number
 }
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
+const DEFAULT_GENERATION_TIMEOUT_MS = 300_000
 
 const ModelsResponseSchema = z.object({
   models: z.array(
@@ -115,7 +119,8 @@ function errorForStatus(status: number, operation: 'models' | 'generate'): Gemin
 export class GeminiClient {
   private readonly fetchImpl: typeof fetch
   private readonly baseUrl: string
-  private readonly timeoutMs: number
+  private readonly requestTimeoutMs: number
+  private readonly generationTimeoutMs: number
 
   constructor(options: GeminiClientOptions = {}) {
     this.fetchImpl = options.fetchImpl ?? fetch
@@ -123,7 +128,9 @@ export class GeminiClient {
       /\/$/,
       ''
     )
-    this.timeoutMs = options.timeoutMs ?? 30_000
+    this.requestTimeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
+    this.generationTimeoutMs =
+      options.generationTimeoutMs ?? options.timeoutMs ?? DEFAULT_GENERATION_TIMEOUT_MS
   }
 
   async listModels(apiKey: string): Promise<WritingModelOption[]> {
@@ -131,7 +138,8 @@ export class GeminiClient {
       '/models?pageSize=1000',
       apiKey,
       { method: 'GET' },
-      'models'
+      'models',
+      this.requestTimeoutMs
     )
     const payload = ModelsResponseSchema.safeParse(await this.readJson(response))
     if (!payload.success) {
@@ -178,11 +186,15 @@ export class GeminiClient {
           generationConfig: {
             maxOutputTokens: input.maxOutputTokens,
             responseMimeType: 'application/json',
-            responseJsonSchema: CREATIVE_DRAFT_JSON_SCHEMA
+            responseJsonSchema: CREATIVE_DRAFT_JSON_SCHEMA,
+            thinkingConfig: {
+              thinkingLevel: input.maxOutputTokens <= 2_000 ? 'low' : 'medium'
+            }
           }
         })
       },
-      'generate'
+      'generate',
+      this.generationTimeoutMs
     )
     const payload = GenerateContentResponseSchema.safeParse(await this.readJson(response))
     if (!payload.success) {
@@ -241,13 +253,14 @@ export class GeminiClient {
     path: string,
     apiKey: string,
     init: RequestInit,
-    operation: 'models' | 'generate'
+    operation: 'models' | 'generate',
+    timeoutMs: number
   ): Promise<Response> {
     try {
       const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
         ...init,
         headers: { 'x-goog-api-key': apiKey, ...init.headers },
-        signal: AbortSignal.timeout(this.timeoutMs)
+        signal: AbortSignal.timeout(timeoutMs)
       })
       if (!response.ok) throw errorForStatus(response.status, operation)
       return response
@@ -259,7 +272,7 @@ export class GeminiClient {
       ) {
         throw new GeminiProviderError(
           'timed-out',
-          'Gemini took too long to respond. The local project was not changed.'
+          'Gemini did not finish the writing request in time. Try again; no proposal was saved and the local project was not changed.'
         )
       }
       throw new GeminiProviderError(

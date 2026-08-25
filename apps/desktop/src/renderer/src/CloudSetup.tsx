@@ -95,13 +95,12 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
     setBusy('refresh')
     setFeedback(undefined)
     try {
-      setFeedback(
-        applyResult(
-          await window.studio.cloud.refresh(),
-          onStatus,
-          'The account and current GPU prices were checked again. No GPU was rented.'
-        )
-      )
+      const result = await window.studio.cloud.refresh()
+      const successMessage =
+        result.ok && result.status.catalogMessage
+          ? 'The RunPod account was checked, but current GPU prices are still unavailable. No GPU was rented.'
+          : 'The account and current GPU prices were checked again. No GPU was rented.'
+      setFeedback(applyResult(result, onStatus, successMessage))
     } catch {
       setFeedback({
         kind: 'error',
@@ -562,8 +561,8 @@ export function CloudSetup({ status, onStatus }: CloudSetupProps): JSX.Element {
             storage created and verified
           </li>
           <li className={status?.setupChecklist.workerImageReady ? 'complete' : ''}>
-            <span>{status?.setupChecklist.workerImageReady ? '✓' : '4'}</span> Pinned ComfyUI, Qwen,
-            TTS, LTX, and lip-sync worker verified
+            <span>{status?.setupChecklist.workerImageReady ? '✓' : '4'}</span> Generation worker and
+            creative tools verified
           </li>
           <li className={status?.setupChecklist.automaticShutdownTested ? 'complete' : ''}>
             <span>{status?.setupChecklist.automaticShutdownTested ? '✓' : '5'}</span> Paid smoke

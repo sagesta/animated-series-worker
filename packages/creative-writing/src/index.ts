@@ -16,6 +16,7 @@ import {
   WritingProviderInputSchema,
   WritingSettingsStatusSchema,
   type CreativeDraftContent,
+  type CanonRecord,
   type ExternalSkillManifest,
   type ExternalSkillPlanPreview,
   type ProjectDetails,
@@ -84,6 +85,10 @@ export interface WritingProjectStore {
   openProject(projectId: string): ProjectDetails
   saveWritingDraft(draft: WritingDraftRecord): WritingDraftRecord
   listWritingDrafts(projectId: string): WritingDraftRecord[]
+}
+
+export interface WritingCanonSource {
+  listActiveCanon(projectId: string): CanonRecord[]
 }
 
 export interface ResolvedWritingSkillPlan {
@@ -538,7 +543,22 @@ function toReceipt(
   }
 }
 
-function buildContext(project: ProjectDetails, selection: WritingContextPreviewInput['context']) {
+function renderCanon(record: CanonRecord): string {
+  return [
+    `CANON: ${record.kind.toUpperCase()} — ${record.label} (revision ${record.revision})`,
+    `Summary: ${record.output.summary}`,
+    ...record.output.sections.map((section) => `${section.heading}\n${section.body}`),
+    record.output.continuityQuestions.length > 0
+      ? `Open continuity questions: ${record.output.continuityQuestions.join('; ')}`
+      : 'Open continuity questions: none recorded'
+  ].join('\n')
+}
+
+function buildContext(
+  project: ProjectDetails,
+  selection: WritingContextPreviewInput['context'],
+  activeCanon: CanonRecord[]
+) {
   const manifest = project.manifest
   const sections: string[] = []
   if (selection.includeProjectBrief) {
@@ -592,6 +612,13 @@ function buildContext(project: ProjectDetails, selection: WritingContextPreviewI
       sections.push('AUDIENCE & CREATIVE DIRECTION\nNo project direction has been set yet.')
     }
   }
+  if (selection.includeApprovedCanon) {
+    sections.push(
+      activeCanon.length > 0
+        ? ['APPROVED CANON — UNCHANGEABLE SOURCE', ...activeCanon.map(renderCanon)].join('\n\n')
+        : 'APPROVED CANON\nNo active canon records have been approved yet.'
+    )
+  }
   const text = sections.length > 0 ? sections.join('\n\n') : 'No local project context selected.'
   const normalizedManifest = JSON.stringify(manifest)
   const sourceVersions: WritingContextPreview['sourceVersions'] = [
@@ -614,6 +641,18 @@ function buildContext(project: ProjectDetails, selection: WritingContextPreviewI
       sha256: hash(JSON.stringify(profile))
     })
   }
+  if (selection.includeApprovedCanon) {
+    for (const record of activeCanon) {
+      sourceVersions.push({
+        kind: 'approved-canon',
+        id: record.canonId,
+        schemaVersion: record.schemaVersion,
+        revision: record.revision,
+        updatedAt: record.createdAt,
+        sha256: record.outputSha256
+      })
+    }
+  }
   return WritingContextPreviewSchema.parse({
     text,
     sha256: hash(text),
@@ -624,6 +663,7 @@ function buildContext(project: ProjectDetails, selection: WritingContextPreviewI
 export interface CreativeWritingServiceOptions {
   setup: WritingSetupService
   projectStore: WritingProjectStore
+  canonSource?: WritingCanonSource
   skillPlanner?: ExternalWritingSkillPlanner
   now?: () => Date
   createId?: () => string
@@ -633,6 +673,7 @@ export interface CreativeWritingServiceOptions {
 export class CreativeWritingService {
   private readonly setup: WritingSetupService
   private readonly projectStore: WritingProjectStore
+  private readonly canonSource: WritingCanonSource
   private readonly skillPlanner: ExternalWritingSkillPlanner
   private readonly now: () => Date
   private readonly createId: () => string
@@ -641,6 +682,7 @@ export class CreativeWritingService {
   constructor(options: CreativeWritingServiceOptions) {
     this.setup = options.setup
     this.projectStore = options.projectStore
+    this.canonSource = options.canonSource ?? { listActiveCanon: () => [] }
     this.skillPlanner =
       options.skillPlanner ??
       ({
@@ -670,7 +712,11 @@ export class CreativeWritingService {
 
   previewContext(unknownInput: unknown): WritingContextPreview {
     const input = WritingContextPreviewInputSchema.parse(unknownInput)
-    return buildContext(this.projectStore.openProject(input.projectId), input.context)
+    return buildContext(
+      this.projectStore.openProject(input.projectId),
+      input.context,
+      this.canonSource.listActiveCanon(input.projectId)
+    )
   }
 
   listDrafts(projectId: string): WritingDraftRecord[] {
@@ -680,7 +726,11 @@ export class CreativeWritingService {
   async generateDraft(unknownInput: unknown): Promise<WritingDraftRecord> {
     const input = WritingDraftRequestSchema.parse(unknownInput)
     const project = this.projectStore.openProject(input.projectId)
-    const context = buildContext(project, input.context)
+    const context = buildContext(
+      project,
+      input.context,
+      this.canonSource.listActiveCanon(input.projectId)
+    )
     let resolvedPlan: ResolvedWritingSkillPlan
     try {
       resolvedPlan = await this.skillPlanner.getPlan(input.projectId, input.taskKind)
@@ -785,7 +835,7 @@ export class CreativeWritingService {
     }
 
     const draft = WritingDraftRecordSchema.parse({
-      schemaVersion: 3,
+      schemaVersion: 4,
       draftId: this.createId(),
       projectId: input.projectId,
       taskKind: input.taskKind,

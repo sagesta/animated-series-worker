@@ -11,6 +11,7 @@ import {
 import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 import { IdeaAssistant } from './IdeaAssistant'
 import { ProductionReadinessStrip } from './ProductionRooms'
+import type { QuickCreateIntent } from './ProductionRooms'
 import { ReleasePlanningPanel } from './ReleasePlanningPanel'
 
 const crockford = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
@@ -108,11 +109,13 @@ function Readiness({ finish }: { finish?: FinishWorkspace }): JSX.Element {
 export function FinishRoom({
   project,
   onHome,
-  onReview
+  onReview,
+  quickCreate
 }: {
   project: ProjectDetails
   onHome(): void
   onReview(): void
+  quickCreate?: QuickCreateIntent
 }): JSX.Element {
   const [production, setProduction] = useState<ProductionWorkspaceSummary>()
   const [finish, setFinish] = useState<FinishWorkspace>()
@@ -120,7 +123,9 @@ export function FinishRoom({
   const [selectedVisuals, setSelectedVisuals] = useState<string[]>([])
   const [selectedAudio, setSelectedAudio] = useState<string[]>([])
   const [clipSeconds, setClipSeconds] = useState(5)
-  const [timelineLabel, setTimelineLabel] = useState('Episode rough cut')
+  const [timelineLabel, setTimelineLabel] = useState(
+    quickCreate?.mode === 'stitch' ? quickCreate.label : 'Episode rough cut'
+  )
   const [captionSource, setCaptionSource] = useState('0|2|Opening caption')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -150,7 +155,11 @@ export function FinishRoom({
     'gold'
   )
   const [busy, setBusy] = useState(false)
-  const [notice, setNotice] = useState<string>()
+  const [notice, setNotice] = useState<string | undefined>(
+    quickCreate?.mode === 'stitch'
+      ? 'Local assembly is prepared. Choose approved picture and audio, then save a reviewable timeline. No rented GPU is used.'
+      : undefined
+  )
   const [issues, setIssues] = useState<string[]>([])
 
   const refresh = useCallback(async (): Promise<void> => {
@@ -533,6 +542,23 @@ export function FinishRoom({
           : result.error.message
       )
       if (result.ok) setFinish(result.workspace)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const openReleasePackage = async (releaseId: string): Promise<void> => {
+    setBusy(true)
+    try {
+      const result = await window.studio.finish.openReleasePackage({
+        projectId: project.manifest.id,
+        releaseId
+      })
+      setNotice(
+        result.ok
+          ? 'Verified manual-upload folder opened. Upload remains a deliberate human action.'
+          : result.error.message
+      )
     } finally {
       setBusy(false)
     }
@@ -1188,7 +1214,15 @@ export function FinishRoom({
             <div className="package-receipt" key={item.releaseId}>
               <strong>Package {item.releaseId.slice(-6)}</strong>
               <span>{item.files.length} hash-checked files</span>
-              <small>{item.relativePath}</small>
+              <small>Ready in this project’s manual-upload folder</small>
+              <button
+                className="button button-secondary"
+                disabled={busy}
+                type="button"
+                onClick={() => void openReleasePackage(item.releaseId)}
+              >
+                Download upload folder
+              </button>
             </div>
           ))}
         </section>

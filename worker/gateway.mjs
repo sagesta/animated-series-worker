@@ -32,6 +32,11 @@ const capabilityPath = resolve(
   process.env.STUDIO_CAPABILITY_REPORT ?? '/workspace/studio-capability.json'
 )
 const modelRoot = resolve(process.env.STUDIO_MODEL_ROOT ?? '/workspace')
+const ttsPythonSetting = process.env.STUDIO_TTS_PYTHON ?? '/opt/tts-venv/bin/python'
+const ttsPython = resolve(ttsPythonSetting)
+const ltxTrainerPythonSetting =
+  process.env.STUDIO_LTX_TRAINER_PYTHON ?? '/opt/ltx-trainer-venv/bin/python'
+const ltxTrainerPython = resolve(ltxTrainerPythonSetting)
 const maxUploadBytes = Number.parseInt(
   process.env.STUDIO_MAX_UPLOAD_BYTES ?? String(20 * 1024 ** 3),
   10
@@ -48,6 +53,10 @@ if (!Number.isInteger(idleTimeoutMinutes) || idleTimeoutMinutes < 2 || idleTimeo
   throw new Error('STUDIO_IDLE_TIMEOUT_MINUTES must be between 2 and 60.')
 if (comfyBaseUrl !== 'http://127.0.0.1:8188')
   throw new Error('ComfyUI must stay on loopback port 8188.')
+if (ttsPythonSetting !== '/opt/tts-venv/bin/python')
+  throw new Error('The text-to-speech runtime path is fixed by the worker image.')
+if (ltxTrainerPythonSetting !== '/opt/ltx-trainer-venv/bin/python')
+  throw new Error('The LTX trainer runtime path is fixed by the worker image.')
 
 mkdirSync(root, { recursive: true })
 const pack = JSON.parse(readFileSync(packPath, 'utf8'))
@@ -195,11 +204,23 @@ function workflowFor(job) {
       status: 422
     })
   }
-  if (
-    workflow.engine === 'comfyui' &&
-    (!workflow.templatePath || !/^[a-f0-9]{64}$/.test(workflow.templateSha256 ?? ''))
-  )
+  const hasTemplatePath =
+    typeof workflow.templatePath === 'string' && workflow.templatePath.length > 0
+  const hasTemplateHash = /^[a-f0-9]{64}$/.test(workflow.templateSha256 ?? '')
+  if (hasTemplatePath !== hasTemplateHash)
+    throw Object.assign(new Error('Workflow contract is only partially locked.'), { status: 422 })
+  if (workflow.engine === 'comfyui' && !hasTemplatePath)
     throw Object.assign(new Error('Workflow template is not locked.'), { status: 422 })
+  if (hasTemplatePath) {
+    const contractPath = resolve(dirname(packPath), workflow.templatePath)
+    if (
+      !inside(dirname(packPath), contractPath) ||
+      !existsSync(contractPath) ||
+      !safeEqual(sha(readFileSync(contractPath)), workflow.templateSha256)
+    ) {
+      throw Object.assign(new Error('Workflow contract integrity check failed.'), { status: 422 })
+    }
+  }
   if (!['comfyui', 'worker-python'].includes(workflow.engine))
     throw Object.assign(new Error('This workflow engine is not available on the GPU worker.'), {
       status: 422
@@ -527,8 +548,19 @@ async function runWorkerPython(job, workflow) {
     Date.parse(hardDeadline) - 30_000,
     Date.now() + workflow.maximumRuntimeMinutes * 60_000
   )
+  const runnerPython = workflow.workflowId.startsWith('qwen3-tts-')
+    ? ttsPython
+    : workflow.workflowId === 'ltx25-project-lora-adaptation'
+      ? ltxTrainerPython
+      : '/usr/bin/python3'
+  if (workflow.workflowId.startsWith('qwen3-tts-') && !existsSync(runnerPython)) {
+    throw new Error('The isolated text-to-speech runtime is unavailable.')
+  }
+  if (workflow.workflowId === 'ltx25-project-lora-adaptation' && !existsSync(runnerPython)) {
+    throw new Error('The pinned LTX trainer runtime is unavailable.')
+  }
   await new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn('/usr/bin/python3', ['/opt/studio/python_runner.py', specPath], {
+    const child = spawn(runnerPython, ['/opt/studio/python_runner.py', specPath], {
       cwd: directory,
       env: { ...process.env },
       detached: true,

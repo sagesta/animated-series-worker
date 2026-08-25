@@ -1,6 +1,21 @@
 # End-to-end production workflow
 
-Current implementation note (0.10.0): the creator-facing rooms and local records implement project-aware field assistance, proposal-to-canon, storyboard/media approval, governed generation preparation, review, local finishing, release-profile/idea/performance/learning planning, attestations, and manual upload packaging. Paid work remains locked until the exact worker passes external qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): Creator Mode is the default creator-facing workflow. The supplied Ofibox reference informs the workflow sequence, not the interface styling. The app accepts an idea or script, exposes one resumable production run, prepares the next reviewable checkpoint with full approved context, and hands supervised image/audio/video work to the existing local records and governed generation services. A collapsed one-off asset tool covers image, video, audio, composition, and local assembly without replacing the main run. Detailed rooms remain optional. Paid work remains locked until the exact worker passes external qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+
+## Default guided path
+
+1. Give the studio a story idea or paste/upload a text script. Choose series or film, optionally name it, and confirm the language. Project creation is local and free.
+2. Creator Mode reads durable project state and recommends only the next missing creative approval. For a text stage, it attaches the source, settings, active creative direction, every active approved canon revision, and applicable enabled skills. The clearly labelled Create action confirms the disclosed text request and possible fallback count; no GPU starts.
+3. Review each response as a proposal. Request changes or approve that exact fingerprint. Only approval creates a new canon revision and advances the durable run.
+4. Complete the approved **story package**: production blueprint, cast, world/locations, timed screenplay, shot-by-shot storyboard, animation look, and original voice/performance direction.
+5. Produce and review **character/location references**, then **storyboard frames**, then **voice/dialogue assets**, then short **video shots**. Existing candidates and interrupted jobs remain available for review, retry, or targeted repair.
+6. Assemble approved picture, dialogue, ambience/effects/music, and editable captions on a deterministic local timeline. Render and review the delivery-profile master locally.
+7. Verify that the master is recovered before the worker lifecycle is considered complete; no active production job or rented GPU may remain after cleanup.
+8. Prepare truthful release strategy, complete human audience/disclosure/originality/rights/full-watch decisions, and create the local manual-upload package. Version 1 never publishes automatically.
+
+The collapsed **Create or repair one production asset** path mirrors the useful output-first part of the reference workflow. It prepares one image, video, audio item, composition, or local assembly from already approved prerequisites. A handoff creates no estimate, job, Pod, or charge by itself. Remote work still requires compatible approved inputs, a qualified workflow, exact estimate, maximum-cost approval, and separate worker-start confirmation.
+
+Advanced Studio exposes the original Story, World & Cast, Storyboard, and Generate controls for precise intervention. It does not define separate truth; both experiences use the same proposal, canon, media, job, cost, timeline, and release stores.
 
 ## 1. Production shape
 
@@ -70,7 +85,7 @@ Select a pilot scene that is difficult enough to be honest. A silent landscape s
 
 ## 4. Stage 1 — story development and upstream import
 
-Choose a connected OpenAI, Anthropic, or Gemini writing profile from the controlled catalogue and select the local context the request may use. The current direction revision is selected by default. The app previews the exact manifest/direction text and hashes, the applicable project-enabled declarative-skill plan, instruction minimum, and paid-confirmation requirement. A valid request is schema-validated and saved locally as a schema-3 proposal with provider/model, source versions, token usage, uncalculated dollar cost, exact plan hash, and execution receipts. Balanced/deep/economy labels explain intended use but do not replace a task benchmark. The provider remains a drafting assistant; only a separate reviewed promotion can create canon.
+Creator Mode selects the saved connected OpenAI, Anthropic, or Gemini writing profile automatically and reveals the exact context and skill plan only when requested. The compact field assistant follows the same rule: ask what the creator wants, show the saved model and a plain-language context summary, then keep exact manifest/direction text, hashes, and project-enabled declarative skills under **What will be shared**. The clearly labelled Create or Generate action is the paid-request confirmation; there is no duplicate checkbox. A valid request is schema-validated and saved locally as a schema-3 proposal with provider/model, source versions, token usage, uncalculated dollar cost, exact plan hash, and execution receipts. Connection checks keep a 30-second ceiling, confirmed structured drafts have a separate five-minute ceiling, and no timed-out request is retried invisibly. The provider remains a drafting assistant; only a separate reviewed promotion can create canon.
 
 The same governed path is available beside applicable text fields throughout Direction, World & Cast, Storyboard, Generate, Edit & Export, and Release. It can propose character/world/style/voice/motion/control/foley/thumbnail/release/learning text, but it cannot fill a secret, measurement, exact source transcript, approval, canon fact, rights/policy attestation, cost limit, GPU confirmation, or publishing action. A suggestion remains a saved proposal until the creator deliberately inserts and then saves it through the destination form.
 

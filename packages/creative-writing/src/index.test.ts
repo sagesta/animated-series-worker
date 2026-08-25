@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
+  CanonRecord,
   ExternalSkillManifest,
   ProjectDetails,
   WritingDraftRecord,
@@ -91,7 +92,7 @@ const project: ProjectDetails = {
   }
 }
 
-function createFixture(skillPlanner?: ExternalWritingSkillPlanner) {
+function createFixture(skillPlanner?: ExternalWritingSkillPlanner, canon: CanonRecord[] = []) {
   const root = mkdtempSync(join(tmpdir(), 'creative-writing-test-'))
   roots.push(root)
   const vaults: Record<WritingProvider, MemoryVault> = {
@@ -149,6 +150,7 @@ function createFixture(skillPlanner?: ExternalWritingSkillPlanner) {
       },
       listWritingDrafts: () => saved
     },
+    canonSource: { listActiveCanon: () => canon },
     skillPlanner,
     now: () => new Date('2026-08-21T14:00:00.000Z'),
     createId: () => '01J00000000000000000000001',
@@ -340,6 +342,63 @@ describe('protected creative writing workflow', () => {
     expect(result.sourceVersions).toEqual(preview.sourceVersions)
   })
 
+  it('shares selected active canon visibly and records its exact revision lineage', () => {
+    const canon: CanonRecord = {
+      schemaVersion: 1,
+      canonId: '01J00000000000000000000009',
+      projectId: project.manifest.id,
+      kind: 'character',
+      label: 'Ayo character bible',
+      revision: 2,
+      state: 'active',
+      sourceDraftId: '01J00000000000000000000010',
+      sourceDraftSha256: 'a'.repeat(64),
+      creativeDirectionProfileId: project.creativeDirection!.profileId,
+      output: {
+        title: 'Ayo',
+        summary: 'Ayo never carries a blade.',
+        sections: [{ heading: 'Identity lock', body: 'Blue scarf, open hands, calm posture.' }],
+        continuityQuestions: [],
+        suggestedNextSteps: []
+      },
+      outputSha256: 'b'.repeat(64),
+      approval: {
+        decisionId: '01J00000000000000000000011',
+        projectId: project.manifest.id,
+        subjectType: 'canon',
+        subjectId: '01J00000000000000000000009',
+        decision: 'approved',
+        reason: 'Identity and continuity were reviewed.',
+        confirmation: true,
+        decidedAt: '2026-08-21T13:30:00.000Z',
+        contentSha256: 'b'.repeat(64)
+      },
+      createdAt: '2026-08-21T13:30:00.000Z',
+      supersededAt: null
+    }
+    const { creative } = createFixture(undefined, [canon])
+    const preview = creative.previewContext({
+      projectId: project.manifest.id,
+      context: {
+        includeProjectBrief: false,
+        includeProductionSettings: false,
+        includeCreativeDirection: false,
+        includeApprovedCanon: true
+      }
+    })
+
+    expect(preview.text).toContain('APPROVED CANON — UNCHANGEABLE SOURCE')
+    expect(preview.text).toContain('Ayo never carries a blade.')
+    expect(preview.sourceVersions).toContainEqual({
+      kind: 'approved-canon',
+      id: canon.canonId,
+      schemaVersion: 1,
+      revision: 2,
+      updatedAt: canon.createdAt,
+      sha256: canon.outputSha256
+    })
+  })
+
   it('blocks a text request unless paid confirmation is explicit', async () => {
     const { setup, creative, generateDraft, saved } = createFixture()
     await setup.connect({ provider: 'openai', apiKey: 'sk-test-protected-key-123456789' })
@@ -415,7 +474,7 @@ describe('protected creative writing workflow', () => {
     )
     expect(saved).toHaveLength(1)
     expect(result).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       skillPlanSha256: plan.planSha256,
       skillsPlanned: [{ skillId: skill.manifest.skillId, state: 'ready' }],
       skillsUsed: [

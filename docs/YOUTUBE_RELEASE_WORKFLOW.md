@@ -1,6 +1,6 @@
 # YouTube release, packaging, and learning workflow
 
-Status: version 0.10.0 implements project-local release-profile revisions, a source-labelled Idea Library, local release details, deterministic thumbnail generation, editable captions, human attestations, immutable release records, a hash-checked manual-upload package, structured performance snapshots, and human-reviewed learning proposals. Report-file parsing, optional read-only OAuth, and automatic publishing remain outside the release. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Status: version 0.10.1 implements project-local release-profile revisions, a source-labelled Idea Library, local release details, deterministic thumbnail generation, editable captions, human attestations, immutable release records, a hash-checked manual-upload package, bounded YouTube Analytics CSV parsing with file hash/selected-row provenance, structured performance snapshots, and human-reviewed learning proposals. Optional read-only OAuth and automatic publishing remain outside the release. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 Reference inspected: `darkzOGx/youtube-automation-agent` at commit `0d77cc64980813b4f1e874a6fa5a5a2752ae2cc4` on 2026-08-21.
 
@@ -143,7 +143,7 @@ The broader studio may later use one of two additional explicit paths:
 1. Import creator-exported reports/files.
 2. Connect a read-only YouTube/Analytics account using least-privilege OAuth credentials stored in the operating-system vault.
 
-Performance snapshots are immutable, time-windowed observations such as 24 hours, 7 days, and 28 days. They record eligible official metrics, collection time, scope, API/report version, missing-data warnings, and whether the values are official/manual or a local rehearsal. Rehearsal, fewer-than-100-view, and views-only records remain visible but cannot be cited by a learning proposal. The 100-view floor is a conservative product guardrail, not evidence that 100 views is statistically sufficient. Version 0.10 does not claim to parse a report file or connect an account; `official report` means the creator transcribed a named official report slice into the structured form and retained its evidence notes.
+Performance snapshots are immutable, time-windowed observations such as 24 hours, 7 days, and 28 days. They record eligible official metrics, collection time, scope, API/report version, missing-data warnings, and whether the values are official/manual or a local rehearsal. Rehearsal, fewer-than-100-view, and views-only records remain visible but cannot be cited by a learning proposal. The 100-view floor is a conservative product guardrail, not evidence that 100 views is statistically sufficient. Version 0.10 can parse a creator-selected YouTube Analytics CSV up to 5 MiB and 500 video rows, handle quoted values/durations/percentages, reject missing/invalid/duplicate identities, skip only an explicit total row, and record the file SHA-256 plus chosen row without exposing its path. The creator still supplies/reviews the measurement window and saves explicitly; no account is connected.
 
 Recommendations compare like with like inside the creator's own channel/profile and clearly separate observation from inference. Examples include `the opening lost viewers earlier than the series median` or `candidate B earned more watch-time share in YouTube's test`. Every recommendation lists its supporting releases and confidence. It remains `proposed` until the creator approves it for a named scope such as one next release, this series, or a future profile version.
 
@@ -156,7 +156,7 @@ Analytics can inform packaging, pacing experiments, and editorial questions. It 
 3. Thumbnail Room using approved project media, local typography/layout, responsive previews, candidate lineage, and selection.
 4. Policy/rights/originality attestations plus Release Readiness gate.
 5. Versioned release package and clean-machine verification.
-6. **Implemented local slice:** manual video ID, structured time-windowed evidence capture, rehearsal exclusion, and human-reviewed learning proposals. Report-file parsing remains open.
+6. **Implemented local slice:** manual video ID, structured time-windowed evidence capture, checked official-report CSV import/provenance, rehearsal exclusion, and human-reviewed learning proposals.
 7. Optional read-only YouTube Analytics connector after OAuth/security review.
 8. Separately decided post-version-1 private upload/scheduling connector, only if its failure, duplicate, quota, privacy, audit, and rollback model passes.
 

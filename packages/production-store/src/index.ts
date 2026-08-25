@@ -10,7 +10,8 @@ import {
   readSync,
   renameSync,
   statSync,
-  unlinkSync
+  unlinkSync,
+  writeFileSync
 } from 'node:fs'
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { pipeline } from 'node:stream/promises'
@@ -22,7 +23,9 @@ import {
   CanonRecordSchema,
   CanonImpactSummarySchema,
   ChooseMediaAssetInputSchema,
+  CopyMediaAssetInputSchema,
   CostEstimateSchema,
+  CreateAdaptationDatasetInputSchema,
   ContinuityDependencySchema,
   MediaActionResultSchema,
   MediaAssetSchema,
@@ -42,7 +45,9 @@ import {
   type CanonRecord,
   type ContinuityDependency,
   type ChooseMediaAssetInput,
+  type CopyMediaAssetInput,
   type CostEstimate,
+  type CreateAdaptationDatasetInput,
   type MediaActionResult,
   type MediaAsset,
   type MediaAssetView,
@@ -156,6 +161,48 @@ const mediaTypes = new Map<string, string>([
   ['.json', 'application/json'],
   ['.pdf', 'application/pdf']
 ])
+
+const importedImageKinds = new Set<MediaAsset['kind']>([
+  'reference-image',
+  'character-board',
+  'style-board',
+  'environment-board',
+  'storyboard-frame',
+  'start-frame-control',
+  'end-frame-control',
+  'pose-control',
+  'depth-control',
+  'edge-control',
+  'segmentation-control',
+  'region-mask',
+  'foreground-layer',
+  'subject-layer',
+  'background-layer',
+  'thumbnail'
+])
+const importedVideoKinds = new Set<MediaAsset['kind']>([
+  'reference-clip',
+  'animatic',
+  'video-take',
+  'master-video'
+])
+const importedAudioKinds = new Set<MediaAsset['kind']>([
+  'voice-line',
+  'ambience',
+  'effect',
+  'music'
+])
+
+function importedKindAcceptsMime(kind: MediaAsset['kind'], mimeType: string): boolean {
+  if (importedImageKinds.has(kind)) return mimeType.startsWith('image/')
+  if (importedVideoKinds.has(kind)) return mimeType.startsWith('video/')
+  if (importedAudioKinds.has(kind)) return mimeType.startsWith('audio/')
+  if (kind === 'caption') return ['application/x-subrip', 'text/vtt'].includes(mimeType)
+  if (['motion-track', 'adaptation-dataset', 'adaptation-artifact'].includes(kind))
+    return mimeType === 'application/json'
+  if (kind === 'document') return ['application/json', 'application/pdf'].includes(mimeType)
+  return false
+}
 
 const allowedTransitions: Record<ProductionJobState, readonly ProductionJobState[]> = {
   planned: ['estimated'],
@@ -564,6 +611,12 @@ export class ProductionStore {
           'The selected file type is unsupported or does not match its contents.'
         )
       }
+      if (!importedKindAcceptsMime(input.kind, mimeType)) {
+        throw new ProductionStoreError(
+          'invalid-input',
+          `That file does not match the selected ${input.kind.replaceAll('-', ' ')} role.`
+        )
+      }
       const assetId = createUlid(this.now().getTime())
       const safeName = basename(sourcePath)
         .normalize('NFKD')
@@ -623,6 +676,185 @@ export class ProductionStore {
     }
   }
 
+  createAdaptationDataset(unknownInput: CreateAdaptationDatasetInput): MediaActionResult {
+    let stagingPath: string | null = null
+    try {
+      const input = CreateAdaptationDatasetInputSchema.parse(unknownInput)
+      const project = this.openProject(input.projectId)
+      const approved = new Map(
+        this.getWorkspace(input.projectId)
+          .media.filter((asset) => asset.state === 'approved')
+          .map((asset) => [asset.assetId, asset])
+      )
+      const samples = input.samples.map((sample, index) => {
+        const asset = approved.get(sample.assetId)
+        if (!asset) {
+          throw new ProductionStoreError(
+            'approval-required',
+            `Sample ${index + 1} is not an approved item in this production.`
+          )
+        }
+        if (!asset.mimeType.startsWith('image/') && !asset.mimeType.startsWith('video/')) {
+          throw new ProductionStoreError(
+            'invalid-input',
+            `Sample ${index + 1} must be an approved image or video.`
+          )
+        }
+        return {
+          inputOrder: index + 2,
+          assetId: asset.assetId,
+          sha256: asset.sha256,
+          caption: sample.caption,
+          rightsBasis: sample.rightsBasis,
+          licenseReference: sample.licenseReference,
+          consentConfirmed: true as const
+        }
+      })
+      const manifest = {
+        schemaVersion: 1 as const,
+        purpose: input.purpose,
+        projectScopeOnly: true as const,
+        humanRightsReviewConfirmed: true as const,
+        trainingSteps: input.trainingSteps,
+        learningRate: input.learningRate,
+        resolutionBuckets: input.resolutionBuckets,
+        samples
+      }
+      const json = `${JSON.stringify(manifest, null, 2)}\n`
+      const bytes = Buffer.from(json, 'utf8')
+      const assemblyId = createUlid(this.now().getTime())
+      stagingPath = this.prepareAssemblyOutput(
+        input.projectId,
+        assemblyId,
+        'adaptation-dataset.json'
+      )
+      const descriptor = openSync(stagingPath, 'wx')
+      try {
+        writeFileSync(descriptor, bytes)
+        fsyncSync(descriptor)
+      } finally {
+        closeSync(descriptor)
+      }
+      const asset = this.registerAssembledMedia({
+        projectId: project.manifest.id,
+        assemblyId,
+        label: input.label,
+        kind: 'adaptation-dataset',
+        stagingPath,
+        fileName: 'adaptation-dataset.json',
+        mimeType: 'application/json',
+        byteSize: bytes.byteLength,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+        parentAssetIds: input.samples.map((sample) => sample.assetId),
+        width: null,
+        height: null,
+        durationMs: null
+      })
+      stagingPath = null
+      return MediaActionResultSchema.parse({ ok: true, asset })
+    } catch (error) {
+      if (stagingPath && existsSync(stagingPath)) unlinkSync(stagingPath)
+      return MediaActionResultSchema.parse({ ok: false, error: toProductionActionError(error) })
+    }
+  }
+
+  async copyMedia(unknownInput: CopyMediaAssetInput): Promise<MediaActionResult> {
+    let destinationPath: string | null = null
+    try {
+      const input = CopyMediaAssetInputSchema.parse(unknownInput)
+      if (input.sourceProjectId === input.targetProjectId) {
+        throw new ProductionStoreError(
+          'invalid-input',
+          'Choose a different production as the copy destination.'
+        )
+      }
+      const sourceProject = this.openProject(input.sourceProjectId)
+      const targetProject = this.openProject(input.targetProjectId)
+      const sourceDatabase = this.openDatabase(sourceProject.workspacePath)
+      let sourceAsset: MediaAsset
+      try {
+        sourceAsset = this.readAsset(sourceDatabase, input.sourceAssetId)
+      } finally {
+        sourceDatabase.close()
+      }
+      if (sourceAsset.projectId !== input.sourceProjectId || sourceAsset.state !== 'approved') {
+        throw new ProductionStoreError(
+          'approval-required',
+          'Only approved media can be copied into another production.'
+        )
+      }
+      const sourcePath = resolve(
+        sourceProject.workspacePath,
+        ...sourceAsset.relativePath.split('/')
+      )
+      if (!isInside(sourceProject.workspacePath, sourcePath) || !existsSync(sourcePath)) {
+        throw new ProductionStoreError(
+          'unsafe-path',
+          'The approved source media is unavailable or outside its production.'
+        )
+      }
+      const assetId = createUlid(this.now().getTime())
+      const safeName = basename(sourceAsset.relativePath)
+        .normalize('NFKD')
+        .replace(/[^a-zA-Z0-9._-]+/g, '-')
+        .slice(-120)
+      const relativePath = `assets/imported/${assetId.toLowerCase()}-copy-${safeName}`
+      destinationPath = resolve(targetProject.workspacePath, ...relativePath.split('/'))
+      if (!isInside(targetProject.workspacePath, destinationPath) || existsSync(destinationPath)) {
+        throw new ProductionStoreError('unsafe-path', 'The copied media destination is not safe.')
+      }
+      mkdirSync(dirname(destinationPath), { recursive: true })
+      const sha256 = await copyAndHash(sourcePath, destinationPath)
+      if (sha256 !== sourceAsset.sha256) {
+        throw new ProductionStoreError(
+          'integrity-failed',
+          'The copied media did not match its approved source.'
+        )
+      }
+      const record = MediaAssetSchema.parse({
+        ...sourceAsset,
+        assetId,
+        projectId: input.targetProjectId,
+        label: input.label,
+        relativePath,
+        origin: 'imported',
+        jobId: null,
+        parentAssetIds: [],
+        copiedFrom: {
+          projectId: sourceAsset.projectId,
+          assetId: sourceAsset.assetId,
+          sha256: sourceAsset.sha256
+        },
+        state: 'candidate',
+        createdAt: this.now().toISOString()
+      })
+      const targetDatabase = this.openDatabase(targetProject.workspacePath)
+      try {
+        targetDatabase
+          .prepare(
+            `INSERT INTO media_assets
+             (asset_id, kind, state, relative_path, sha256, record_json, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
+          )
+          .run(
+            record.assetId,
+            record.kind,
+            record.state,
+            record.relativePath,
+            record.sha256,
+            JSON.stringify(record),
+            record.createdAt
+          )
+      } finally {
+        targetDatabase.close()
+      }
+      return MediaActionResultSchema.parse({ ok: true, asset: toAssetView(record) })
+    } catch (error) {
+      if (destinationPath && existsSync(destinationPath)) unlinkSync(destinationPath)
+      return MediaActionResultSchema.parse({ ok: false, error: toProductionActionError(error) })
+    }
+  }
+
   reviewMedia(unknownInput: ReviewMediaAssetInput): MediaActionResult {
     try {
       const input = ReviewMediaAssetInputSchema.parse(unknownInput)
@@ -637,9 +869,17 @@ export class ProductionStore {
             'stale-data',
             'That media item changed. Review it again before deciding.'
           )
-        if (asset.state !== 'candidate')
+        if (!['candidate', 'held'].includes(asset.state))
           throw new ProductionStoreError('invalid-state', 'That media item already has a decision.')
-        const state = input.decision === 'approved' ? 'approved' : 'rejected'
+        if (asset.state === 'held' && input.decision === 'held') {
+          throw new ProductionStoreError('invalid-state', 'That media item is already on hold.')
+        }
+        const state =
+          input.decision === 'approved'
+            ? 'approved'
+            : input.decision === 'held'
+              ? 'held'
+              : 'rejected'
         const updated = MediaAssetSchema.parse({ ...asset, state })
         const decision = ApprovalDecisionSchema.parse({
           decisionId: createUlid(this.now().getTime()),
@@ -737,6 +977,8 @@ export class ProductionStore {
             workflowVersion: input.workflowVersion,
             inputAssetIds: input.inputAssetIds,
             canonIds: input.canonIds,
+            parentJobId: input.parentJobId ?? null,
+            retakeOfAssetId: input.retakeOfAssetId ?? null,
             parameters: input.parameters,
             estimate: input.estimate
           }
@@ -746,6 +988,8 @@ export class ProductionStore {
             workflowVersion: job.workflowVersion,
             inputAssetIds: job.inputAssetIds,
             canonIds: job.canonIds,
+            parentJobId: job.parentJobId,
+            retakeOfAssetId: job.retakeOfAssetId,
             parameters: job.parameters,
             estimate: job.estimate
           }
@@ -759,6 +1003,48 @@ export class ProductionStore {
             ok: true,
             details: this.readJobDetails(database, job)
           })
+        }
+        if (Boolean(input.parentJobId) !== Boolean(input.retakeOfAssetId)) {
+          throw new ProductionStoreError(
+            'invalid-input',
+            'A retake must identify both its earlier job and exact earlier take.'
+          )
+        }
+        if (input.parentJobId && input.retakeOfAssetId) {
+          const parentJob = this.readJob(database, input.parentJobId)
+          const earlierTake = this.readAsset(database, input.retakeOfAssetId)
+          if (
+            parentJob.projectId !== input.projectId ||
+            earlierTake.projectId !== input.projectId ||
+            earlierTake.jobId !== parentJob.jobId
+          ) {
+            throw new ProductionStoreError(
+              'not-found',
+              'The earlier take and job are not in this production.'
+            )
+          }
+          if (earlierTake.state !== 'rejected') {
+            throw new ProductionStoreError(
+              'approval-required',
+              'Request a retake on the earlier candidate before creating its child job.'
+            )
+          }
+          if (
+            parentJob.kind !== input.kind ||
+            parentJob.workflowId !== input.workflowId ||
+            parentJob.workflowVersion !== input.workflowVersion
+          ) {
+            throw new ProductionStoreError(
+              'invalid-input',
+              'A retake must use the same qualified operation as its parent job.'
+            )
+          }
+          if (hashJson(parentJob.parameters) === hashJson(input.parameters)) {
+            throw new ProductionStoreError(
+              'invalid-input',
+              'Change at least one production parameter before creating the retake.'
+            )
+          }
         }
         for (const assetId of input.inputAssetIds) {
           const asset = this.readAsset(database, assetId)
@@ -788,6 +1074,8 @@ export class ProductionStore {
           workflowVersion: input.workflowVersion,
           inputAssetIds: input.inputAssetIds,
           canonIds: input.canonIds,
+          parentJobId: input.parentJobId ?? null,
+          retakeOfAssetId: input.retakeOfAssetId ?? null,
           parameters: input.parameters,
           idempotencyKey: input.idempotencyKey,
           estimate: input.estimate,

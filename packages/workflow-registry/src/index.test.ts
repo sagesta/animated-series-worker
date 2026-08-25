@@ -107,6 +107,11 @@ describe('locked workflow registry', () => {
       freeDiskGb: 20,
       pythonVersion: '3.12',
       cudaVersion: '12.8',
+      nvidiaDriverVersion: '595.45.01',
+      latentsyncPythonVersion: 'Python 3.10.20',
+      ltxTrainerPythonVersion: 'Python 3.12.3',
+      ltxTrainerTorchVersion: '2.13.0+cu132',
+      ltxTrainerCudaVersion: '13.2',
       installedNodeTypes: ['StudioTextNode'],
       modelHashes: {},
       workflowHashes: { 'image-board@1.0.0': templateSha },
@@ -141,21 +146,135 @@ describe('locked workflow registry', () => {
     expect(estimate.gpuCount).toBe(2)
   })
 
-  it('loads advanced control, foley, and adaptation definitions as non-billable candidates', () => {
+  it('loads advanced definitions and hash-locks every implemented graph and runner contract', () => {
     const registry = new WorkflowRegistry(
       resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')
     )
     const expected = [
+      'ltx2-audio-driven-dialogue',
       'qwen-image-controlled-board',
       'ltx2-controlled-shot',
       'rights-aware-foley-generation',
       'ltx25-project-lora-adaptation'
     ]
+    const expectedTemplates: Record<string, string> = {
+      'ltx2-audio-driven-dialogue': 'workflows/candidate/ltx2-audio-driven-dialogue.api.json',
+      'qwen-image-controlled-board': 'workflows/candidate/qwen-image-controlled-board.api.json',
+      'ltx2-controlled-shot': 'workflows/candidate/ltx2-controlled-shot.api.json',
+      'rights-aware-foley-generation':
+        'workflows/candidate/rights-aware-foley-generation.contract.json',
+      'ltx25-project-lora-adaptation':
+        'workflows/candidate/ltx25-project-lora-adaptation.contract.json'
+    }
     for (const workflowId of expected) {
       const workflow = registry.get(workflowId, '1.0.0')
       expect(workflow.qualificationState).toBe('candidate')
-      expect(workflow.templatePath).toBeNull()
-      expect(workflow.templateSha256).toBeNull()
+      expect(workflow.qualificationTier).toBe('advanced')
+      expect(workflow.templatePath).toBe(expectedTemplates[workflowId])
+      expect(workflow.templateSha256).toMatch(/^[a-f0-9]{64}$/)
     }
+  })
+
+  it('hash-locks and compiles the reviewed core image and LTX candidate graphs', () => {
+    const registry = new WorkflowRegistry(
+      resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')
+    )
+    const image = registry.compile(
+      'qwen-image-character-board',
+      '1.0.0',
+      {
+        prompt: 'Approved hero turnaround board',
+        negativePrompt: '',
+        seed: 12,
+        width: 1024,
+        height: 1024
+      },
+      { allowCandidate: true }
+    )
+    expect(image.prompt['10']).toMatchObject({ class_type: 'SaveImage' })
+    expect(image.prompt['4']).toMatchObject({
+      inputs: { text: 'Approved hero turnaround board' }
+    })
+
+    const motion = registry.compile(
+      'ltx2-image-to-video-draft',
+      '1.0.0',
+      {
+        motionPrompt: 'The hero turns toward camera while the camera slowly pushes in.',
+        durationSeconds: 5,
+        seed: 42,
+        framesPerSecond: 24
+      },
+      { allowCandidate: true }
+    )
+    expect(motion.prompt['11']).toMatchObject({
+      class_type: 'ComfyMathExpression',
+      inputs: { 'values.a': 5, 'values.b': 24 }
+    })
+    expect(motion.prompt['27']).toMatchObject({ class_type: 'SaveVideo' })
+  })
+
+  it('compiles the advanced A2V and control graphs without prompt-network nodes', () => {
+    const registry = new WorkflowRegistry(
+      resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')
+    )
+    const sourceManifest = JSON.stringify({ direction: 'reviewed', assets: [{ order: 1 }] })
+    const a2v = registry.compile(
+      'ltx2-audio-driven-dialogue',
+      '1.0.0',
+      {
+        motionPrompt: 'The approved character performs the supplied dialogue with subtle motion.',
+        preserveApprovedAudio: true,
+        seed: 44
+      },
+      { allowCandidate: true }
+    )
+    expect(JSON.stringify(a2v.prompt)).not.toMatch(/GemmaAPITextEncode|TextGenerateLTX2Prompt/)
+    expect(
+      Object.values(a2v.prompt).find(
+        (node) =>
+          (node as { _meta?: { title?: string } })._meta?.title ===
+          'CLIP Text Encode (Positive Prompt)'
+      )
+    ).toMatchObject({ inputs: { text: expect.stringContaining('approved character') } })
+    expect(
+      Object.values(a2v.prompt)
+        .filter((node) => (node as { class_type?: string }).class_type === 'RandomNoise')
+        .every((node) => (node as { inputs: { noise_seed: number } }).inputs.noise_seed === 44)
+    ).toBe(true)
+
+    const qwen = registry.compile(
+      'qwen-image-controlled-board',
+      '1.0.0',
+      {
+        prompt: 'Keep the approved identity and follow the supplied pose reference.',
+        controlManifestJson: sourceManifest,
+        seed: 45
+      },
+      { allowCandidate: true }
+    )
+    expect(
+      Object.values(qwen.prompt).find(
+        (node) => (node as { class_type?: string }).class_type === 'TextEncodeQwenImageEditPlus'
+      )
+    ).toMatchObject({ inputs: { prompt: expect.stringContaining('approved identity') } })
+
+    const controlled = registry.compile(
+      'ltx2-controlled-shot',
+      '1.0.0',
+      {
+        motionPrompt: 'Use the approved reference sheet while the character crosses the room.',
+        controlManifestJson: sourceManifest,
+        durationSeconds: 6,
+        seed: 46
+      },
+      { allowCandidate: true }
+    )
+    expect(JSON.stringify(controlled.prompt)).not.toContain('GemmaAPITextEncode')
+    expect(
+      Object.values(controlled.prompt).find(
+        (node) => (node as { class_type?: string }).class_type === 'ComfyMathExpression'
+      )
+    ).toMatchObject({ inputs: { 'values.b': 6 } })
   })
 })

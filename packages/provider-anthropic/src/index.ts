@@ -33,7 +33,11 @@ export interface AnthropicClientOptions {
   fetchImpl?: typeof fetch
   baseUrl?: string
   timeoutMs?: number
+  generationTimeoutMs?: number
 }
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
+const DEFAULT_GENERATION_TIMEOUT_MS = 300_000
 
 const ModelsResponseSchema = z.object({
   data: z.array(
@@ -109,16 +113,24 @@ function errorForStatus(status: number): AnthropicProviderError {
 export class AnthropicClient {
   private readonly fetchImpl: typeof fetch
   private readonly baseUrl: string
-  private readonly timeoutMs: number
+  private readonly requestTimeoutMs: number
+  private readonly generationTimeoutMs: number
 
   constructor(options: AnthropicClientOptions = {}) {
     this.fetchImpl = options.fetchImpl ?? fetch
     this.baseUrl = (options.baseUrl ?? 'https://api.anthropic.com').replace(/\/$/, '')
-    this.timeoutMs = options.timeoutMs ?? 30_000
+    this.requestTimeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
+    this.generationTimeoutMs =
+      options.generationTimeoutMs ?? options.timeoutMs ?? DEFAULT_GENERATION_TIMEOUT_MS
   }
 
   async listModels(apiKey: string): Promise<WritingModelOption[]> {
-    const response = await this.request('/v1/models?limit=100', apiKey, { method: 'GET' })
+    const response = await this.request(
+      '/v1/models?limit=100',
+      apiKey,
+      { method: 'GET' },
+      this.requestTimeoutMs
+    )
     const payload = ModelsResponseSchema.safeParse(await this.readJson(response))
     if (!payload.success) {
       throw new AnthropicProviderError(
@@ -144,19 +156,24 @@ export class AnthropicClient {
     unknownInput: WritingProviderDraftInput
   ): Promise<WritingProviderDraftResponse> {
     const input = WritingProviderDraftInputSchema.parse(unknownInput)
-    const response = await this.request('/v1/messages', apiKey, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: input.model,
-        max_tokens: input.maxOutputTokens,
-        system: input.systemInstruction,
-        messages: [{ role: 'user', content: input.userPrompt }],
-        output_config: {
-          format: { type: 'json_schema', schema: CREATIVE_DRAFT_JSON_SCHEMA }
-        }
-      })
-    })
+    const response = await this.request(
+      '/v1/messages',
+      apiKey,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model: input.model,
+          max_tokens: input.maxOutputTokens,
+          system: input.systemInstruction,
+          messages: [{ role: 'user', content: input.userPrompt }],
+          output_config: {
+            format: { type: 'json_schema', schema: CREATIVE_DRAFT_JSON_SCHEMA }
+          }
+        })
+      },
+      this.generationTimeoutMs
+    )
     const payload = MessageResponseSchema.safeParse(await this.readJson(response))
     if (!payload.success || payload.data.stop_reason === 'refusal') {
       throw new AnthropicProviderError(
@@ -211,7 +228,12 @@ export class AnthropicClient {
     })
   }
 
-  private async request(path: string, apiKey: string, init: RequestInit): Promise<Response> {
+  private async request(
+    path: string,
+    apiKey: string,
+    init: RequestInit,
+    timeoutMs: number
+  ): Promise<Response> {
     try {
       const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
         ...init,
@@ -220,7 +242,7 @@ export class AnthropicClient {
           'anthropic-version': '2023-06-01',
           ...init.headers
         },
-        signal: AbortSignal.timeout(this.timeoutMs)
+        signal: AbortSignal.timeout(timeoutMs)
       })
       if (!response.ok) throw errorForStatus(response.status)
       return response

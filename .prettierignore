@@ -4,6 +4,7 @@ out/
 release/
 release-smoke-*/
 coverage/
+test-results/
 pnpm-lock.yaml
 docs/
 scripts/

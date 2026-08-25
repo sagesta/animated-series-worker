@@ -60,10 +60,16 @@ export function ChoiceRequirement({
 
 export function ValidationAlert({
   title = 'A few things need attention',
+  eyebrow = 'Before continuing',
+  description = 'Nothing was submitted or charged. Please correct the following:',
+  closeLabel = 'Go back and fix',
   messages,
   onClose
 }: {
   title?: string
+  eyebrow?: string
+  description?: string
+  closeLabel?: string
   messages: string[]
   onClose(): void
 }): JSX.Element | null {
@@ -107,16 +113,16 @@ export function ValidationAlert({
           !
         </span>
         <div>
-          <p className="eyebrow">Before continuing</p>
+          <p className="eyebrow">{eyebrow}</p>
           <h2 id={titleId}>{title}</h2>
-          <p id={descriptionId}>Nothing was submitted or charged. Please correct the following:</p>
+          <p id={descriptionId}>{description}</p>
           <ul>
             {messages.map((message) => (
               <li key={message}>{message}</li>
             ))}
           </ul>
           <button ref={closeRef} className="button button-primary" type="button" onClick={onClose}>
-            Go back and fix
+            {closeLabel}
           </button>
         </div>
       </section>

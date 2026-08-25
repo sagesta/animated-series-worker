@@ -1,6 +1,6 @@
 {
   "name": "animated-series-studio",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "private": true,
   "description": "Local-first animated-series production studio with temporary cloud GPU workers",
   "main": "./out/main/index.js",
@@ -13,7 +13,11 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
-    "test": "vitest run",
+    "test": "pnpm test:python && pnpm test:upstream && vitest run",
+    "test:python": "python -m unittest discover -s worker -p \"test_*.py\"",
+    "test:upstream": "node scripts/test-upstream-validators.mjs",
+    "test:e2e": "pnpm build && playwright test",
+    "test:ci": "pnpm test && pnpm test:e2e",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -28,6 +32,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.5",
     "@types/node": "24.13.3",
@@ -111,6 +116,7 @@
       }
     ],
     "win": {
+      "icon": "assets/branding/app-icon.png",
       "target": [
         "nsis"
       ],

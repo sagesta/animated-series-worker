@@ -81,6 +81,35 @@ describe('RunPod REST lifecycle client', () => {
     ])
   })
 
+  it('keeps usable current prices when the catalogue contains harmless format drift', async () => {
+    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        gpus: [
+          { id: 'future-entry-without-prices' },
+          {
+            id: 'NVIDIA A100 80GB PCIe',
+            name: null,
+            manufacturer: null,
+            memory: '80',
+            price: { secure: '1.89', community: null, futurePrice: 2.1 },
+            futureField: true
+          }
+        ],
+        futureTopLevelField: true
+      })
+    )
+    const client = new RunPodClient({ fetchImplementation })
+
+    await expect(client.listGpuOptions(secret)).resolves.toEqual([
+      expect.objectContaining({
+        id: 'NVIDIA A100 80GB PCIe',
+        memoryGb: 80,
+        secureHourlyUsd: 1.89,
+        communityHourlyUsd: null
+      })
+    ])
+  })
+
   it('reuses a matching lease instead of creating a duplicate Pod', async () => {
     const fetchImplementation = vi
       .fn<typeof fetch>()

@@ -150,18 +150,20 @@ function resultError(
 function workflowBlockers(definition: WorkflowDefinition, imageDigest: string | null): string[] {
   const blockers: string[] = []
   if (definition.qualificationState !== 'qualified') {
-    blockers.push('The workflow still needs its locked GPU benchmark and human quality sign-off.')
+    blockers.push(
+      'This operation still needs its measured generation test and human quality sign-off.'
+    )
   }
   if (definition.engine === 'comfyui' && !definition.templateSha256) {
-    blockers.push('The exact ComfyUI API workflow has not been hash-locked yet.')
+    blockers.push('The exact generation recipe has not completed its integrity review.')
   }
   if (
     definition.requiredModels.some((model) => !model.sha256 || model.licenseReview !== 'accepted')
   ) {
-    blockers.push('One or more model files still need license review and exact hash verification.')
+    blockers.push('One or more creative tools still need rights and integrity review.')
   }
   if (!imageDigest && ['comfyui', 'worker-python'].includes(definition.engine)) {
-    blockers.push('The production worker image has not been built and digest-locked yet.')
+    blockers.push('The generation worker has not completed release verification.')
   }
   return blockers
 }

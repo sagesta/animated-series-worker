@@ -297,7 +297,8 @@ export function CreativeRoom({
       ),
     [writingStatus]
   )
-  const savedProvider = writingStatus?.defaultProfile?.provider
+  const defaultProfile = writingStatus?.defaultProfile
+  const savedProvider = defaultProfile?.provider
   const initialProvider =
     savedProvider && connectedProviders.includes(savedProvider)
       ? savedProvider
@@ -306,9 +307,7 @@ export function CreativeRoom({
     ? (writingStatus?.providers[initialProvider].models ?? [])
     : []
   const preferredInitialModel =
-    writingStatus?.defaultProfile?.provider === initialProvider
-      ? writingStatus.defaultProfile.model
-      : undefined
+    defaultProfile?.provider === initialProvider ? defaultProfile?.model : undefined
   const initialModel =
     availableInitialModels.find((item) => item.id === preferredInitialModel)?.id ??
     availableInitialModels[0]?.id ??
@@ -318,24 +317,22 @@ export function CreativeRoom({
     providerChoice && connectedProviders.includes(providerChoice) ? providerChoice : initialProvider
   const [modelChoice, setModelChoice] = useState(initialModel)
   const availableModels = provider ? (writingStatus?.providers[provider].models ?? []) : []
-  const savedModel =
-    writingStatus?.defaultProfile?.provider === provider
-      ? writingStatus.defaultProfile.model
-      : undefined
+  const savedModel = defaultProfile?.provider === provider ? defaultProfile?.model : undefined
   const model =
     availableModels.find((item) => item.id === modelChoice)?.id ??
     availableModels.find((item) => item.id === savedModel)?.id ??
     availableModels[0]?.id ??
     ''
   const [profile, setProfile] = useState<'balanced' | 'best-draft' | 'custom'>(
-    writingStatus?.defaultProfile?.profile ?? 'balanced'
+    defaultProfile?.profile ?? 'balanced'
   )
   const [taskKind, setTaskKind] = useState<WritingTaskKind>('outline_episode')
   const [instruction, setInstruction] = useState('')
   const [context, setContext] = useState({
     includeProjectBrief: true,
     includeProductionSettings: true,
-    includeCreativeDirection: true
+    includeCreativeDirection: true,
+    includeApprovedCanon: true
   })
   const [preview, setPreview] = useState<WritingContextPreview>()
   const [previewError, setPreviewError] = useState(false)
@@ -748,6 +745,19 @@ export function CreativeRoom({
               />
               Audience, niche, tone, themes, boundaries, format, and creative promise
             </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={context.includeApprovedCanon}
+                onChange={(event) =>
+                  setContext((current) => ({
+                    ...current,
+                    includeApprovedCanon: event.target.checked
+                  }))
+                }
+              />
+              Active approved story, character, world, style, and script canon
+            </label>
           </div>
           <pre className="context-preview">
             {previewError
@@ -795,6 +805,8 @@ export function CreativeRoom({
               <option value={1600}>Standard</option>
               <option value={3000}>Detailed</option>
               <option value={4000}>Maximum allowed</option>
+              <option value={8000}>Long screenplay</option>
+              <option value={12000}>Maximum screenplay</option>
             </select>
           </label>
           <button className="button button-primary button-large" disabled={generating}>

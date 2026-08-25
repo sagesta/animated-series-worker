@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -214,6 +215,184 @@ describe('production truth store', () => {
     projects.close()
   })
 
+  it('rejects a valid file whose media type does not match its selected production role', async () => {
+    const root = makeRoot()
+    const projects = new ProjectStore({ workspaceRoot: join(root, 'projects') })
+    const project = projects.createProject(projectInput())
+    const source = join(root, 'not-a-master.png')
+    writeFileSync(source, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'))
+    const production = new ProductionStore({ projectStore: projects })
+
+    const result = await production.importMedia({
+      projectId: project.manifest.id,
+      kind: 'master-video',
+      label: 'Incorrectly labelled master',
+      sourcePath: source,
+      origin: 'imported',
+      parentAssetIds: []
+    })
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: {
+        code: 'invalid-input',
+        message: 'That file does not match the selected master video role.'
+      }
+    })
+    expect(production.getWorkspace(project.manifest.id).media).toHaveLength(0)
+    projects.close()
+  })
+
+  it('blocks cross-project references until an approved asset is explicitly copied', async () => {
+    const root = makeRoot()
+    const projects = new ProjectStore({ workspaceRoot: join(root, 'projects') })
+    const sourceProject = projects.createProject(projectInput())
+    const targetProject = projects.createProject({
+      ...projectInput(),
+      title: 'The Harbour Bell',
+      pilotBrief: 'A young bell keeper follows a mysterious light across the harbour.'
+    })
+    const source = join(root, 'reference.png')
+    writeFileSync(source, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'))
+    const production = new ProductionStore({ projectStore: projects })
+    const imported = await production.importMedia({
+      projectId: sourceProject.manifest.id,
+      kind: 'reference-image',
+      label: 'Ayo approved identity',
+      sourcePath: source,
+      origin: 'imported',
+      parentAssetIds: []
+    })
+    if (!imported.ok) throw new Error(imported.error.message)
+
+    expect(() =>
+      production.resolveMediaPath(targetProject.manifest.id, imported.asset.assetId)
+    ).toThrow(/could not be found/i)
+    expect(
+      await production.copyMedia({
+        sourceProjectId: sourceProject.manifest.id,
+        sourceAssetId: imported.asset.assetId,
+        targetProjectId: targetProject.manifest.id,
+        label: 'Ayo identity copy',
+        confirmation: true
+      })
+    ).toMatchObject({ ok: false, error: { code: 'approval-required' } })
+
+    const approved = production.reviewMedia({
+      projectId: sourceProject.manifest.id,
+      assetId: imported.asset.assetId,
+      expectedSha256: imported.asset.sha256,
+      decision: 'approved',
+      reason: 'The identity reference was reviewed and approved for controlled reuse.',
+      confirmation: true
+    })
+    if (!approved.ok) throw new Error(approved.error.message)
+    const copied = await production.copyMedia({
+      sourceProjectId: sourceProject.manifest.id,
+      sourceAssetId: imported.asset.assetId,
+      targetProjectId: targetProject.manifest.id,
+      label: 'Ayo identity copy',
+      confirmation: true
+    })
+    if (!copied.ok) throw new Error(copied.error.message)
+    expect(copied.asset).toMatchObject({
+      projectId: targetProject.manifest.id,
+      state: 'candidate',
+      sha256: imported.asset.sha256,
+      copiedFrom: {
+        projectId: sourceProject.manifest.id,
+        assetId: imported.asset.assetId,
+        sha256: imported.asset.sha256
+      }
+    })
+    expect(
+      production.resolveMediaPath(targetProject.manifest.id, copied.asset.assetId).path
+    ).not.toBe(production.resolveMediaPath(sourceProject.manifest.id, imported.asset.assetId).path)
+    projects.close()
+  })
+
+  it('builds a strict project-only adaptation manifest from ordered approved samples', async () => {
+    const root = makeRoot()
+    const projects = new ProjectStore({ workspaceRoot: join(root, 'projects') })
+    const project = projects.createProject(projectInput())
+    const production = new ProductionStore({ projectStore: projects })
+    const samples = []
+    for (let index = 0; index < 4; index += 1) {
+      const path = join(root, `sample-${index + 1}.png`)
+      writeFileSync(
+        path,
+        Buffer.concat([
+          Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'),
+          Buffer.from(`sample-${index + 1}`)
+        ])
+      )
+      const imported = await production.importMedia({
+        projectId: project.manifest.id,
+        kind: 'reference-image',
+        label: `Reviewed adaptation sample ${index + 1}`,
+        sourcePath: path,
+        origin: 'imported',
+        parentAssetIds: []
+      })
+      if (!imported.ok) throw new Error(imported.error.message)
+      const approved = production.reviewMedia({
+        projectId: project.manifest.id,
+        assetId: imported.asset.assetId,
+        expectedSha256: imported.asset.sha256,
+        decision: 'approved',
+        reason: 'Rights, identity, provenance, and training consent were reviewed for this sample.',
+        confirmation: true
+      })
+      if (!approved.ok) throw new Error(approved.error.message)
+      samples.push(approved.asset)
+    }
+
+    const result = production.createAdaptationDataset({
+      projectId: project.manifest.id,
+      label: 'Ayo project-only identity dataset',
+      purpose: 'Improve Ayo identity consistency only inside this production.',
+      projectScopeOnly: true,
+      humanRightsReviewConfirmed: true,
+      trainingSteps: 400,
+      learningRate: 0.0001,
+      resolutionBuckets: ['576x576x1', '768x448x49'],
+      samples: samples.map((asset, index) => ({
+        assetId: asset.assetId,
+        caption: `Approved Ayo identity reference number ${index + 1} with reviewed clothing and face anchors.`,
+        rightsBasis: 'owned-original' as const,
+        licenseReference: null,
+        consentConfirmed: true as const
+      }))
+    })
+    if (!result.ok) throw new Error(result.error.message)
+    expect(result.asset).toMatchObject({
+      kind: 'adaptation-dataset',
+      state: 'candidate',
+      mimeType: 'application/json',
+      parentAssetIds: samples.map((asset) => asset.assetId)
+    })
+    const path = production.resolveMediaPath(project.manifest.id, result.asset.assetId).path
+    const bytes = readFileSync(path)
+    expect(createHash('sha256').update(bytes).digest('hex')).toBe(result.asset.sha256)
+    const manifest = JSON.parse(bytes.toString('utf8')) as {
+      projectScopeOnly: boolean
+      humanRightsReviewConfirmed: boolean
+      samples: Array<{ inputOrder: number; assetId: string; sha256: string }>
+    }
+    expect(manifest.projectScopeOnly).toBe(true)
+    expect(manifest.humanRightsReviewConfirmed).toBe(true)
+    expect(manifest.samples).toEqual(
+      samples.map((asset, index) =>
+        expect.objectContaining({
+          inputOrder: index + 2,
+          assetId: asset.assetId,
+          sha256: asset.sha256
+        })
+      )
+    )
+    projects.close()
+  })
+
   it('refuses unapproved inputs and separates estimating from cost approval and execution', async () => {
     const root = makeRoot()
     const projects = new ProjectStore({ workspaceRoot: join(root, 'projects') })
@@ -274,6 +453,161 @@ describe('production truth store', () => {
     expect(approved).toMatchObject({ ok: true, details: { job: { state: 'approved' } } })
     if (!approved.ok) throw new Error('fixture approval failed')
     expect(approved.details.events.at(-1)?.message).toContain('not been queued')
+    projects.close()
+  })
+
+  it('keeps held takes reviewable and creates retakes as parameter-modified child jobs', () => {
+    const root = makeRoot()
+    const projects = new ProjectStore({ workspaceRoot: join(root, 'projects') })
+    const project = projects.createProject(projectInput())
+    const production = new ProductionStore({
+      projectStore: projects,
+      now: () => new Date('2026-08-22T11:00:00.000Z'),
+      maxSessionCostUsd: () => 1
+    })
+    const parentParameters = {
+      prompt: 'Ayo turns toward the lantern as warm light crosses the painted room.',
+      seed: 21
+    }
+    const planned = production.planJob({
+      projectId: project.manifest.id,
+      kind: 'qwen-image',
+      label: 'Ayo lantern reaction',
+      workflowId: 'qwen-image-character-board',
+      workflowVersion: '1.0.0',
+      inputAssetIds: [],
+      canonIds: [],
+      parameters: parentParameters,
+      idempotencyKey: 'e'.repeat(64),
+      estimate: estimate()
+    })
+    if (!planned.ok) throw new Error(planned.error.message)
+    const approved = production.approveJob({
+      projectId: project.manifest.id,
+      jobId: planned.details.job.jobId,
+      expectedEstimateId: planned.details.job.estimate.estimateId,
+      acceptedMaximumUsd: 0.5,
+      confirmation: true
+    })
+    if (!approved.ok) throw new Error(approved.error.message)
+    production.transitionJob(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'queued',
+      'Queued by the test fixture.'
+    )
+    production.transitionJob(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'provisioning',
+      'Provisioning in the test fixture.'
+    )
+    production.transitionJob(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'running',
+      'Running in the test fixture.'
+    )
+    production.transitionJob(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'downloading',
+      'Downloading in the test fixture.'
+    )
+    const bytes = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex')
+    const stagingPath = production.prepareArtifactDownload(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'take.png'
+    )
+    writeFileSync(stagingPath, bytes)
+    const take = production.registerGeneratedMedia({
+      projectId: project.manifest.id,
+      jobId: approved.details.job.jobId,
+      label: 'Ayo lantern reaction · take one',
+      kind: 'character-board',
+      stagingPath,
+      fileName: 'take.png',
+      mimeType: 'image/png',
+      byteSize: bytes.length,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+      parentAssetIds: []
+    })
+    production.transitionJob(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'verifying',
+      'Verified in the test fixture.'
+    )
+    production.transitionJob(
+      project.manifest.id,
+      approved.details.job.jobId,
+      'awaiting-review',
+      'Waiting for a human decision.'
+    )
+
+    expect(
+      production.reviewMedia({
+        projectId: project.manifest.id,
+        assetId: take.assetId,
+        expectedSha256: take.sha256,
+        decision: 'held',
+        reason: 'Pause this take while the lighting reference is checked.',
+        confirmation: true
+      })
+    ).toMatchObject({ ok: true, asset: { state: 'held' } })
+    expect(
+      production.reviewMedia({
+        projectId: project.manifest.id,
+        assetId: take.assetId,
+        expectedSha256: take.sha256,
+        decision: 'changes-requested',
+        reason: 'Keep the pose but reduce the warm spill on the background.',
+        confirmation: true
+      })
+    ).toMatchObject({ ok: true, asset: { state: 'rejected' } })
+
+    expect(
+      production.planJob({
+        projectId: project.manifest.id,
+        kind: 'qwen-image',
+        label: 'Ayo lantern reaction retake',
+        workflowId: 'qwen-image-character-board',
+        workflowVersion: '1.0.0',
+        inputAssetIds: [],
+        canonIds: [],
+        parentJobId: approved.details.job.jobId,
+        retakeOfAssetId: take.assetId,
+        parameters: parentParameters,
+        idempotencyKey: 'f'.repeat(64),
+        estimate: estimate()
+      })
+    ).toMatchObject({ ok: false, error: { code: 'invalid-input' } })
+
+    const retake = production.planJob({
+      projectId: project.manifest.id,
+      kind: 'qwen-image',
+      label: 'Ayo lantern reaction retake',
+      workflowId: 'qwen-image-character-board',
+      workflowVersion: '1.0.0',
+      inputAssetIds: [],
+      canonIds: [],
+      parentJobId: approved.details.job.jobId,
+      retakeOfAssetId: take.assetId,
+      parameters: { ...parentParameters, seed: 22 },
+      idempotencyKey: '1'.repeat(64),
+      estimate: estimate()
+    })
+    expect(retake).toMatchObject({
+      ok: true,
+      details: {
+        job: {
+          parentJobId: approved.details.job.jobId,
+          retakeOfAssetId: take.assetId,
+          state: 'estimated'
+        }
+      }
+    })
     projects.close()
   })
 

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "scope": "Bounded public-domain excerpts used for deterministic parser and chunking tests; not redistributed as complete editions.",
+  "fixtures": [
+    {
+      "file": "alice-in-wonderland.txt",
+      "title": "Alice's Adventures in Wonderland",
+      "author": "Lewis Carroll",
+      "genre": "children's fantasy",
+      "sourceUrl": "https://www.gutenberg.org/ebooks/11",
+      "ebookNumber": 11
+    },
+    {
+      "file": "pride-and-prejudice.txt",
+      "title": "Pride and Prejudice",
+      "author": "Jane Austen",
+      "genre": "social comedy",
+      "sourceUrl": "https://www.gutenberg.org/ebooks/1342",
+      "ebookNumber": 1342
+    },
+    {
+      "file": "frankenstein.txt",
+      "title": "Frankenstein; or, the Modern Prometheus",
+      "author": "Mary Wollstonecraft Shelley",
+      "genre": "gothic science fiction",
+      "sourceUrl": "https://www.gutenberg.org/ebooks/84",
+      "ebookNumber": 84
+    },
+    {
+      "file": "sherlock-holmes.txt",
+      "title": "The Adventures of Sherlock Holmes",
+      "author": "Arthur Conan Doyle",
+      "genre": "detective mystery",
+      "sourceUrl": "https://www.gutenberg.org/ebooks/1661",
+      "ebookNumber": 1661
+    },
+    {
+      "file": "moby-dick.txt",
+      "title": "Moby-Dick; or, The Whale",
+      "author": "Herman Melville",
+      "genre": "maritime adventure",
+      "sourceUrl": "https://www.gutenberg.org/ebooks/2701",
+      "ebookNumber": 2701
+    }
+  ]
+}

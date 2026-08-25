@@ -168,9 +168,13 @@ describe('project-aware idea assistant', () => {
     )
 
     await user.click(screen.getByRole('button', { name: /Help me create this/ }))
-    await screen.findByRole('option', { name: /GPT-5.6 Terra/ })
-    await user.click(screen.getByRole('checkbox'))
-    await user.click(screen.getByRole('button', { name: 'Create reviewable idea' }))
+    expect(await screen.findByText('Uses GPT-5.6 Terra')).toBeTruthy()
+    expect(screen.queryByLabelText('Writing service')).toBeNull()
+    expect(screen.queryByText('Depth')).toBeNull()
+    await user.click(screen.getByText('What will be shared'))
+    await user.click(screen.getByText('View the exact project text'))
+    expect(screen.getByText('Project: Lantern Keepers')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Generate suggestion' }))
 
     await screen.findByText('Ayo, apprentice keeper')
     expect(generateDraft).toHaveBeenCalledWith(

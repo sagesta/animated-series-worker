@@ -1,6 +1,6 @@
 # API and adapter contracts
 
-Current implementation note (0.10.0): typed desktop/preload production methods, RunPod lifecycle, worker authentication/capability/jobs/chunk transfers, local media, timeline, release-profile/idea/performance/learning, release, and readiness contracts are implemented. Candidate workflows remain non-billable until production qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): typed desktop/preload production methods, RunPod lifecycle, worker authentication/capability/jobs/chunk transfers, local media, timeline, release-profile/idea/performance/learning, release, and readiness contracts are implemented. Candidate workflows remain non-billable until production qualification. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 This document defines behavior and shapes. The current source provides runtime Zod schemas and shared TypeScript types under `packages/contracts` for the implemented project/production/release lifecycle, immutable Audience & Creative Direction and release-profile versions, verified backup/restore, cloud setup/orchestration, protected writing-provider setup, exact context/skill preview, local structured proposals, media/control roles, performance snapshots, and reviewed learnings. Worker HTTP shapes are validated at their boundaries and must remain consistent with this document.
 
@@ -51,6 +51,7 @@ The React renderer can call only methods exposed by the Electron preload layer.
 | `finish.saveReleaseProfile(input)` | `studio:finish:save-release-profile` | Append an immutable project-local packaging-profile revision using stale-write protection |
 | `finish.saveIdea(input)` | `studio:finish:save-idea` | Create or edit a project-scoped, source-labelled editorial idea without creating production work |
 | `finish.savePerformanceSnapshot(input)` | `studio:finish:save-performance-snapshot` | Append one immutable official/manual/rehearsal metric window, generate missing-data warnings, and exclude rehearsal from baselines |
+| `finish.choosePerformanceReport()` | `studio:finish:choose-performance-report` | Choose and parse one bounded YouTube Analytics CSV in the trusted process; return reviewable rows plus filename/hash without returning a filesystem path |
 | `finish.saveLearning(input)` | `studio:finish:save-learning` | Save a proposed observation/inference/recommendation citing project-owned snapshot IDs |
 | `finish.reviewLearning(input)` | `studio:finish:review-learning` | Record one explicit human approval/rejection and reason; never trigger a creative, paid, or platform action |
 
@@ -82,7 +83,7 @@ The preload exposes no generic `send`, listener, filesystem, shell, or provider-
 | `releaseDetails.draft/validate/select` | Title/description/chapter/caption/category/tag/playlist fields and factual support |
 | `releaseReadiness.run/attest/status` | Prerequisite, rights, policy, originality, and human-review gate with explicit paid-probe consent |
 | `releasePackage.preview/lock/verify/openFolder` | Immutable hash-inventoried manual-upload package and checklist |
-| `performance.importFile/status` | Future evidence-file parsing; structured manual evidence storage is implemented |
+| `performance.importFile/status` | Implemented bounded CSV preview/provenance plus structured evidence storage; saving remains a separate creator action |
 | `youtubeReadOnly.connect/status/collect/disconnect` | Optional least-privilege analytics only; no version-1 mutation surface |
 | `learning.applyProspectively` | Future explicit compiler binding for an approved lesson; proposal/list/review is implemented and has no automatic effect |
 
@@ -277,7 +278,7 @@ Base path: `/v1`. Transport must be encrypted and authenticated with a short-liv
 | --- | --- |
 | `GET /health` | Process health; no model load required |
 | `GET /ready` | Runtime, mount, GPU, disk, and core workflow readiness |
-| `GET /capabilities` | Exact worker image, GPU, model, workflow, and schema versions |
+| `GET /capabilities` | Exact worker image, GPU/VRAM/disk, NVIDIA driver, base/LatentSync/LTX-trainer Python, trainer torch/CUDA, model, workflow, node, and schema versions |
 | `POST /uploads` | Resumable, size-limited input upload with expected hash |
 | `POST /jobs` | Validate and enqueue a signed compiled job |
 | `GET /jobs/{id}` | Durable status, progress, timing, and sanitized errors |

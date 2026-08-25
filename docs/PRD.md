@@ -2,7 +2,7 @@
 
 Product baseline: 1.0
 
-Current source implementation: 0.10.0
+Current source implementation: 0.10.1
 
 Date: 2026-08-23
 
@@ -198,6 +198,10 @@ The product may later support collaborators, but version 1 is optimized for one 
 
 - **FR-069:** Creative and planning workspaces offer an in-place idea assistant for applicable audience/direction, story, character, relationship, world, location, prop, visual style, voice, storyboard, movement, control, sound/foley, generation, edit, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text fields. Before each potentially paid text request, the creator sees the selected provider/model, exact project-context preview, applicable skill plan, and confirmation. The result is stored as a project-scoped proposal with lineage and changes a field only after the creator chooses a suggestion. AI assistance cannot enter or decide credentials, cost limits, measured performance values, exact source transcripts, approvals, canon, rights/consent, audience/disclosure/truth/originality attestations, worker starts, or publishing actions; those fields may receive explanation-only guidance where safe.
 
+### Default Creator Mode
+
+- **FR-070:** The default non-technical path accepts either a story idea or an existing script plus only format, optional title, and primary language, then opens one Creator Mode that infers and tracks the next unfinished stage. It automatically attaches the project source, production settings, current creative direction, active approved canon, compatible enabled skills, and a controlled connected writing model; prepares reviewable production plan, cast, world, screenplay, storyboard, animation-look, voice, and YouTube-release proposals; and requires an exact creator approval before each proposal becomes versioned canon. The complete resumable run is visible as story package → character/location references → storyboard frames → voices/dialogue → video shots → local edit/sound/captions → verified master → worker cleanup, with durable inputs and outputs retained across interruption. Earlier approved stages remain revisable. Image, video, audio, composition, or assembly of one asset is a secondary path that cannot bypass approved prerequisites, input lineage, qualification, estimate, maximum-cost approval, separate GPU start, review, or local finishing controls. Missing connections and worker qualification become plain-language exceptions. No project creation, context preview, setup navigation, one-off handoff, or estimate rents a GPU; every potentially billed text stage discloses fallback-call behavior. Advanced rooms remain available but are not the default workflow.
+
 ## 7. Non-functional requirements
 
 - **NFR-001 Usability:** After initial installation, the primary workflow must require no terminal, Docker command, SSH session, ComfyUI graph editing, or manual cloud console operation.
@@ -222,6 +226,7 @@ The product may later support collaborators, but version 1 is optimized for one 
 - **NFR-020 Platform-policy safety:** Platform rules, limits, fields, metric definitions, and disclosure guidance are versioned external assumptions and revalidated before release changes. The application never hardcodes a legal/policy declaration, stuffs irrelevant keywords, presents a local candidate comparison as a live audience test, or promises ranking/monetization.
 - **NFR-021 Analytics integrity:** Performance evidence is project/profile scoped, time-windowed, source-labelled, immutable after capture, comparable only under stated rules, and separated from recommendations. Missing, simulated, or low-sample data cannot be presented as a reliable result or silently influence generation.
 - **NFR-022 Validation clarity:** A creator must never have to infer a hidden field rule from an unexplained grey action. Required markers, inline constraints, invalid-state styling, keyboard-focusable summaries, and safe-next-action wording remain understandable without technical knowledge or color perception.
+- **NFR-023 Progressive disclosure:** A first-time creator can move from idea or script to the next review decision without understanding providers, model names, canon schemas, ComfyUI graphs, workflow IDs, seeds, VRAM, cloud Pods, file layout, or internal room structure. Technical controls remain reachable through a clearly labelled optional Advanced Studio mode, while the default path exposes costs, exceptions, approvals, and irreversible boundaries in plain language.
 
 ## 8. Release success criteria
 

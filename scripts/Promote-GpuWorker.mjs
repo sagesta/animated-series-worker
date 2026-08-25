@@ -10,7 +10,12 @@ const REQUIRED_TESTS = new Set([
   'BENCH-TTS-LINE-BOOK',
   'BENCH-LTX-DRAFT',
   'BENCH-LTX-FINAL',
-  'BENCH-LTX-DIALOGUE',
+  'BENCH-LTX-NATIVE-AUDIO',
+  'BENCH-QWEN-CONTROL',
+  'BENCH-LTX-CONTROL',
+  'BENCH-CREATIVE-QC',
+  'BENCH-FOLEY',
+  'BENCH-ADAPTATION',
   'BENCH-LIP-CLOSE',
   'BENCH-LIP-MEDIUM',
   'BENCH-LIP-PROFILE',
@@ -19,11 +24,15 @@ const REQUIRED_TESTS = new Set([
   'BENCH-LIP-OFF-SCREEN',
   'SECURITY-GATEWAY-AUTH',
   'SECURITY-COMFY-LOOPBACK',
+  'SECURITY-NODE-ALLOWLIST',
   'RECOVERY-UPLOAD-RESUME',
+  'RECOVERY-DOWNLOAD-RESUME',
   'RECOVERY-RECONCILE',
   'SHUTDOWN-IDLE',
   'SHUTDOWN-HARD-DEADLINE',
   'SHUTDOWN-PROVIDER-TERMINATION',
+  'COMPAT-TRAINER-CUDA-DRIVER',
+  'LOCAL-FINISHING-SUITE',
   'COST-RECEIPT'
 ])
 
@@ -122,7 +131,25 @@ if (!evidence.reviewer || Number.isNaN(Date.parse(evidence.testedAt))) fail('Rev
 const fingerprint = sha256(stableJson({ ...candidatePack, workerImageDigest: null }))
 if (capability.workflowPackFingerprint !== fingerprint) fail('The tested worker used a different workflow pack.')
 if (capability.comfyUiCommit !== candidatePack.comfyUiCommit) fail('The tested ComfyUI commit differs from the pack.')
-const maximumVram = Math.max(...candidatePack.workflows.map((workflow) => workflow.minimumVramGb ?? 0))
+if (capability.ltxTrainerCudaVersion !== '13.2') {
+  fail('The tested LTX trainer did not use the candidate CUDA 13.2 runtime.')
+}
+const nvidiaDriverMajor = Number.parseInt(capability.nvidiaDriverVersion, 10)
+if (!Number.isInteger(nvidiaDriverMajor) || nvidiaDriverMajor < 595) {
+  fail('The CUDA 13.2 trainer requires an R595-or-newer NVIDIA driver.')
+}
+const coreWorkflows = candidatePack.workflows.filter(
+  (workflow) => workflow.qualificationTier !== 'advanced'
+)
+const advancedWorkflows = candidatePack.workflows.filter(
+  (workflow) => workflow.qualificationTier === 'advanced'
+)
+if (coreWorkflows.length === 0 || advancedWorkflows.length === 0) {
+  fail('The candidate pack must contain both core and advanced workflows for one promotion.')
+}
+const maximumVram = Math.max(
+  ...candidatePack.workflows.map((workflow) => workflow.minimumVramGb ?? 0)
+)
 if (!(capability.vramGb >= maximumVram)) fail(`The qualification GPU must prove at least ${maximumVram} GB VRAM.`)
 
 const testResults = new Map()

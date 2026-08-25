@@ -478,7 +478,7 @@ export function ProjectWizard({ onClose, onCreated }: ProjectWizardProps): JSX.E
                   </span>
                   <textarea
                     rows={5}
-                    maxLength={4000}
+                    maxLength={60_000}
                     value={pilotBrief}
                     onChange={(event) => setPilotBrief(event.target.value)}
                     placeholder="A short note about the story you want to tell..."

@@ -1,6 +1,6 @@
 # Automatic cloud GPU operations
 
-Current implementation note (0.10.0): official RunPod REST lifecycle, lease reconciliation, one-GPU job orchestration, cost/start approvals, authenticated gateway, loopback ComfyUI, preflight, watchdog, resumable transfers, purge/termination, candidate qualification, and atomic promotion are implemented. No live Pod qualification was performed on this development machine. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): official RunPod REST lifecycle, lease reconciliation, one-GPU job orchestration, cost/start approvals, authenticated gateway, loopback ComfyUI, preflight, watchdog, resumable transfers, purge/termination, candidate qualification, and atomic promotion are implemented. No live Pod qualification was performed on this development machine. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. User-facing promise
 
@@ -67,7 +67,7 @@ The setup finishes only after it proves:
 - A compatible worker can be created.
 - Gateway authentication and capability checks succeed.
 - A tiny smoke job returns and verifies locally.
-- Every promoted control/audio/adaptation capability declares and passes its own small smoke fixture; unavailable optional capabilities remain visibly disabled.
+- Every control/audio/adaptation capability declares and passes its own smoke fixture; the atomic version-1 promotion is refused while any required core or advanced capability is unavailable.
 - The remote watchdog has the correct hard deadline.
 - Temporary project data can be purged.
 - Provider termination returns a receipt and later reconciliation confirms no active worker.

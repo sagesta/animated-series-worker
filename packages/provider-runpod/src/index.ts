@@ -42,23 +42,27 @@ const RunPodListPodsResponseSchema = z.union([
   z.object({ pods: z.array(RunPodPodSchema) }).passthrough()
 ])
 
-const NullablePriceSchema = z.number().nonnegative().nullable().optional()
+const NumericCatalogValueSchema = z.union([
+  z.number().nonnegative(),
+  z.string().regex(/^\d+(?:\.\d+)?$/)
+])
+const NullableCatalogValueSchema = NumericCatalogValueSchema.nullable().optional()
+
+const RunPodGpuCatalogItemSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1).nullish(),
+    manufacturer: z.string().min(1).nullish(),
+    memory: NumericCatalogValueSchema,
+    price: z
+      .object({ secure: NullableCatalogValueSchema, community: NullableCatalogValueSchema })
+      .passthrough()
+  })
+  .passthrough()
 
 const RunPodGpuCatalogSchema = z
   .object({
-    gpus: z.array(
-      z
-        .object({
-          id: z.string().min(1),
-          name: z.string().min(1),
-          manufacturer: z.string(),
-          memory: z.number().int().positive(),
-          price: z
-            .object({ secure: NullablePriceSchema, community: NullablePriceSchema })
-            .passthrough()
-        })
-        .passthrough()
-    )
+    gpus: z.array(z.unknown())
   })
   .passthrough()
 
@@ -127,6 +131,10 @@ function roundCurrency(value: number): number {
 
 function toCurrency(value: number | string): number {
   return typeof value === 'number' ? value : Number.parseFloat(value)
+}
+
+function nullableCurrency(value: number | string | null | undefined): number | null {
+  return value === null || value === undefined ? null : toCurrency(value)
 }
 
 function toPod(value: z.infer<typeof RunPodPodSchema>): RunPodPod {
@@ -331,19 +339,22 @@ export class RunPodClient {
     )
 
     const candidates = payload.gpus
-      .filter(
-        (gpu) =>
-          gpu.manufacturer === 'NVIDIA' &&
-          (gpu.memory >= 32 || gpu.id === 'NVIDIA GeForce RTX 4090')
-      )
+      .map((gpu) => RunPodGpuCatalogItemSchema.safeParse(gpu))
+      .filter((result) => result.success)
+      .map((result) => result.data)
+      .filter((gpu) => {
+        const memory = toCurrency(gpu.memory)
+        const isNvidia = gpu.manufacturer === 'NVIDIA' || gpu.id.startsWith('NVIDIA ')
+        return isNvidia && (memory >= 32 || gpu.id === 'NVIDIA GeForce RTX 4090')
+      })
       .map((gpu) =>
         CloudGpuOptionSchema.parse({
           id: gpu.id,
-          name: gpu.name,
-          memoryGb: gpu.memory,
-          secureHourlyUsd: gpu.price.secure ?? null,
-          communityHourlyUsd: gpu.price.community ?? null,
-          ltxCompatibility: gpu.memory >= 32 ? 'meets-baseline' : 'below-baseline'
+          name: gpu.name ?? gpu.id.replace(/^NVIDIA\s+/, ''),
+          memoryGb: toCurrency(gpu.memory),
+          secureHourlyUsd: nullableCurrency(gpu.price.secure),
+          communityHourlyUsd: nullableCurrency(gpu.price.community),
+          ltxCompatibility: toCurrency(gpu.memory) >= 32 ? 'meets-baseline' : 'below-baseline'
         })
       )
       .sort((left, right) => {
@@ -357,7 +368,14 @@ export class RunPodClient {
       .filter((candidate) => candidate.ltxCompatibility === 'meets-baseline')
       .slice(0, 7)
     const rtx4090 = candidates.find((candidate) => candidate.id === 'NVIDIA GeForce RTX 4090')
-    return rtx4090 ? [...compatible, rtx4090] : compatible
+    const options = rtx4090 ? [...compatible, rtx4090] : compatible
+    if (options.length === 0) {
+      throw new RunPodConnectionError(
+        'invalid-response',
+        'RunPod returned no usable GPU planning prices. No paid action was started.'
+      )
+    }
+    return options
   }
 
   private async mutatePod(

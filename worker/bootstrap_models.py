@@ -8,9 +8,7 @@ import hashlib
 import json
 import os
 import shutil
-from pathlib import Path
-
-from huggingface_hub import hf_hub_download, snapshot_download
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 
 def fail(message: str) -> None:
@@ -43,9 +41,18 @@ def path_hash(path: Path) -> str:
 
 
 def safe_destination(root: Path, relative_value: str) -> Path:
-    relative = Path(relative_value)
-    if relative.is_absolute() or ".." in relative.parts:
+    if not isinstance(relative_value, str) or not relative_value.strip():
         fail("A model destination is unsafe.")
+    posix = PurePosixPath(relative_value)
+    windows = PureWindowsPath(relative_value)
+    if (
+        posix.is_absolute()
+        or windows.is_absolute()
+        or ".." in posix.parts
+        or ".." in windows.parts
+    ):
+        fail("A model destination is unsafe.")
+    relative = Path(relative_value)
     destination = (root / relative).resolve()
     if destination == root or root not in destination.parents:
         fail("A model destination escaped persistent storage.")
@@ -53,6 +60,8 @@ def safe_destination(root: Path, relative_value: str) -> Path:
 
 
 def install_file(entry: dict, destination: Path, token: str | None) -> None:
+    from huggingface_hub import hf_hub_download
+
     source = hf_hub_download(
         repo_id=entry["repository"],
         filename=entry["sourcePath"],
@@ -67,6 +76,8 @@ def install_file(entry: dict, destination: Path, token: str | None) -> None:
 
 
 def install_snapshot(entry: dict, destination: Path, token: str | None) -> None:
+    from huggingface_hub import snapshot_download
+
     temporary = destination.with_name(f"{destination.name}.partial")
     if temporary.exists():
         shutil.rmtree(temporary)
@@ -85,6 +96,8 @@ def install_snapshot(entry: dict, destination: Path, token: str | None) -> None:
 
 
 def install_cache_snapshot(entry: dict, destination: Path, token: str | None) -> None:
+    from huggingface_hub import snapshot_download
+
     cache_root = destination.parent
     snapshot_download(
         repo_id=entry["repository"],
@@ -95,6 +108,68 @@ def install_cache_snapshot(entry: dict, destination: Path, token: str | None) ->
     )
     if not destination.is_dir():
         fail("The pinned Hugging Face cache snapshot was not created at the declared path.")
+
+
+def validate_manifest(manifest: object, root: Path) -> list[dict]:
+    if not isinstance(manifest, dict) or manifest.get("schemaVersion") != 1:
+        fail("The model installation manifest is invalid.")
+    models = manifest.get("models")
+    if not isinstance(models, list) or not models:
+        fail("The model installation manifest is invalid.")
+    seen_ids: set[str] = set()
+    for entry in models:
+        if not isinstance(entry, dict):
+            fail("A model manifest entry is invalid.")
+        model_id = entry.get("modelId")
+        repository = entry.get("repository")
+        revision = entry.get("revision")
+        mode = entry.get("mode")
+        if not isinstance(model_id, str) or not model_id or model_id in seen_ids:
+            fail("Model identities must be non-empty and unique.")
+        if not isinstance(repository, str) or not re_fullmatch_repository(repository):
+            fail(f"The repository is not allowlisted for {model_id}.")
+        if not isinstance(revision, str) or not is_sha1(revision):
+            fail(f"The model revision is not immutable for {model_id}.")
+        if mode not in {"file", "snapshot", "cache-snapshot"}:
+            fail(f"The model installation mode is not allowlisted for {model_id}.")
+        safe_destination(root, entry.get("destination"))
+        if mode == "file":
+            safe_source_path(entry.get("sourcePath"))
+        for pattern in entry.get("allowPatterns") or []:
+            safe_source_path(pattern, allow_glob=True)
+        seen_ids.add(model_id)
+    return models
+
+
+def re_fullmatch_repository(value: str) -> bool:
+    import re
+
+    return re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}/[A-Za-z0-9][A-Za-z0-9._-]{0,199}", value) is not None
+
+
+def is_sha1(value: str) -> bool:
+    import re
+
+    return re.fullmatch(r"[a-f0-9]{40}", value) is not None
+
+
+def safe_source_path(value: object, allow_glob: bool = False) -> None:
+    if not isinstance(value, str) or not value:
+        fail("A model source path is unsafe.")
+    posix = PurePosixPath(value)
+    windows = PureWindowsPath(value)
+    if posix.is_absolute() or windows.is_absolute() or ".." in posix.parts or ".." in windows.parts:
+        fail("A model source path is unsafe.")
+    if not allow_glob and any(character in value for character in "*?[]"):
+        fail("A model source file cannot contain a glob.")
+
+
+def select_entries(models: list[dict], required: set[str]) -> list[dict]:
+    known_ids = {entry["modelId"] for entry in models}
+    unknown_required = required - known_ids
+    if unknown_required:
+        fail("A required model or repository is not in the locked installation manifest.")
+    return [entry for entry in models if not required or entry["modelId"] in required]
 
 
 def main() -> None:
@@ -108,8 +183,7 @@ def main() -> None:
         )
     ).resolve(strict=True)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schemaVersion") != 1 or not isinstance(manifest.get("models"), list):
-        fail("The model installation manifest is invalid.")
+    models = validate_manifest(manifest, root)
     accepted = {
         value.strip()
         for value in os.environ.get("STUDIO_ACCEPTED_MODEL_LICENSES", "").split(",")
@@ -122,14 +196,7 @@ def main() -> None:
     }
     token = os.environ.get("HF_TOKEN") or None
     receipt = []
-    known_ids = {entry.get("modelId") for entry in manifest["models"]}
-    unknown_required = required - known_ids
-    if unknown_required:
-        fail("A required model is not in the locked installation manifest.")
-    selected = [
-        entry for entry in manifest["models"]
-        if not required or entry.get("modelId") in required
-    ]
+    selected = select_entries(models, required)
     for entry in selected:
         model_id = entry.get("modelId")
         expected = entry.get("sha256")

@@ -8,6 +8,7 @@ export default tseslint.config(
       'vendor/**',
       'node_modules/**',
       'out/**',
+      'dist/**',
       'release/**',
       'release-smoke-*/**',
       'qualification/**',

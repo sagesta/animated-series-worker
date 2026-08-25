@@ -5,6 +5,7 @@ import {
   type ProjectDetails,
   type ProjectMigrationPreview,
   type ProjectSummary,
+  type ProductionWorkspaceSummary,
   type SupportBundleSummary,
   type SystemStatus,
   type VisualDirection,
@@ -13,22 +14,47 @@ import {
 import { CloudSetup } from './CloudSetup'
 import { CreativeDirectionPanel } from './CreativeDirectionPanel'
 import { CreativeRoom } from './CreativeRoom'
+import { CreatorMode } from './CreatorMode'
 import { FinishRoom } from './FinishRoom'
 import { ProjectWizard } from './ProjectWizard'
-import { GenerateRoom, MediaReviewRoom, StoryboardRoom, WorldCastRoom } from './ProductionRooms'
+import { QuickStartWizard } from './QuickStartWizard'
+import {
+  GenerateRoom,
+  MediaReviewRoom,
+  StoryboardRoom,
+  WorldCastRoom,
+  type QuickCreateIntent,
+  type RetakeContext
+} from './ProductionRooms'
 import { SkillSetup } from './SkillSetup'
 import { WritingSetup } from './WritingSetup'
 
-type Page = 'home' | 'story' | 'world' | 'storyboard' | 'generate' | 'review' | 'edit' | 'settings'
+type Page =
+  | 'home'
+  | 'creator'
+  | 'story'
+  | 'world'
+  | 'storyboard'
+  | 'generate'
+  | 'review'
+  | 'edit'
+  | 'settings'
 
-const navigation: Array<{ id: Page; label: string; icon: string; needsProject: boolean }> = [
-  { id: 'home', label: 'Home', icon: 'H', needsProject: false },
-  { id: 'story', label: 'Story', icon: 'S', needsProject: true },
-  { id: 'world', label: 'World & Cast', icon: 'W', needsProject: true },
-  { id: 'storyboard', label: 'Storyboard', icon: 'B', needsProject: true },
-  { id: 'generate', label: 'Generate', icon: 'G', needsProject: true },
+const navigation: Array<{
+  id: Page
+  label: string
+  icon: string
+  needsProject: boolean
+  advanced?: boolean
+}> = [
+  { id: 'home', label: 'Productions', icon: 'H', needsProject: false },
+  { id: 'creator', label: 'Create', icon: '✦', needsProject: true },
   { id: 'review', label: 'Review', icon: 'R', needsProject: true },
   { id: 'edit', label: 'Edit & Export', icon: 'E', needsProject: true },
+  { id: 'story', label: 'Story controls', icon: 'S', needsProject: true, advanced: true },
+  { id: 'world', label: 'World & Cast controls', icon: 'W', needsProject: true, advanced: true },
+  { id: 'storyboard', label: 'Storyboard controls', icon: 'B', needsProject: true, advanced: true },
+  { id: 'generate', label: 'Generation controls', icon: 'G', needsProject: true, advanced: true },
   { id: 'settings', label: 'Settings', icon: '⚙', needsProject: false }
 ]
 
@@ -40,7 +66,7 @@ const visualLabels: Record<VisualDirection, string> = {
 }
 
 const pageCopy: Record<
-  Exclude<Page, 'home' | 'settings'>,
+  Exclude<Page, 'home' | 'creator' | 'settings'>,
   { eyebrow: string; title: string; description: string; next: string }
 > = {
   story: {
@@ -213,12 +239,66 @@ interface ProjectLibraryProps {
   openingProjectId?: string
 }
 
+type DashboardProjectState = Pick<
+  ProductionWorkspaceSummary,
+  'jobs' | 'staleDependencyCount' | 'actualSpendUsd' | 'elapsedCloudUsageEstimateUsd'
+>
+
+function dashboardStatus(project: ProjectSummary, workspace?: DashboardProjectState): string {
+  if (
+    workspace &&
+    (workspace.staleDependencyCount > 0 || workspace.jobs.some((job) => job.state === 'failed'))
+  ) {
+    return 'Blocked'
+  }
+  if (project.status === 'completed') return 'Ready'
+  if (
+    project.status === 'production' ||
+    workspace?.jobs.some((job) =>
+      ['queued', 'provisioning', 'running', 'downloading', 'verifying', 'awaiting-review'].includes(
+        job.state
+      )
+    )
+  ) {
+    return 'In progress'
+  }
+  return 'Draft'
+}
+
 function ProjectLibrary({
   projects,
   onCreate,
   onOpen,
   openingProjectId
 }: ProjectLibraryProps): JSX.Element {
+  const [dashboard, setDashboard] = useState<Record<string, DashboardProjectState>>({})
+  const [dashboardUnavailable, setDashboardUnavailable] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    let cancelled = false
+    void Promise.allSettled(
+      projects.map(async (project) => ({
+        projectId: project.id,
+        workspace: await window.studio.production.getWorkspace(project.id)
+      }))
+    ).then((results) => {
+      if (cancelled) return
+      const next: Record<string, DashboardProjectState> = {}
+      const unavailable = new Set<string>()
+      results.forEach((result, index) => {
+        const projectId = projects[index]?.id
+        if (!projectId) return
+        if (result.status === 'fulfilled') next[projectId] = result.value.workspace
+        else unavailable.add(projectId)
+      })
+      setDashboard(next)
+      setDashboardUnavailable(unavailable)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [projects])
+
   if (projects.length === 0) {
     return <EmptyLibrary onCreate={onCreate} />
   }
@@ -259,6 +339,54 @@ function ProjectLibrary({
                 <div className="project-art-lines" />
               </div>
               <div className="project-card-body">
+                {(() => {
+                  const workspace = dashboard[project.id]
+                  const queued =
+                    workspace?.jobs.filter((job) =>
+                      ['queued', 'provisioning', 'running', 'downloading', 'verifying'].includes(
+                        job.state
+                      )
+                    ).length ?? 0
+                  const approvals = workspace
+                    ? workspace.jobs.filter((job) =>
+                        ['planned', 'estimated', 'awaiting-review'].includes(job.state)
+                      ).length + workspace.staleDependencyCount
+                    : 0
+                  const spend = workspace
+                    ? workspace.actualSpendUsd + workspace.elapsedCloudUsageEstimateUsd
+                    : 0
+                  return (
+                    <div className="project-dashboard-summary">
+                      <span
+                        className={`project-status project-status-${dashboardStatus(project, workspace).toLowerCase().replace(' ', '-')}`}
+                      >
+                        {dashboardStatus(project, workspace)}
+                      </span>
+                      {dashboardUnavailable.has(project.id) && (
+                        <span className="project-card-warning">Details need attention</span>
+                      )}
+                      {!workspace && !dashboardUnavailable.has(project.id) && (
+                        <span className="project-card-loading">Checking project…</span>
+                      )}
+                      {workspace && (
+                        <dl>
+                          <div>
+                            <dt>Queued work</dt>
+                            <dd>{queued}</dd>
+                          </div>
+                          <div>
+                            <dt>Current cloud spend</dt>
+                            <dd>{formatCurrencyForSidebar(spend)}</dd>
+                          </div>
+                          <div>
+                            <dt>Approvals needed</dt>
+                            <dd>{approvals}</dd>
+                          </div>
+                        </dl>
+                      )}
+                    </div>
+                  )
+                })()}
                 <div className="project-card-meta">
                   <span>{projectTypeLabel(project)}</span>
                   <span>•</span>
@@ -469,7 +597,7 @@ function ProjectOverview({
   onLibrary,
   onProjectUpdated
 }: ProjectOverviewProps): JSX.Element {
-  const { manifest, workspacePath } = project
+  const { manifest } = project
 
   return (
     <div className="project-overview">
@@ -488,8 +616,8 @@ function ProjectOverview({
             {manifest.targetDurationMinutes} minutes · {visualLabels[manifest.visualDirection]}
           </p>
         </div>
-        <button className="button button-primary" onClick={() => onNavigate('story')}>
-          Start story planning <span>→</span>
+        <button className="button button-primary" onClick={() => onNavigate('creator')}>
+          Continue creating <span>→</span>
         </button>
       </section>
 
@@ -511,7 +639,7 @@ function ProjectOverview({
           <div>
             <span>Storage</span>
             <strong>Saved on this computer</strong>
-            <small title={workspacePath}>{workspacePath}</small>
+            <small>Your original project files stay private and local.</small>
           </div>
         </article>
         <article className="health-card">
@@ -544,34 +672,36 @@ function ProjectOverview({
           </div>
         </div>
         <div className="roadmap-list">
-          <button onClick={() => onNavigate('story')}>
+          <button onClick={() => onNavigate('creator')}>
             <span className="roadmap-number current">1</span>
             <span>
               <strong>Story foundation</strong>
-              <small>Structure the story, scenes, dialogue, and production intent.</small>
+              <small>
+                AI prepares the plan, cast, world, screenplay and storyboard for review.
+              </small>
             </span>
             <span className="roadmap-state current">Next</span>
           </button>
-          <button onClick={() => onNavigate('world')}>
+          <button onClick={() => onNavigate('creator')}>
             <span className="roadmap-number">2</span>
             <span>
               <strong>World and cast</strong>
-              <small>Lock visual style, character boards, voices, locations, and props.</small>
+              <small>Approve identity, animation look, voice direction, locations and props.</small>
             </span>
             <span className="roadmap-state current">Ready</span>
           </button>
-          <button onClick={() => onNavigate('storyboard')}>
+          <button onClick={() => onNavigate('review')}>
             <span className="roadmap-number">3</span>
             <span>
-              <strong>Storyboard and shots</strong>
-              <small>Decide movement, framing, dialogue, and references shot by shot.</small>
+              <strong>Proof and production review</strong>
+              <small>Review character boards, voices, motion, lip-sync and episode media.</small>
             </span>
             <span className="roadmap-state current">Ready</span>
           </button>
-          <button onClick={() => onNavigate('generate')}>
+          <button onClick={() => onNavigate('edit')}>
             <span className="roadmap-number">4</span>
             <span>
-              <strong>Generate, review, and finish</strong>
+              <strong>Finish and release</strong>
               <small>
                 Local review and finishing are ready; paid work starts only after qualification,
                 estimate approval, and a separate start confirmation.
@@ -594,7 +724,7 @@ function WorkspacePlaceholder({
   project,
   onHome
 }: {
-  page: Exclude<Page, 'home' | 'settings'>
+  page: Exclude<Page, 'home' | 'creator' | 'settings'>
   project: ProjectDetails
   onHome(): void
 }): JSX.Element {
@@ -759,14 +889,14 @@ function SupportDiagnosticsPanel(): JSX.Element {
   return (
     <div className="settings-card support-card">
       <p>
-        This creates one local JSON support file with app state and recent safety events. It does
-        not include API keys, provider responses, scripts, prompts, images, audio, or video, and it
-        is never uploaded automatically.
+        This creates one local support file with app state and recent safety events. It does not
+        include API keys, provider responses, scripts, prompts, images, audio, or video, and it is
+        never uploaded automatically.
       </p>
       {bundle && (
         <div className="support-result">
-          <span>Saved locally</span>
-          <strong title={bundle.bundlePath}>{bundle.bundlePath}</strong>
+          <span>Saved safely on this computer</span>
+          <strong>Support file ready</strong>
           <small>{bundle.eventCount} redacted events included</small>
         </div>
       )}
@@ -845,7 +975,7 @@ function Settings({
         <div className="settings-card">
           <div className="settings-row">
             <span>Project storage</span>
-            <strong title={status?.storagePath}>{status?.storagePath ?? 'Loading…'}</strong>
+            <strong>{status ? 'Stored locally on this computer' : 'Checking…'}</strong>
           </div>
           <div className="settings-row">
             <span>Local catalog</span>
@@ -916,9 +1046,13 @@ export function App(): JSX.Element {
   const [activeProject, setActiveProject] = useState<ProjectDetails>()
   const [page, setPage] = useState<Page>('home')
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [detailedWizardOpen, setDetailedWizardOpen] = useState(false)
+  const [advancedMode, setAdvancedMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
   const [openingProjectId, setOpeningProjectId] = useState<string>()
+  const [retakeContext, setRetakeContext] = useState<RetakeContext>()
+  const [quickCreateIntent, setQuickCreateIntent] = useState<QuickCreateIntent>()
 
   useEffect(() => {
     let cancelled = false
@@ -963,7 +1097,9 @@ export function App(): JSX.Element {
     try {
       const project = await window.studio.projects.open(projectId)
       setActiveProject(project)
-      setPage('home')
+      setRetakeContext(undefined)
+      setQuickCreateIntent(undefined)
+      setPage('creator')
     } catch {
       setError('That production could not be opened safely. Its files were not changed.')
     } finally {
@@ -973,6 +1109,8 @@ export function App(): JSX.Element {
 
   const projectCreated = (project: ProjectDetails): void => {
     setActiveProject(project)
+    setRetakeContext(undefined)
+    setQuickCreateIntent(undefined)
     setProjects((current) => [
       toSummary(project),
       ...current.filter((item) => item.id !== project.manifest.id)
@@ -980,13 +1118,16 @@ export function App(): JSX.Element {
     setStatus((current) =>
       current ? { ...current, indexedProjects: current.indexedProjects + 1 } : current
     )
-    setPage('home')
+    setPage('creator')
     setWizardOpen(false)
+    setDetailedWizardOpen(false)
   }
 
   const projectRestored = (project: ProjectDetails): void => {
     const alreadyIndexed = projects.some((item) => item.id === project.manifest.id)
     setActiveProject(project)
+    setRetakeContext(undefined)
+    setQuickCreateIntent(undefined)
     setProjects((current) => [
       toSummary(project),
       ...current.filter((item) => item.id !== project.manifest.id)
@@ -997,7 +1138,7 @@ export function App(): JSX.Element {
       )
     }
     setError(undefined)
-    setPage('home')
+    setPage('creator')
   }
 
   const projectUpdated = (project: ProjectDetails): void => {
@@ -1010,6 +1151,8 @@ export function App(): JSX.Element {
 
   const goToLibrary = (): void => {
     setActiveProject(undefined)
+    setRetakeContext(undefined)
+    setQuickCreateIntent(undefined)
     setPage('home')
   }
 
@@ -1052,6 +1195,25 @@ export function App(): JSX.Element {
       )
     }
 
+    if (page === 'creator') {
+      return (
+        <CreatorMode
+          project={activeProject}
+          writingStatus={writingStatus}
+          cloudStatus={cloudStatus}
+          onNavigate={(destination) => {
+            setQuickCreateIntent(undefined)
+            setPage(destination)
+          }}
+          onQuickCreate={(intent) => {
+            setRetakeContext(undefined)
+            setQuickCreateIntent(intent)
+            setPage(intent.mode === 'stitch' ? 'edit' : 'generate')
+          }}
+        />
+      )
+    }
+
     if (page === 'story') {
       return (
         <CreativeRoom
@@ -1072,7 +1234,17 @@ export function App(): JSX.Element {
     }
 
     if (page === 'review') {
-      return <MediaReviewRoom project={activeProject} onHome={() => setPage('home')} />
+      return (
+        <MediaReviewRoom
+          project={activeProject}
+          onHome={() => setPage('home')}
+          onRetake={(context) => {
+            setQuickCreateIntent(undefined)
+            setRetakeContext(context)
+            setPage('generate')
+          }}
+        />
+      )
     }
 
     if (page === 'generate') {
@@ -1080,8 +1252,14 @@ export function App(): JSX.Element {
         <GenerateRoom
           project={activeProject}
           cloudStatus={cloudStatus}
-          onHome={() => setPage('home')}
+          onHome={() => {
+            setQuickCreateIntent(undefined)
+            setPage(quickCreateIntent ? 'creator' : 'home')
+          }}
           onSettings={() => setPage('settings')}
+          retake={retakeContext}
+          quickCreate={quickCreateIntent}
+          onRetakePlanned={() => setRetakeContext(undefined)}
         />
       )
     }
@@ -1090,8 +1268,12 @@ export function App(): JSX.Element {
       return (
         <FinishRoom
           project={activeProject}
-          onHome={() => setPage('home')}
+          onHome={() => {
+            setQuickCreateIntent(undefined)
+            setPage(quickCreateIntent ? 'creator' : 'home')
+          }}
           onReview={() => setPage('review')}
+          quickCreate={quickCreateIntent}
         />
       )
     }
@@ -1116,7 +1298,7 @@ export function App(): JSX.Element {
   const reportedHourlyCost = cloudStatus?.account?.activeHourlyCostUsd ?? 0
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell page-${page}`}>
       <aside className="sidebar">
         <div className="brand">
           <Logo />
@@ -1139,26 +1321,52 @@ export function App(): JSX.Element {
 
         <nav aria-label="Studio sections">
           <span className="nav-label">Workspace</span>
-          {navigation.map((item) => {
-            const disabled = item.needsProject && !activeProject
-            return (
-              <button
-                key={item.id}
-                className={page === item.id ? 'active' : ''}
-                aria-current={page === item.id ? 'page' : undefined}
-                disabled={disabled}
-                title={disabled ? 'Choose or create a production first' : undefined}
-                onClick={() => setPage(item.id)}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                {item.label}
-                {item.id === 'generate' && cloudStatus?.generationState !== 'ready' && (
-                  <span className="mini-lock">◇</span>
-                )}
-              </button>
-            )
-          })}
+          {navigation
+            .filter((item) => advancedMode || !item.advanced)
+            .map((item) => {
+              const disabled = item.needsProject && !activeProject
+              return (
+                <button
+                  key={item.id}
+                  className={page === item.id ? 'active' : ''}
+                  aria-current={page === item.id ? 'page' : undefined}
+                  disabled={disabled}
+                  title={disabled ? 'Choose or create a production first' : undefined}
+                  onClick={() => {
+                    setQuickCreateIntent(undefined)
+                    setPage(item.id)
+                  }}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  {item.label}
+                  {item.id === 'generate' && cloudStatus?.generationState !== 'ready' && (
+                    <span className="mini-lock">◇</span>
+                  )}
+                </button>
+              )
+            })}
         </nav>
+
+        {activeProject && (
+          <button
+            className={`advanced-mode-toggle ${advancedMode ? 'active' : ''}`}
+            onClick={() => {
+              setAdvancedMode((current) => !current)
+              if (advancedMode && ['story', 'world', 'storyboard', 'generate'].includes(page)) {
+                setQuickCreateIntent(undefined)
+                setPage('creator')
+              }
+            }}
+          >
+            <span>{advancedMode ? '✓' : '＋'}</span>
+            <span>
+              <strong>Advanced Studio</strong>
+              <small>
+                {advancedMode ? 'Technical controls shown' : 'Optional technical controls'}
+              </small>
+            </span>
+          </button>
+        )}
 
         <div className="sidebar-spacer" />
         <div className="cloud-summary">
@@ -1182,7 +1390,7 @@ export function App(): JSX.Element {
         <div className="sidebar-version">Safe connection build · v{status?.appVersion}</div>
       </aside>
 
-      <main className="workspace">
+      <main className={`workspace workspace-${page}`}>
         <header className="topbar">
           <div>
             <span className="topbar-dot" />
@@ -1207,7 +1415,17 @@ export function App(): JSX.Element {
       </main>
 
       {wizardOpen && (
-        <ProjectWizard onClose={() => setWizardOpen(false)} onCreated={projectCreated} />
+        <QuickStartWizard
+          onClose={() => setWizardOpen(false)}
+          onCreated={projectCreated}
+          onDetailedSetup={() => {
+            setWizardOpen(false)
+            setDetailedWizardOpen(true)
+          }}
+        />
+      )}
+      {detailedWizardOpen && (
+        <ProjectWizard onClose={() => setDetailedWizardOpen(false)} onCreated={projectCreated} />
       )}
     </div>
   )

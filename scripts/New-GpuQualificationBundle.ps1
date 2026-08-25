@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $manifestPath = Join-Path $projectRoot 'config\model-install-manifest.candidate.json'
+$packPath = Join-Path $projectRoot 'config\workflow-pack.candidate.json'
 $evidenceTemplatePath = Join-Path $projectRoot 'config\gpu-qualification-evidence.template.json'
 $outputPath = [System.IO.Path]::GetFullPath($OutputDirectory)
 
@@ -14,6 +15,7 @@ if (Test-Path -LiteralPath $outputPath) {
 }
 
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+$pack = Get-Content -LiteralPath $packPath -Raw | ConvertFrom-Json
 $evidence = Get-Content -LiteralPath $evidenceTemplatePath -Raw | ConvertFrom-Json
 $evidence.licenseApprovals = @(
   $manifest.models | ForEach-Object {
@@ -36,7 +38,7 @@ $environment = [ordered]@{
   STUDIO_LEASE_ID = '<26-character-qualification-lease-id>'
   STUDIO_HARD_DEADLINE = '<UTC-ISO-time>'
   STUDIO_WORKER_IMAGE_DIGEST = '<64-character-image-digest-without-sha256-prefix>'
-  STUDIO_WORKER_RELEASE = '0.9.0-candidate.1'
+  STUDIO_WORKER_RELEASE = $pack.packVersion
   STUDIO_MODEL_BOOTSTRAP_MODE = 'qualification'
   STUDIO_QUALIFICATION_MODE = 'controlled'
   STUDIO_ACCEPTED_MODEL_LICENSES = '<comma-separated-model-ids-after-license-review>'

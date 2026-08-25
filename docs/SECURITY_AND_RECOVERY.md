@@ -1,6 +1,6 @@
 # Security, rights, backup, and recovery
 
-Current implementation note (0.10.0): OS-protected provider and per-lease secrets, token hashing, renderer isolation, restricted media protocol, allowlisted worker execution, scoped paths, chunk/hash verification, job/lease reconciliation, process-group cancellation, watchdog deadlines, and audit-preserving worker closure are implemented. Live adversarial/cloud failure proof remains a release gate. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): OS-protected provider and per-lease secrets, token hashing, renderer isolation, restricted media protocol, allowlisted worker execution, scoped paths, chunk/hash verification, job/lease reconciliation, process-group cancellation, watchdog deadlines, and audit-preserving worker closure are implemented. Live adversarial/cloud failure proof remains a release gate. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Protection goals
 

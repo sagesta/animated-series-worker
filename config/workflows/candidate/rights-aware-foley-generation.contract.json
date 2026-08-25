@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "rights-aware-foley-generation",
+  "engine": "worker-python",
+  "runner": "python_runner.py:rights_aware_foley",
+  "inputs": [],
+  "parameters": {
+    "cueSheetJson": {
+      "type": "json-string",
+      "schema": {
+        "schemaVersion": 1,
+        "durationSeconds": "number:0.1..120",
+        "cues": [
+          {
+            "cueId": "unique-safe-name",
+            "kind": "ambience|effect|foley",
+            "description": "text:1..240",
+            "generator": "room-tone|wind|rain|footstep|impact|whoosh|tone",
+            "startSeconds": "number:>=0",
+            "durationSeconds": "number:0.02..30",
+            "gainDb": "number:-60..0",
+            "rightsBasis": "procedural-original"
+          }
+        ]
+      }
+    },
+    "preserveDialogue": {
+      "type": "boolean",
+      "requiredValue": true
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    }
+  },
+  "outputs": [
+    {
+      "name": "foley-layer.wav",
+      "mediaType": "audio/wav",
+      "sampleRate": 48000,
+      "channels": 1
+    },
+    {
+      "name": "foley-manifest.json",
+      "mediaType": "application/json",
+      "recordsOutputSha256": true,
+      "humanReviewRequired": true
+    }
+  ],
+  "safety": {
+    "acceptsSourceRecordings": false,
+    "mixesDialogue": false,
+    "mixesMusic": false,
+    "networkAccess": false,
+    "shellCommands": false
+  }
+}

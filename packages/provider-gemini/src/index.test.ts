@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GeminiClient } from './index'
 
 const draft = {
@@ -9,8 +9,13 @@ const draft = {
   suggestedNextSteps: ['Define the price of restoring one tree.']
 }
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe('GeminiClient', () => {
   it('uses the no-cost model list with the protected Google API key header', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
     const request = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -42,9 +47,11 @@ describe('GeminiClient', () => {
         headers: expect.objectContaining({ 'x-goog-api-key': 'AIza-test-protected-key-123456789' })
       })
     )
+    expect(timeout).toHaveBeenCalledWith(30_000)
   })
 
   it('requests structured JSON and maps Gemini usage', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
     let body: Record<string, unknown> = {}
     const request = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
       body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -76,9 +83,11 @@ describe('GeminiClient', () => {
       generationConfig: {
         maxOutputTokens: 800,
         responseMimeType: 'application/json',
-        responseJsonSchema: { type: 'object' }
+        responseJsonSchema: { type: 'object' },
+        thinkingConfig: { thinkingLevel: 'low' }
       }
     })
+    expect(timeout).toHaveBeenCalledWith(300_000)
     expect(result.output.title).toBe('The Glass Orchard')
     expect(result.usage).toEqual({
       inputTokens: 70,
@@ -87,6 +96,34 @@ describe('GeminiClient', () => {
       cachedInputTokens: 8
     })
     expect(result.requestId).toBe('gemini-response-123')
+  })
+
+  it('keeps long-form drafts bounded while using balanced thinking', async () => {
+    let body: Record<string, unknown> = {}
+    const request = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
+      body = JSON.parse(String(init?.body)) as Record<string, unknown>
+      return new Response(
+        JSON.stringify({
+          responseId: 'gemini-long-response-123',
+          candidates: [
+            { finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(draft) }] } }
+          ]
+        }),
+        { status: 200 }
+      )
+    })
+    const client = new GeminiClient({ fetchImpl: request })
+
+    await client.generateDraft('AIza-test-protected-key-123456789', {
+      model: 'gemini-3.7-flash',
+      systemInstruction: 'Return a useful proposal.',
+      userPrompt: 'Write a complete screenplay from the selected project context.',
+      maxOutputTokens: 8_000
+    })
+
+    expect(body).toMatchObject({
+      generationConfig: { thinkingConfig: { thinkingLevel: 'medium' } }
+    })
   })
 
   it('rejects a partial response instead of saving unfinished writing', async () => {

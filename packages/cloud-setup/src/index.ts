@@ -175,8 +175,8 @@ function statusFrom(
     readiness.workerImageReady &&
     readiness.automaticShutdownTested
   const missingReadiness: string[] = []
-  if (!readiness.modelStorageReady) missingReadiness.push('verified model storage')
-  if (!readiness.workerImageReady) missingReadiness.push('the pinned worker image')
+  if (!readiness.modelStorageReady) missingReadiness.push('verified creative-tool storage')
+  if (!readiness.workerImageReady) missingReadiness.push('the generation worker')
   if (!readiness.automaticShutdownTested) missingReadiness.push('the automatic shutdown test')
   const generationReason = generationReady
     ? 'Production checks are complete. Each paid job still requires its own cost approval and a separate worker-start confirmation.'

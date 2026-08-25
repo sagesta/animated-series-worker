@@ -7,6 +7,8 @@ import {
   CloudGuardrailsSchema,
   CanonActionResultSchema,
   ChooseMediaAssetInputSchema,
+  CopyMediaAssetInputSchema,
+  CreateAdaptationDatasetInputSchema,
   CreateProjectInputSchema,
   ExternalSkillActionResultSchema,
   ExternalSkillPlanPreviewInputSchema,
@@ -25,6 +27,8 @@ import {
   LocalMediaActionResultSchema,
   LocalMediaInstallResultSchema,
   LocalMediaRuntimeStatusSchema,
+  OpenReleasePackageInputSchema,
+  OpenReleasePackageResultSchema,
   ProductionJobActionResultSchema,
   ProductionJobApprovalInputSchema,
   ProductionJobDetailsSchema,
@@ -72,6 +76,7 @@ import {
   WritingProviderInputSchema,
   WritingSettingsActionResultSchema,
   WritingSettingsStatusSchema,
+  YouTubePerformanceReportPreviewSchema,
   type StudioApi
 } from '@studio/contracts'
 
@@ -243,6 +248,18 @@ const studioApi: StudioApi = {
         await ipcRenderer.invoke(IPC_CHANNELS.productionImportMedia, safeInput)
       )
     },
+    async createAdaptationDataset(input) {
+      const safeInput = CreateAdaptationDatasetInputSchema.parse(input)
+      return MediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionCreateAdaptationDataset, safeInput)
+      )
+    },
+    async copyMedia(input) {
+      const safeInput = CopyMediaAssetInputSchema.parse(input)
+      return MediaActionResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.productionCopyMedia, safeInput)
+      )
+    },
     async reviewMedia(input) {
       const safeInput = ReviewMediaAssetInputSchema.parse(input)
       return MediaActionResultSchema.parse(
@@ -348,6 +365,11 @@ const studioApi: StudioApi = {
         await ipcRenderer.invoke(IPC_CHANNELS.finishSavePerformanceSnapshot, safeInput)
       )
     },
+    async choosePerformanceReport() {
+      return YouTubePerformanceReportPreviewSchema.nullable().parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishChoosePerformanceReport)
+      )
+    },
     async saveLearning(input) {
       const safeInput = SaveReleaseLearningInputSchema.parse(input)
       return FinishActionResultSchema.parse(
@@ -364,6 +386,12 @@ const studioApi: StudioApi = {
       const safeInput = CreateReleasePackageInputSchema.parse(input)
       return FinishActionResultSchema.parse(
         await ipcRenderer.invoke(IPC_CHANNELS.finishCreateReleasePackage, safeInput)
+      )
+    },
+    async openReleasePackage(input) {
+      const safeInput = OpenReleasePackageInputSchema.parse(input)
+      return OpenReleasePackageResultSchema.parse(
+        await ipcRenderer.invoke(IPC_CHANNELS.finishOpenReleasePackage, safeInput)
       )
     },
     async getLocalMediaStatus() {

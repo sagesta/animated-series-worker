@@ -1,6 +1,6 @@
 # Cost and capacity model
 
-Current implementation note (0.10.0): per-job current-catalogue estimates, expected/hard-maximum display, exact cost approval, separate start confirmation, elapsed estimate, provider-reconciled spend field, one-GPU-per-job concurrency, and session guardrails are implemented. Actual image/video/episode costs remain unknown until controlled live benchmarks; retained storage can cost money without an active GPU. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): per-job current-catalogue estimates, expected/hard-maximum display, exact cost approval, separate start confirmation, elapsed estimate, provider-reconciled spend field, one-GPU-per-job concurrency, and session guardrails are implemented. Actual image/video/episode costs remain unknown until controlled live benchmarks; retained storage can cost money without an active GPU. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Honest cost statement
 

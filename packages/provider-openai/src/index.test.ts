@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OpenAiClient } from './index'
 
 const draft = {
@@ -8,6 +8,10 @@ const draft = {
   continuityQuestions: ['Why is the station closed?'],
   suggestedNextSteps: ['Decide what Mara carries.']
 }
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('OpenAiClient', () => {
   it('uses the free model list without exposing the key', async () => {
@@ -36,6 +40,7 @@ describe('OpenAiClient', () => {
   })
 
   it('sends a non-stored structured Responses request and maps usage', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
     let body: Record<string, unknown> = {}
     const request = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
       body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -62,6 +67,7 @@ describe('OpenAiClient', () => {
     })
 
     expect(body).toMatchObject({ model: 'gpt-5.1', store: false, max_output_tokens: 800 })
+    expect(timeout).toHaveBeenCalledWith(300_000)
     expect(body.text).toMatchObject({
       format: { type: 'json_schema', name: 'creative_draft', strict: true }
     })

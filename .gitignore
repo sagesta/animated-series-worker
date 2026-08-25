@@ -18,6 +18,7 @@ tmp/
 node_modules/
 out/
 coverage/
+test-results/
 dist/
 build/
 release/

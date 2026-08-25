@@ -1,6 +1,6 @@
 # Non-technical user experience specification
 
-Current implementation note (0.10.0): Home, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, and Settings are wired to local production services. Applicable creative/planning fields offer a governed project-aware idea assistant. Media is viewed inside the app; ComfyUI is headless. Paid start remains visibly locked until qualification, with exact input, estimate, approval, and separate start guidance. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): Creator Mode is the default project experience. A creator supplies an idea or script, reviews AI-prepared stages, and sees one next unfinished decision without configuring technical rooms. The complete story-package → references → frames → voices → shots → local edit/captions → verified-master → worker-cleanup run is available under one disclosure and is derived from durable canon, media, job, timeline, and worker state. Image, video, audio, composition, and local assembly are a collapsed secondary asset/repair path rather than the primary navigation. Productions, Review, Edit & Export, and Settings remain primary navigation; Story, World & Cast, Storyboard, and Generate controls appear only when Advanced Studio is enabled or a guided handoff needs them. Media is viewed inside the app; ComfyUI is headless. Paid start remains visibly locked until qualification, with exact input, estimate, approval, and separate start guidance. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. Experience goal
 
@@ -8,9 +8,9 @@ The creator should feel that they are operating a production studio, not adminis
 
 The UI does not hide consequences. Before a paid or destructive action it explains scope, estimated spend, affected work, and the recovery path in plain language.
 
-### Current implementation — version 0.10.0
+### Current implementation — version 0.10.1
 
-The production library, guided series/film wizard, overview, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, Settings, backup/recovery, protected providers, and declarative skills are wired to production services. Proposals remain separate from canon; generated/imported media remains separate from approval. A reusable assistant supplies reviewable ideas beside applicable text fields using exact context and skill previews. Generate shows input order, compatible memory, expected/hard maximum, cost confirmation, and a separate start confirmation. Exact remote candidates remain visibly locked until the worker qualification receipt exists. The creator reviews media and finishes locally without opening ComfyUI or a terminal. Local control/layer/dataset roles and control/foley/adaptation candidates exist, as do structured performance/learning records; higher-risk executable/MCP skills, exact advanced engines/trainers, report parsing/read-only OAuth, and automatic publishing remain absent.
+The production library, guided series/film wizard, overview, Story, World & Cast, Storyboard, Generate, Review, Edit & Export, Release, Settings, backup/recovery, protected providers, and declarative skills are wired to production services. Proposals remain separate from canon; generated/imported media remains separate from approval. Creator Mode keeps one next step and one primary action visible, while its complete eight-checkpoint production run, earlier creative stages, and one-off asset tools remain collapsed by default. The Ofibox reference affects this output-first workflow only; the app retains its own studio visual system and vocabulary. A reusable single-column assistant supplies reviewable ideas beside applicable text fields, uses the saved provider/profile automatically, and keeps exact context and skill previews under one optional disclosure. Generate shows input order, compatible memory, expected/hard maximum, cost confirmation, and a separate start confirmation. Exact remote candidates remain visibly locked until the worker qualification receipt exists. The creator reviews media and finishes locally without opening ComfyUI or a terminal. Local control/layer/dataset roles, exact control/foley/adaptation candidates, a rights-reviewed adaptation dataset builder, structured performance/learning records, and checked official-report CSV import exist; higher-risk executable/MCP skills, live advanced-engine qualification, optional read-only OAuth, and automatic publishing remain absent.
 
 ### Shared field and warning behavior
 
@@ -21,19 +21,27 @@ The production library, guided series/film wizard, overview, Story, World & Cast
 - Primary actions are disabled only while that action is already running or where the action is genuinely unavailable. Busy-state disabling still prevents duplicate requests.
 - Closing the popup returns the creator to the unchanged form. Trusted main-process and domain validation still run when valid-looking data is submitted; renderer guidance is not a security boundary.
 
+### Creator questions and production handoff
+
+- Continuity questions are presented as creative decisions, never as unexplained warnings. Each question has a plain-language answer field and **Let AI recommend** option. Every question must receive one of those responses before Creator Mode can prepare a revision request.
+- Preparing question answers only fills the visible change request. The creator must still review it, use the clearly labelled potentially billed **Create** action, review the revised proposal, and explicitly approve its exact fingerprint before canon changes.
+- The production handoff sends the creator to Settings only while the RunPod account or spending defaults genuinely need creator action. Once both are complete, the creator stays in Creator Mode and sees which model-storage, worker, and shutdown checks remain studio-managed.
+- A locked studio-managed check says explicitly that the creator should not create a Pod. It cannot be bypassed by navigating between Creator Mode and Settings.
+- Informational readiness popups say **Production status**, describe what remains, and close with **Close**. They do not use “please correct” or “go back and fix” when the creator has completed every creator-owned step.
+
 ## 2. Navigation
 
-Primary navigation:
+Default navigation:
 
-1. **Home** — projects, blocked decisions, active work, spend.
-2. **Story** — outline, acts/sequences, scripts, episode status.
-3. **World** — style, characters, voices, locations, props, wardrobe.
-4. **Storyboard & Animatic** — scenes, shots, timing, production method, control packs, and pacing preview.
-5. **Generate** — ready queue, estimates, cloud session.
-6. **Review** — images, voice lines, video takes, retakes.
-7. **Edit & Export** — timeline, sound, captions, QC, delivery.
-8. **Release** — public thumbnail, title, description, chapters, policy review, upload package, and later performance evidence.
-9. **Settings** — cloud connection, storage, budgets, backups, optional read-only analytics connection, expert mode.
+1. **Productions** — the local series/film library and the selected production's safety overview.
+2. **Create** — Creator Mode: one progress path, the next useful AI-assisted stage, its proposal review, and production exceptions.
+3. **Review** — approved and candidate images, voice lines, video takes, and retakes.
+4. **Edit & Export** — timeline, sound, captions, QC, thumbnail, release decisions, and local YouTube package.
+5. **Settings** — protected writing/RunPod connections, spending limits, skills, backups, and diagnostics.
+
+**Advanced Studio** is a visible optional toggle for Story controls, World & Cast controls, Storyboard controls, and Generation controls. Turning it off while an advanced room is open returns to Creator Mode. The guided path may open the exact advanced room needed for a production exception, but it never requires the creator to understand the room's internal architecture before starting a project.
+
+Inside **Create**, the creator sees the current creative approval and may expand **View the complete production run** to inspect all eight durable checkpoints. Each checkpoint states approved, next review, or waiting in text as well as color. Reopening the project derives the first unfinished checkpoint from saved evidence. The collapsed **Create or repair one production asset** tool offers Image, Video, Audio, Composition, and Assemble only after their approved prerequisites exist. Preparing one remote asset opens the existing job screen with its name, direction, and intended output type prefilled; it does not request an estimate, approve cost, or start a GPU. Assemble opens local Edit & Export and uses no rented GPU.
 
 The currently open project and production unit are always visible. Switching projects requires an explicit action so the user does not unknowingly work in the wrong series.
 
@@ -92,7 +100,37 @@ The setup creates or verifies the provider template, persistent model cache, wor
 
 Technical details are available under `Show details` but are never the only explanation.
 
-## 4. Project creation wizard
+## 4. Project creation
+
+### Default quick start
+
+The first action is **Start a production**. The default dialog asks only:
+
+- whether the creator has a story idea or an existing script;
+- series or one-off film;
+- optional title;
+- primary language; and
+- the story description or pasted/uploaded text script.
+
+Required values show asterisks and live minimum guidance. Story/script text accepts up to 60,000 characters so the later protected context still has room for production settings and approved canon. TXT, Markdown, Fountain, and text-based FDX files can be loaded locally; upload here means reading the local file, not sending it to a service. A missing/short source or language opens the same accessible correction summary used elsewhere. Creating the project stores it locally, infers safe placeholder direction for later AI review, keeps the GPU off, and makes no provider call. If no title is supplied, the studio derives a working title from the opening sentence.
+
+After creation, Creator Mode derives this review path from durable project state:
+
+1. story production plan;
+2. complete cast and world/location book;
+3. timed production screenplay;
+4. shot-by-shot storyboard plan;
+5. animation look and original voice/performance book;
+6. character/style, voice, motion/lip-sync proofs and approved master; and
+7. truthful YouTube release plan and final package checks.
+
+For text stages the studio automatically supplies the original idea/script, production settings, active creative-direction revision, all active approved canon, and applicable enabled skills. It selects the saved connected model first and may try declared connected fallbacks only after the creator approves wording that explains multiple text requests may be billed. A result is visibly **AI proposal · not canon**. The creator can request changes or approve the exact fingerprinted proposal; approval creates a new canon revision and advances to the next missing stage. Revisiting an earlier stage creates a revision rather than overwriting history.
+
+At visual/audio production, the default card shows the small-proof sequence and whether worker setup is protected, existing media needs review, or a job needs attention. Opening setup or an estimate does not rent a GPU. Cost approval and worker start remain separate.
+
+### Detailed setup (optional)
+
+**Use detailed setup instead** opens the original six-screen wizard for creators who want to define every initial field before AI planning.
 
 ### Screen 1: What are you making?
 
@@ -172,15 +210,23 @@ Version 0.8.0 implements this pattern for declarative JSON writing skills. `Inst
 
 ### Project-aware help beside creative fields
 
-Version 0.10 reuses the Creative Room's governed path as a modal assistant beside creative-direction, cast/world, storyboard, generation, edit/sound, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text groups:
+Version 0.10.1 reuses the Creative Room's governed path as a compact modal assistant beside creative-direction, cast/world, storyboard, generation, edit/sound, thumbnail, release-profile, Idea Library, metadata, and evidence-analysis text groups:
 
-1. Choose the field and describe the kind of help wanted.
-2. Review the connected controlled provider/model, exact project context, and matching required/optional skills.
-3. Tick one potentially paid text-request confirmation; no GPU starts.
-4. Review the saved proposal and deliberately choose a summary or alternative to place in the unsaved field.
-5. Edit and save through the field's normal validation and approval boundary.
+1. Choose the field when more than one applies, then describe the wanted result in one text box.
+2. The saved controlled provider/model is selected automatically and summarized in plain language; changing it remains a Settings action.
+3. **What will be shared** contains the selected provider/model, a friendly context summary, matching skills, and a nested exact-text preview without forcing raw canon into the main surface.
+4. The **Generate suggestion** or **Explain this decision** button is the explicit approval for one potentially billed text request and states that no GPU starts. There is no second checkbox for the same request.
+5. While waiting, the same surface explains that long context can take a few minutes. A completed result replaces the request form, with the best answer first and details/alternatives collapsed.
+6. The creator deliberately chooses the best answer or an alternative to place in the unsaved field, then edits and saves through the field's normal validation and approval boundary.
 
 The assistant never auto-saves and cannot write secrets, cost limits, measured metrics, exact reference transcripts, canon, approvals, rights/consent, made-for-kids/synthetic/truth/originality/full-watch decisions, GPU starts, or publishing. A human-only target may ask the model to explain considerations but exposes no **Use** action.
+
+### Writing-request timing and recovery
+
+- Provider model-list/connection checks remain bounded to 30 seconds so setup failures return promptly.
+- Confirmed structured writing requests use a separate five-minute ceiling because project context, schema-constrained output, and model reasoning can legitimately take longer than a connection check.
+- Short Gemini field suggestions request low thinking; longer production stages request medium thinking. Both remain schema-validated proposals.
+- A timeout saves no proposal and changes no local field or canon. The creator can retry the unchanged request; the app does not hide an automatic paid retry.
 
 ### Changing a character's visual style
 
@@ -325,7 +371,7 @@ The normal flow is:
 6. Select **Lock upload package**. The studio writes an immutable, hash-verified folder with the master, selected thumbnail, captions, copy-ready details, chapters, credits/rights, attestations, QC report, checklist, and manifests.
 7. Select **Open package folder** and follow the plain-language YouTube Studio checklist. Version 1 does not sign in, paste fields, schedule, or publish for the creator.
 
-After publication, the creator may enter the video ID and a structured metric window copied from an official source, or label a rehearsal. Missing values stay null with warnings and rehearsal is excluded from baselines. The creator can propose an observation/inference/recommendation citing selected snapshots and explicitly approve or reject it with a reason. Report-file parsing and a later optional read-only connection remain future work. Lessons are not applied automatically and cannot rewrite a released episode, change YouTube, or start paid generation.
+After publication, the creator may enter the video ID and a structured metric window copied from an official source, import and select a checked row from a YouTube Analytics CSV, or label a rehearsal. The report path displays only its safe filename and row choices; the trusted process retains its hash without exposing a local path. Missing values stay null with warnings and rehearsal is excluded from baselines. The creator can propose an observation/inference/recommendation citing selected snapshots and explicitly approve or reject it with a reason. A later optional read-only connection remains future work. Lessons are not applied automatically and cannot rewrite a released episode, change YouTube, or start paid generation.
 
 ## 11. Error language
 
