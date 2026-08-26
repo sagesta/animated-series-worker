@@ -215,6 +215,84 @@ describe('locked workflow registry', () => {
     expect(motion.prompt['27']).toMatchObject({ class_type: 'SaveVideo' })
   })
 
+  it('ltx2-image-to-video-final rounds generation up to an LTX-valid frame count and trims to the requested duration', () => {
+    const registry = new WorkflowRegistry(
+      resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')
+    )
+    const framesPerSecond = 12
+    const expectedGenerationFrames = new Map([
+      [1, 17],
+      [2, 25],
+      [4, 49]
+    ])
+
+    for (const durationSeconds of [1, 2, 4]) {
+      const compiled = registry.compile(
+        'ltx2-image-to-video-final',
+        '1.0.1',
+        {
+          motionPrompt: 'The approved character makes one small, continuous movement.',
+          durationSeconds,
+          seed: 42,
+          framesPerSecond
+        },
+        { allowCandidate: true }
+      )
+      const nodes = Object.values(compiled.prompt) as Array<{
+        class_type?: string
+        inputs?: Record<string, unknown>
+      }>
+      const generationFrameNode = nodes.find(
+        (node) =>
+          node.class_type === 'ComfyMathExpression' &&
+          node.inputs?.expression === 'ceil((ceil(a * b) - 1) / 8) * 8 + 1'
+      )
+      const videoNode = nodes.find((node) => node.class_type === 'CreateVideo')
+      const sliceNode = nodes.find((node) => node.class_type === 'Video Slice')
+      const saveNode = nodes.find((node) => node.class_type === 'SaveVideo')
+
+      expect(generationFrameNode).toMatchObject({
+        inputs: {
+          'values.a': durationSeconds,
+          'values.b': framesPerSecond
+        }
+      })
+      expect(sliceNode).toMatchObject({
+        inputs: {
+          video: expect.any(Array),
+          start_time: 0,
+          duration: durationSeconds,
+          strict_duration: true
+        }
+      })
+      expect(sliceNode?.inputs?.video).toEqual(
+        expect.arrayContaining([
+          Object.entries(compiled.prompt).find(([, node]) => node === videoNode)?.[0],
+          0
+        ])
+      )
+      expect(saveNode?.inputs?.video).toEqual(
+        expect.arrayContaining([
+          Object.entries(compiled.prompt).find(([, node]) => node === sliceNode)?.[0],
+          0
+        ])
+      )
+
+      const requestedFrames = Math.ceil(durationSeconds * framesPerSecond)
+      const generationFrames = Math.ceil((requestedFrames - 1) / 8) * 8 + 1
+      expect({ durationSeconds, requestedFrames, generationFrames }).toEqual({
+        durationSeconds,
+        requestedFrames,
+        generationFrames: expectedGenerationFrames.get(durationSeconds)
+      })
+      expect((generationFrames - 1) % 8).toBe(0)
+      expect(generationFrames).toBeGreaterThanOrEqual(requestedFrames)
+      expect(Math.abs(requestedFrames / framesPerSecond - durationSeconds)).toBeLessThanOrEqual(
+        1 / framesPerSecond
+      )
+    }
+  })
+
   it('compiles the advanced A2V and control graphs without prompt-network nodes', () => {
     const registry = new WorkflowRegistry(
       resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')

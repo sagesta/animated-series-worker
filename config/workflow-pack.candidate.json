@@ -401,7 +401,7 @@
     },
     {
       "workflowId": "ltx2-image-to-video-final",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "label": "LTX final image-to-video take",
       "jobKind": "ltx-video-final",
       "engine": "comfyui",
@@ -411,7 +411,7 @@
       "maximumRuntimeMinutes": 60,
       "outputKind": "video",
       "templatePath": "workflows/candidate/ltx2-image-to-video-final.api.json",
-      "templateSha256": "ad1fc609c0dbb4620d5a6bd4a49e7051ec6ee56eb3ce01e202033ac909d4af13",
+      "templateSha256": "8c8350f0bccedc3b845cdf0a6f80a1adc8e1d0f5c2592a298fa506596b40c1a5",
       "allowedNodeTypes": [
         "CLIPLoader",
         "CLIPTextEncode",
@@ -437,7 +437,8 @@
         "SaveVideo",
         "UNETLoader",
         "VAEDecodeTiled",
-        "VAELoader"
+        "VAELoader",
+        "Video Slice"
       ],
       "requiredModels": [
         {
@@ -506,7 +507,8 @@
         }
       ],
       "notes": [
-        "Final profile remains a candidate take until human approval."
+        "Final profile remains a candidate take until human approval.",
+        "LTX temporal latents decode to 8n+1 frames; generation rounds up to that boundary, then strictly trims assembled audio/video to the requested duration."
       ]
     },
     {
