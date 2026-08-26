@@ -437,6 +437,7 @@ async function recoverQualification() {
 
 async function terminate(reason = 'operator-request') {
   const state = await readJson(STATE_PATH)
+  if (state.controllerStatus === 'terminated') return state
   const context = await protectedContext()
   const pods = await listPods(context.apiKey)
   const pod = pods.find((candidate) => candidate.id === state.pod.id)

@@ -19,6 +19,10 @@ const promotionScript = readFileSync(
   resolve(projectRoot, 'scripts', 'Promote-GpuWorker.mjs'),
   'utf8'
 )
+const liveQualificationController = readFileSync(
+  resolve(projectRoot, 'scripts', 'Run-LiveGpuQualification.cjs'),
+  'utf8'
+)
 const qualificationTemplate = JSON.parse(
   readFileSync(resolve(projectRoot, 'config', 'gpu-qualification-evidence.template.json'), 'utf8')
 )
@@ -120,6 +124,9 @@ describe('GPU worker release configuration', () => {
     expect(gateway).toContain('fetch(`${comfyBaseUrl}/free`')
     expect(gateway).toContain('unload_models: true, free_memory: true')
     expect(gateway).toContain("stdio: ['ignore', 'ignore', 'pipe']")
+    expect(liveQualificationController).toContain(
+      "if (state.controllerStatus === 'terminated') return state"
+    )
   })
 
   it('locks the procedural foley contract to the candidate pack and worker runner', () => {
