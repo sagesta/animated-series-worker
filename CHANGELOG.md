@@ -4,6 +4,20 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Fixed — 2026-08-26 (LTX-2.5 final-duration rounding)
+
+- Traced the live 0.75-second result to the pinned `EmptyLTXVLatentVideo` temporal mapping: the old graph requested 13 frames for 1 second at 12 fps, which became two latent frames and decoded to only nine frames.
+- Versioned `ltx2-image-to-video-final` from `1.0.0` to `1.0.1`. The graph now rounds generation up to the next valid `8n+1` decoded-frame boundary, assembles audio/video, and strictly slices the result to the independently bound requested duration before saving. The draft graph and its hash remain unchanged.
+- Added a regression test covering 1, 2, and 4 seconds at 12 fps. It requires valid generation plans of 17, 25, and 49 frames, exact strict-duration binding, and final output tolerances of at most one frame. This is local structural evidence; produced-file duration still requires the targeted GPU run.
+
+User impact: final LTX requests no longer compile a frame count that the pinned VAE silently rounds down, but production remains locked until targeted GPU probing and the creator's media review pass.
+
+Data/migration impact: no project or database migration. Existing `1.0.0` take manifests remain truthful and unchanged; new jobs must use the separately versioned `1.0.1` graph after it is packaged and qualified.
+
+Documentation impact: synchronized the media pipeline, production implementation, test plan, traceability, and changelog. `STATUS.md` and the build backlog remain owned by the targeted requalification record so they cannot claim a live pass prematurely.
+
+Rollback: restore final workflow `1.0.0` and its prior template hash only for non-production diagnosis if the targeted qualification fails; do not relabel or overwrite any historical artifact, pack, or receipt.
+
 ### Changed — 2026-08-26 (controlled L40S core qualification)
 
 - Published candidate `0.10.1-candidate.5` as `ghcr.io/sagesta/animated-series-worker@sha256:3b1142ede47d387a890b36e7e5e0ae212c3f2304387e128f4f7991ad5c33b0e9` by rebasing the already-published parent with a small linked layer. Protected GitHub OIDC run `32994632107` verified config `sha256:9dc427e506059a685b7b5f588ab0b02161bd87c4fcc080301a21e117b8f3dcb1`, signed the exact digest, and verified the canonical workflow identity.

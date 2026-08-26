@@ -171,7 +171,8 @@ Dialogue text is not used as a substitute for the approved audio file. For A2V, 
 ### Duration and shot boundaries
 
 - Canonical duration is frames at project frame rate.
-- Engine-supported frame counts may require snapping. The adapter reports the difference before generation and the editor reconciles it explicitly.
+- The final LTX-2.5 graph converts requested seconds to `ceil(seconds × fps)` output frames. Because the pinned LTX video VAE represents temporal lengths as `8n+1` decoded frames, it rounds generation up to the next valid `8n+1` boundary, assembles video and audio, then uses the pinned core `Video Slice` node with strict duration checking to trim the result to the independently bound requested seconds. The graph fails instead of returning an undersized clip when that duration cannot be satisfied.
+- Version `1.0.1` applies this rule only to `ltx2-image-to-video-final`. The previously exercised draft graph and all historical `1.0.0` manifests remain unchanged. Any future engine-supported snapping must still be visible in the compiled manifest and reconciled explicitly rather than silently shortening the requested shot.
 - Prefer several intentional shots over asking one generation to perform a complicated long scene.
 - Native multi-shot may be used only after the pilot proves identity, timing, and editorial control for the selected style.
 

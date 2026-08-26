@@ -46,7 +46,7 @@
   "11": {
     "class_type": "ComfyMathExpression",
     "inputs": {
-      "expression": "a * b + 1",
+      "expression": "ceil((ceil(a * b) - 1) / 8) * 8 + 1",
       "values.a": "$PARAM:durationSeconds",
       "values.b": "$PARAM:framesPerSecond"
     }
@@ -176,10 +176,19 @@
   "37": {
     "class_type": "SaveVideo",
     "inputs": {
-      "video": ["36", 0],
+      "video": ["38", 0],
       "filename_prefix": "animated-series/ltx-final",
       "format": "auto",
       "format.codec": "auto"
+    }
+  },
+  "38": {
+    "class_type": "Video Slice",
+    "inputs": {
+      "video": ["36", 0],
+      "start_time": 0,
+      "duration": "$PARAM:durationSeconds",
+      "strict_duration": true
     }
   }
 }
