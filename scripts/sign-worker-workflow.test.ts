@@ -16,10 +16,12 @@ describe('GPU worker signing workflow', () => {
     expect(workflow).toContain('permissions: {}')
   })
 
-  it('has only the permissions needed for GHCR keyless signing', () => {
+  it('has only the GitHub permissions needed for keyless signing', () => {
     expect(workflow).toContain('contents: read')
     expect(workflow).toContain('id-token: write')
-    expect(workflow).toContain('packages: write')
+    expect(workflow).not.toContain('packages: write')
+    expect(workflow).toContain('password: ${{ secrets.GHCR_SIGNING_TOKEN }}')
+    expect(workflow).not.toContain('password: ${{ secrets.GITHUB_TOKEN }}')
   })
 
   it('pins the package, actions, Cosign release, and canonical OIDC identity', () => {

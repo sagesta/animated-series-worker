@@ -30,7 +30,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-      packages: write
     env:
       IMAGE_NAME: ghcr.io/sagesta/animated-series-worker
       IMAGE_DIGEST: ${{ inputs.image_digest }}
@@ -60,8 +59,8 @@ jobs:
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: sagesta
+          password: ${{ secrets.GHCR_SIGNING_TOKEN }}
 
       - name: Verify published manifest and config identity
         shell: bash
