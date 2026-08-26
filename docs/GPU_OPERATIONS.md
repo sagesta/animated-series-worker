@@ -1,6 +1,6 @@
 # Automatic cloud GPU operations
 
-Current implementation note (0.10.1): official RunPod REST lifecycle, lease reconciliation, one-GPU job orchestration, cost/start approvals, authenticated gateway, loopback ComfyUI, preflight, watchdog, resumable transfers, purge/termination, candidate qualification, and atomic promotion are implemented. No live Pod qualification was performed on this development machine. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): official RunPod REST lifecycle, lease reconciliation, one-GPU job orchestration, cost/start approvals, authenticated gateway, loopback ComfyUI, preflight, watchdog, resumable transfers, purge/termination, candidate qualification, and atomic core-profile promotion are implemented. No live Pod qualification was performed on this development machine. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. User-facing promise
 
@@ -54,11 +54,15 @@ The versioned image contains:
 - Worker gateway and watchdog.
 - ComfyUI and pinned custom nodes.
 - LTX/Qwen runtime dependencies.
-- Pinned control preprocessors, advanced LTX adapters, creative-QC helpers, and any benchmark-approved audio-effects/adaptation dependencies.
+- Core creative-QC helpers and the dependencies required by the qualified normal-generation workflows.
 - FFmpeg/ffprobe and QC tools.
 - Workflow pack and capability manifest.
 
 Large model weights should normally live on the network volume so a worker image update does not duplicate them. The image is pinned by digest.
+
+After publication and pull-by-digest verification, canonical signing uses the manual main-only `sign-worker-image.yml` workflow. The protected `worker-signing` job checks both the immutable manifest digest and local config/image digest, signs only `ghcr.io/sagesta/animated-series-worker`, and verifies the result against the exact GitHub workflow OIDC identity recorded in [SECURITY_AND_RECOVERY.md](SECURITY_AND_RECOVERY.md). Signing neither deploys the image nor unlocks RunPod; model, license, compatible-GPU, recovery, shutdown, quality, and readiness evidence remain separate gates.
+
+The optional LTX trainer and other separately qualified advanced-profile dependencies are not installed in the core image. They require their own immutable image, template, digest, capability report, evidence receipt, and rollback path. Selecting another registry does not remove this packaging requirement.
 
 ### Safety test
 
@@ -67,7 +71,7 @@ The setup finishes only after it proves:
 - A compatible worker can be created.
 - Gateway authentication and capability checks succeed.
 - A tiny smoke job returns and verifies locally.
-- Every control/audio/adaptation capability declares and passes its own smoke fixture; the atomic version-1 promotion is refused while any required core or advanced capability is unavailable.
+- Every core capability declares and passes its own smoke fixture before the core profile can promote. Advanced control/audio/adaptation candidates remain unavailable until their separate profile passes equivalent evidence; they do not block an otherwise complete core release.
 - The remote watchdog has the correct hard deadline.
 - Temporary project data can be purged.
 - Provider termination returns a receipt and later reconciliation confirms no active worker.

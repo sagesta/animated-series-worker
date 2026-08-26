@@ -33,7 +33,7 @@ Verified full backup/non-overwriting restore, SQLite integrity, file inventories
 | Duplicate worker after timeout | Idempotency tags and provider reconciliation |
 | Malicious/invalid workflow | Signed allowlisted workflow hash and worker capability check |
 | Runtime “install missing nodes” or model/package update | Manager/install routes disabled; immutable worker image and allowlisted cache hashes |
-| Poisoned adaptation dataset or cross-project LoRA | Project-scoped rights-approved dataset manifest, isolated paths/tokens, candidate benchmark and explicit promotion |
+| Poisoned adaptation dataset, cross-project LoRA, or trainer exposed to normal jobs | Project-scoped rights-approved dataset manifest, isolated paths/tokens, candidate benchmark, separate immutable adaptation image/profile, and explicit promotion |
 | Assistive QC changes approval | Contract has no approval authority; authorization tests deny creative state mutation |
 | Path traversal or project crossover | Project-scoped roots/tokens, normalized paths, isolation tests |
 | Untrusted upstream/model update | Pins, checksums, source/license review, sandboxed tests, rollback |
@@ -91,9 +91,20 @@ For each worker release:
 - Sign the worker image and capability manifest.
 - Run GPU smoke and contract tests before promotion.
 - Keep the previous production image available for rollback.
-- Treat control preprocessors, creative-QC models, speech verifiers, audio-effects adapters, and adaptation trainers as separately allowlisted capability classes with exact hashes and least-privilege inputs.
+- Treat control preprocessors, creative-QC models, speech verifiers, audio-effects adapters, and adaptation trainers as separately allowlisted capability classes with exact hashes and least-privilege inputs. Do not place the optional trainer in the core image or install it at runtime.
 
 An upstream or model Git branch name such as `main` is not a production pin.
+
+### Canonical worker signing policy
+
+The accepted canonical signer is the manual `.github/workflows/sign-worker-image.yml` workflow running from `refs/heads/main`. It uses GitHub OIDC rather than a stored private key and is verified against this exact identity pair:
+
+- certificate identity: `https://github.com/sagesta/animated-series-worker/.github/workflows/sign-worker-image.yml@refs/heads/main`;
+- certificate issuer: `https://token.actions.githubusercontent.com`.
+
+The job is bound to the `worker-signing` GitHub environment and receives only `contents: read`, `id-token: write`, and `packages: write`. Before activation, that environment must be configured with the repository's available approval/protection rules. The workflow is manual-only and main-only, fixes the package to `ghcr.io/sagesta/animated-series-worker`, accepts only strict SHA-256 manifest/config inputs, checks the published config digest before signing, uses commit-pinned installer/login actions, and verifies the resulting signature against the exact workflow identity before succeeding. It does not build, deploy, start a provider, or accept a mutable tag.
+
+The personal Google-backed keyless signature on candidate `.3` is retained as valid immutable evidence, but it is not the canonical production signer. Activation requires publishing the reviewed workflow to `main`, protecting the `worker-signing` environment, dispatching it with the already verified manifest/config digest pair, and retaining its run URL, signature referrer digest, and exact-identity verification output. A failed or mismatched run does not remove the existing image or signature; it leaves promotion locked and can be retried after correction.
 
 ### External skill controls
 

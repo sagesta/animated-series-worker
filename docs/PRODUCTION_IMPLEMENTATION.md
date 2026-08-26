@@ -94,7 +94,9 @@ RunPod can still charge for retained persistent storage after compute stops. A P
 
 ## 6. Worker image and automatic setup
 
-`worker/Dockerfile` pins ComfyUI, the LTX custom nodes, Qwen3-TTS, LatentSync, and the official LTX trainer source commits. It pins Kornia 0.8.2 because the exact LTX node revision imports an API removed by 0.8.3, Transformers 5.14.1 because LTX excludes the regressed 5.15 line, and a Python 3.10 LatentSync environment because the pinned upstream setup declares 3.10.13 and its MediaPipe pin has no Python 3.12 wheel. Qwen3-TTS, LatentSync, and the trainer use separate environments so their dependencies cannot silently rewrite ComfyUI's runtime; the image also verifies Qwen's required `sox` executable and common codecs. Runtime dependencies are built into the image; the worker never installs custom nodes or accepts arbitrary commands during a job.
+`worker/Dockerfile` is the normal core-generation image. It pins ComfyUI, the LTX custom nodes, Qwen3-TTS, and LatentSync, but deliberately excludes the optional LTX adaptation trainer. It pins Kornia 0.8.2 because the exact LTX node revision imports an API removed by 0.8.3, Transformers 5.14.1 because LTX excludes the regressed 5.15 line, and a Python 3.10 LatentSync environment because the pinned upstream setup declares 3.10.13 and its MediaPipe pin has no Python 3.12 wheel. Qwen3-TTS and LatentSync use separate environments so their dependencies cannot silently rewrite ComfyUI's runtime; the image also verifies Qwen's required `sox` executable and common codecs. Runtime dependencies are built into the image; the worker never installs custom nodes or accepts arbitrary commands during a job.
+
+Optional adaptation is a separate worker profile, not a repair performed on the core worker. The candidate contract and exact trainer pin remain recorded, but adaptation cannot enter a production pack until a separately built trainer image has its own digest and passes the full training/license/driver/quality/cost/rollback evidence set. The core promotion filters every `advanced` candidate out of the production pack, so native-audio/control/foley/adaptation work stays visibly locked without blocking the first image/voice/video/lip-repair release.
 
 The model installer reads only `config/model-install-manifest.*.json`. Each entry contains an allowlisted Hugging Face repository, immutable revision, source path, destination, license URL, and production hash. It rejects absolute/traversal destinations and undeclared repositories.
 
@@ -108,11 +110,11 @@ The ordinary creator does not set up the GPU every episode. A maintainer builds 
 
 ComfyUI is the execution engine, not the review interface. A production Comfy workflow must be an API-format prompt stored under `config/workflows`, have a SHA-256 in the production pack, and use only reviewed node types. The importer refuses UI-format/unsafe workflow content and records its exact node inventory.
 
-The candidate pack contains reviewed, hash-locked API graphs for Qwen character/storyboard frames, Qwen targeted edits, an LTX single-stage draft, an LTX two-stage final, native LTX audio-driven dialogue, control-guided Qwen, and control-guided LTX. Rights-aware foley and project adaptation have exact hash-locked runner contracts. All are structurally checked but remain non-billable candidates until the declared model files, GPU runtime, output quality, cost, rights, and shutdown evidence pass. Promotion is atomic across every core, advanced, and local-finishing entry: missing advanced evidence blocks the whole pack rather than silently producing a core-only release.
+The candidate pack contains reviewed, hash-locked API graphs for Qwen character/storyboard frames, Qwen targeted edits, an LTX single-stage draft, an LTX two-stage final, native LTX audio-driven dialogue, control-guided Qwen, and control-guided LTX. Rights-aware foley and project adaptation have exact hash-locked runner contracts. All are structurally checked and non-billable. Core promotion is atomic across every core and local-finishing entry and includes only the models those workflows reference. Advanced entries remain candidate-only until a separately packaged profile passes its own declared model, GPU runtime, output quality, cost, rights, security, recovery, and shutdown evidence.
 
 At worker startup, preflight verifies GPU/VRAM, disk, ComfyUI commit, installed nodes, model hashes, workflow hashes, the normalized workflow-pack fingerprint, image digest, and a tiny loopback smoke workflow. The desktop repeats qualification against the selected workflow before uploading inputs.
 
-Local verification on 2026-08-25 built candidate `0.10.1-candidate.2` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. That evidence does not provide a registry digest/signature, any model hash, a compatible 18–80 GB benchmark, media quality, provider lifecycle, cost, or production promotion.
+Local verification on 2026-08-25 built the smaller core candidate `0.10.1-candidate.3` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. On 2026-08-26 that exact image was published, pulled by immutable digest, keyless-signed with Sigstore, and signature-verified. D-053 now defines and locally tests the canonical GitHub OIDC workflow identity, but that workflow/environment has not been published, protected, or executed on GitHub. This evidence still does not provide any model hash, a compatible 18–80 GB benchmark, media quality, provider lifecycle, cost, or production promotion.
 
 The gateway accepts only a registered workflow/version and its declared parameters. `$PARAM:<key>` and `$INPUT:<index>` are the only template placeholders. Uploaded assets are size/hash checked, copied into a lease/job namespace under the Comfy input directory, and removed during purge. Outputs are copied into the job workspace and hashed before download.
 
@@ -126,7 +128,7 @@ The repository ships candidate pins, not fabricated production evidence. These n
 node scripts\Import-ComfyWorkflow.mjs --workflow-id <id> --input <api-workflow.json>
 ```
 
-The controlled run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. Qualification runs every required image, edit, voice, line-book, draft/final/native-audio/control motion, animated lip-sync, creative-QC, foley, adaptation, local-finishing, compatibility, security, resumable-transfer, reconciliation, shutdown, and cost test. Because the current controlled-shot and adaptation candidates declare 80 GB, the atomic run requires an 80 GB compatible GPU and the CUDA 13.2 trainer path requires an R595-or-newer NVIDIA driver.
+The controlled core run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. Core qualification runs every required image, edit, voice, line-book, draft/final, animated lip-sync, creative-QC, local-finishing, security, resumable-transfer, reconciliation, shutdown, and cost test. Its current maximum declared workflow requirement is 48 GB. Native-audio/control/foley/adaptation tests and the trainer's 80 GB/R595 compatibility proof belong to later profile-specific qualification and cannot be represented by the core receipt.
 
 Promotion requires three external artifacts:
 
@@ -143,7 +145,7 @@ node scripts\Promote-GpuWorker.mjs `
   --evidence <qualification-evidence.json>
 ```
 
-The promotion tool refuses stale pack fingerprints, model/source mismatches, null hashes, missing templates, unreviewed nodes, insufficient VRAM, missing licenses, failed tests, missing shutdown proof, or mismatched image digests. It atomically creates the production workflow pack, model manifest, and readiness receipt. It will not overwrite an earlier release.
+The promotion tool refuses stale pack fingerprints, core model/source mismatches, null hashes, missing templates, unreviewed nodes, insufficient core VRAM, missing licenses, failed core tests, missing shutdown proof, or mismatched image digests. It atomically creates the core production workflow pack, core-only model manifest, and readiness receipt. Advanced candidates are omitted rather than marked qualified, and the tool will not overwrite an earlier release.
 
 ## 9. Recovery and cost controls
 
@@ -167,7 +169,7 @@ Title and description validation uses current YouTube field limits. The package 
 
 The following are deliberately not claimed complete on this development machine:
 
-- the candidate Docker image exists locally and passed model-free preflight, but it has not been pushed by immutable registry digest, signed, or run with the declared production models;
+- the candidate Docker image passed local model-free preflight and was published, pulled, keyless-signed, and signature-verified by immutable registry digest; the canonical GitHub OIDC policy/workflow is implemented and locally tested but not yet activated through a protected GitHub environment, and the image has not run with the declared production models;
 - the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
 - model hashes and commercial-use license decisions have not been recorded;
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;

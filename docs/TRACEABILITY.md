@@ -10,7 +10,7 @@ This matrix prevents requirements from becoming disconnected from architecture, 
 | FR-011–FR-023, FR-049–FR-051 | Media store, identity/edit/voice/video job contracts, approved-input lineage, local media protocol, viewing and approval are implemented | Exact remote workflow/model qualification and season-scale continuity |
 | FR-024–FR-034 | RunPod lifecycle, lease/idempotency/cost gates, worker gateway, preflight/watchdog, transfers, review and local finishing are implemented | Real Pod, model, Comfy, shutdown, recovery, concurrency, and long-form proof |
 | FR-035–FR-042 | Multi-project local control, deterministic timeline, captions, technical checks and release packaging are implemented | Clean-machine full-production acceptance and signed installer |
-| FR-052–FR-058 | Timed local storyboard/timeline/QC; control/layer/dataset roles; strict ordered control manifests; hash-locked control graphs; exact foley runner; rights-reviewed dataset builder; official isolated LTX trainer candidate; and an atomic all-tier promotion gate are implemented | Typed control-pack/layer authoring depth, live external compatibility/quality/cost, adaptation promotion/rollback, and AT-042–AT-049 fixtures |
+| FR-052–FR-058 | Timed local storyboard/timeline/QC; control/layer/dataset roles; strict ordered control manifests; hash-locked control graphs; exact foley runner; rights-reviewed dataset builder; pinned LTX trainer contract; and independent atomic core promotion are implemented | Separate advanced/adaptation image packaging, typed control-pack/layer authoring depth, live external compatibility/quality/cost, adaptation promotion/rollback, and AT-042–AT-049 fixtures |
 | FR-059–FR-066 | Local release-profile revisions, Idea Library, release details, thumbnail, human attestations, immutable package, bounded official-report CSV parsing/provenance, structured snapshots, and reviewed learning proposals are implemented | Profile sharing/research signals, optional read-only OAuth decision, real evidence/master proof, full AT-050–AT-058 |
 | NFR-001–NFR-023 | Local boundaries, schemas, vaults, isolation, async jobs, progressive disclosure, documentation, qualification locks and human authority are implemented where applicable | Named external security, provider, quality, accessibility, signing, and clean-machine evidence |
 
@@ -46,7 +46,7 @@ Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODU
 | FR-055 | `MEDIA_PIPELINE.md` advanced LTX profiles, `ARCHITECTURE.md` compatibility model | engine-ltx, workflow registry, benchmark store | AT-020, AT-045, AT-049 |
 | FR-056 | `ARCHITECTURE.md` creative QC, `MEDIA_PIPELINE.md` assistive checks, `API_CONTRACTS.md` artifact contract | creative-qc, media probes, speech verifier, review UI | AT-046 |
 | FR-057 | `MEDIA_PIPELINE.md` ambience/effects/foley, `DOMAIN_MODEL.md` audio-effects cue | engine-audio-fx, rights registry, timeline/mix | AT-047 |
-| FR-058 | `MEDIA_PIPELINE.md` optional adaptation, `DOMAIN_MODEL.md` adaptation profile, `SECURITY_AND_RECOVERY.md` dataset controls | adaptation, benchmark store, project store | AT-048, AT-049 |
+| FR-058 | `MEDIA_PIPELINE.md` optional adaptation, `DOMAIN_MODEL.md` adaptation profile, `SECURITY_AND_RECOVERY.md` dataset controls, D-052 profile separation | adaptation, benchmark store, project store, future adaptation worker image | AT-048, AT-049 |
 | FR-059 | `YOUTUBE_RELEASE_WORKFLOW.md` release profile/Idea Library, `DOMAIN_MODEL.md`, `UX_SPEC.md` | release-profile store, idea library, research adapters | AT-050 |
 | FR-060 | `YOUTUBE_RELEASE_WORKFLOW.md` Thumbnail Room, `UX_SPEC.md`, `MEDIA_PIPELINE.md` | thumbnail compositor, image adapter, responsive preview, release validator | AT-051, AT-052 |
 | FR-061 | `YOUTUBE_RELEASE_WORKFLOW.md` Release Details, `API_CONTRACTS.md`, `PRODUCTION_WORKFLOW.md` | release-details editor, chapter/metadata validator | AT-053 |
@@ -67,7 +67,7 @@ Detailed component and gate mappings are in [PRODUCTION_IMPLEMENTATION.md](PRODU
 | NFR-002 | `CHANGE_CONTROL.md`, `UX_SPEC.md` impact/spend previews | domain, orchestrator, UI | AT-003, AT-008, AT-018, AT-028 |
 | NFR-003 | `ARCHITECTURE.md` §12 and writing-provider timing, `SECURITY_AND_RECOVERY.md` | durable queues, reconciliation, backup, separate connection/draft timeouts | AT-004, AT-014–AT-016, AT-030, AT-061 |
 | NFR-004 | `DOMAIN_MODEL.md`, `API_CONTRACTS.md` artifact/manifest | project store, engines, worker | AT-020, AT-022, AT-025 |
-| NFR-005 | `SECURITY_AND_RECOVERY.md` §3–5 | credential vault, gateway, signed image | security suite, AT-013, AT-015 |
+| NFR-005 | `SECURITY_AND_RECOVERY.md` §3–5, D-053 canonical worker signing policy | credential vault, gateway, signed image, manual GitHub OIDC signing workflow | security suite, worker-signing workflow tests, external protected-environment/OIDC run, AT-013, AT-015 |
 | NFR-006 | `ARCHITECTURE.md` trust boundaries, `SECURITY_AND_RECOVERY.md` | project isolation, purge, scoped tokens | AT-002, AT-031, security suite |
 | NFR-007 | `DOMAIN_MODEL.md` §6–9, backup design | project store, export/rebuild | AT-001, AT-030 |
 | NFR-008 | `ARCHITECTURE.md` component boundaries, `API_CONTRACTS.md` | adapters and contracts | AT-005, AT-008, AT-020 |

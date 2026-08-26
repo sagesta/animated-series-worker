@@ -1,6 +1,6 @@
 # Master build and proof backlog
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 Current source version: 0.10.1
 
@@ -31,7 +31,8 @@ Writing code never manufactures model quality, license permission, provider shut
 | UP-001/UP-002 | Implemented | Pinned upstream validation, import preview, normalized candidate acceptance | Representative long-form external fixture acceptance |
 | CONT-001 | Implemented | Versioned canon, active/superseded records, media parentage/dependencies/stale counts | Season-scale continuity drill |
 | VIEW-001 | Implemented | Local image/audio/video viewing, approval/rejection and history | Packaged long-media/accessibility test |
-| WORKER-001 | Implemented | Docker recipe, loopback ComfyUI, authenticated gateway, watchdog, preflight, purge, local candidate build, model-free GPU smoke | Registry digest/signature and compatible model-backed cloud-GPU qualification |
+| WORKER-001 | Implemented, locally smoke-tested, published, keyless-signed, with canonical workflow implemented locally | Core Docker recipe, loopback ComfyUI, authenticated gateway, watchdog, preflight, purge, fail-closed optional-trainer routing, pull/signature-verified immutable digest, and static-tested manual GitHub OIDC signer policy | Publish workflow to `main`, protect `worker-signing`, execute/verify canonical signature, and complete compatible model-backed cloud-GPU qualification |
+| WORKER-002 | Implemented with local build, registry, personal-signature, and canonical-workflow evidence | Core promotion filters advanced workflows/models and no longer requires the adaptation trainer or its 80 GB/R595 gate; local candidate `.3` is 29,285,117,474 bytes, passed model-free smoke, was published/pulled/keyless-signed, and has an exact-identity CI signer ready for activation | Canonical protected-environment signing run and 48 GB model-backed qualification |
 | CLOUD-001 | Implemented | RunPod REST lifecycle, lease reconciliation, price/limit checks, one worker per job | Real Pod lifecycle and provider-cost receipt |
 | COMFY-001 | Implemented | Candidate/qualified registry, seven imported hash-locked API graphs, two runner contracts, and node/model/parameter allowlists | Compatible model-backed live benchmark |
 | COMFY-002 | Implemented | Image/pack/GPU/VRAM/disk/runtime/node/model/workflow fingerprint preflight with a passing local model-free receipt | Compatible model-backed capability receipt with complete hashes |
@@ -55,9 +56,9 @@ Writing code never manufactures model quality, license permission, provider shut
 | --- | --- | --- | --- | --- |
 | 1 | COMFY-WF-QUAL | Release-blocked | Execute the seven imported/hash-locked Qwen/LTX API graphs and two exact advanced runner contracts against their pinned runtime | Controlled receipts prove templates, hashes, node allowlists, outputs, and no unsafe nodes |
 | 2 | MODEL-LIC-QUAL | Release-blocked | Review every model and transitive license for intended commercial YouTube use | Named, dated accepted decisions; no inferred permission |
-| 3 | WORKER-BUILD-QUAL | Release-blocked | Publish the locally built/smoked candidate image to the approved private registry and sign it | Immutable registry digest, signature, reproducible build log, and pull verification |
+| 3 | WORKER-BUILD-QUAL | Release-blocked | Publish the reviewed D-053 workflow to `main`, configure protection on `worker-signing`, dispatch it with the verified manifest/config digest pair, and retain its run/referrer/verification evidence | Canonical GitHub OIDC signature matching the exact workflow identity plus reproducible build log tied to image `sha256:875eea3747e89369df5f375aa600bf6de634950c988a82494a2671c0e643603e`; the personal signature is valid but non-canonical |
 | 4 | MODEL-HASH-QUAL | Release-blocked | Run pinned bootstrap on controlled persistent storage | Complete `studio-model-qualification.json` |
-| 5 | GPU-CAP-QUAL | Release-blocked | Repeat preflight with all approved models on an allowed 80 GB GPU and R595-or-newer driver | Matching `studio-capability.json`, complete hashes, smoke pass, sufficient VRAM/disk/runtime |
+| 5 | GPU-CAP-QUAL | Release-blocked | Repeat core preflight with all core-approved models on an allowed 48 GB-class GPU | Matching core `studio-capability.json`, complete hashes, smoke pass, sufficient VRAM/disk/runtime |
 | 6 | MEDIA-BENCH-QUAL | Release-blocked | Run image, edit, TTS, LTX and all LatentSync fixtures | Human-reviewed quality/runtime/VRAM evidence for each mandatory test |
 | 7 | SECURITY-RECOVERY-QUAL | Release-blocked | Prove gateway auth, loopback-only Comfy, resume, reconciliation, cancellation and purge | Linked pass evidence with no cross-job/project access |
 | 8 | SHUTDOWN-COST-QUAL | Release-blocked | Prove idle exit, hard deadline, provider termination, and cost ledger | Provider-side termination and billing evidence |
@@ -73,7 +74,7 @@ Writing code never manufactures model quality, license permission, provider shut
 | LAYER-001 | Implemented foundation | Foreground/subject/background and region-mask media roles can be imported, reviewed, lineage-tracked, and planned with AI assistance | Dedicated non-destructive separation authoring, occlusion/safe-margin recipe and deterministic parallax acceptance AT-044 |
 | LTXADV-001 | Implemented candidate slice | Control-guided LTX-2.5 job definition and neutral manifest boundary | IC-LoRA/reference/multishot/DFR/upsample implementations only after exact compatibility benchmarks |
 | FOLEY-001 | Implemented candidate slice | Separate foley job/output kind, cue-plan assistance, dialogue-preservation parameter, hash-locked contract, and exact model-free procedural runner | Synchronized rights/usefulness/dialogue-preservation fixtures and AT-047 |
-| ADAPT-001 | Implemented candidate slice | Rights/consent-reviewed 4–100-sample dataset builder, ordered asset IDs/hashes, official pinned LTX trainer environment/contract, image-level imports/CLI checks, explicit failed-reference gate, and project scope | Compatible live trainer qualification, evaluation/promotion/rollback lifecycle, live cost/regression proof AT-048/AT-049 |
+| ADAPT-001 | Implemented candidate contract; separately packaged profile pending | Rights/consent-reviewed 4–100-sample dataset builder, ordered asset IDs/hashes, official pinned LTX trainer contract, explicit failed-reference gate, and project scope; trainer removed from the core image | Build a separate immutable adaptation image only after the reference-only benchmark fails, then complete trainer qualification, evaluation/promotion/rollback, cost/regression proof AT-048/AT-049 |
 | THUMB-ADV-001 | Implemented local foundation | Deterministic thumbnail plus LLM concept/headline planning | Generated illustration candidate qualification and responsive comparison depth |
 | PUBLISH-001 | Planned and intentionally locked | No YouTube mutation surface exists | Separate post-version-1 authorization, OAuth/quota/private-first/duplicate/reconciliation/policy/audit review |
 | SKILL-TOOL-001 | Planned and intentionally locked | Declarative skills remain the only executable request influence | Signatures, sandbox, timeout, local/remote/MCP permission and secret-safety proof |

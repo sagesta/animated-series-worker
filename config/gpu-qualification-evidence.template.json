@@ -15,12 +15,7 @@
     { "testId": "BENCH-TTS-LINE-BOOK", "passed": false, "evidence": "" },
     { "testId": "BENCH-LTX-DRAFT", "passed": false, "evidence": "" },
     { "testId": "BENCH-LTX-FINAL", "passed": false, "evidence": "" },
-    { "testId": "BENCH-LTX-NATIVE-AUDIO", "passed": false, "evidence": "" },
-    { "testId": "BENCH-QWEN-CONTROL", "passed": false, "evidence": "" },
-    { "testId": "BENCH-LTX-CONTROL", "passed": false, "evidence": "" },
     { "testId": "BENCH-CREATIVE-QC", "passed": false, "evidence": "" },
-    { "testId": "BENCH-FOLEY", "passed": false, "evidence": "" },
-    { "testId": "BENCH-ADAPTATION", "passed": false, "evidence": "" },
     { "testId": "BENCH-LIP-CLOSE", "passed": false, "evidence": "" },
     { "testId": "BENCH-LIP-MEDIUM", "passed": false, "evidence": "" },
     { "testId": "BENCH-LIP-PROFILE", "passed": false, "evidence": "" },
@@ -36,11 +31,10 @@
     { "testId": "SHUTDOWN-IDLE", "passed": false, "evidence": "" },
     { "testId": "SHUTDOWN-HARD-DEADLINE", "passed": false, "evidence": "" },
     { "testId": "SHUTDOWN-PROVIDER-TERMINATION", "passed": false, "evidence": "" },
-    { "testId": "COMPAT-TRAINER-CUDA-DRIVER", "passed": false, "evidence": "" },
     { "testId": "LOCAL-FINISHING-SUITE", "passed": false, "evidence": "" },
     { "testId": "COST-RECEIPT", "passed": false, "evidence": "" }
   ],
   "notes": [
-    "This receipt promotes the complete candidate pack atomically. Every core, advanced, local-finishing, compatibility, security, recovery, shutdown, and cost gate must pass."
+    "This receipt promotes only the complete core workflow set. Advanced control, native-audio, foley, and optional adaptation candidates remain locked for separate image and evidence profiles."
   ]
 }

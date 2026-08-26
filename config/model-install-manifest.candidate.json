@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "manifestVersion": "0.10.1-candidate.2",
+  "manifestVersion": "0.10.1-candidate.3",
   "models": [
     { "modelId": "Comfy-Org/Qwen-Image-2512/diffusion-fp8", "mode": "file", "repository": "Comfy-Org/Qwen-Image_ComfyUI", "revision": "7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f", "sourcePath": "split_files/diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors", "destination": "models/diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors", "sha256": null, "licenseReview": "required", "licenseUrl": "https://huggingface.co/Qwen/Qwen-Image-2512" },
     { "modelId": "Comfy-Org/Qwen-Image/text-encoder-fp8", "mode": "file", "repository": "Comfy-Org/Qwen-Image_ComfyUI", "revision": "7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f", "sourcePath": "split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors", "destination": "models/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors", "sha256": null, "licenseReview": "required", "licenseUrl": "https://huggingface.co/Qwen/Qwen-Image-2512" },

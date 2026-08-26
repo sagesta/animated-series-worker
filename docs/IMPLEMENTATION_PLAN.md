@@ -31,7 +31,7 @@ Prerequisites:
 
 1. Reverify the imported API-format Qwen/LTX workflow hashes and reviewed node inventories against the built image.
 2. Complete model/transitive-license review.
-3. Build and push the exact candidate worker image.
+3. Build and smoke the exact core candidate worker image, publish and pull it by immutable digest, then sign and verify it through the protected canonical GitHub OIDC workflow; keep optional advanced/trainer profiles on separate qualification tracks.
 4. Run model bootstrap and retain its hash receipt.
 5. Run preflight and retain the exact capability report.
 6. Execute every mandatory benchmark, security, recovery, shutdown, and cost fixture.

@@ -117,10 +117,10 @@ The existing upstream requirement that each skill remain self-contained is respe
 | Local services | Electron-bundled Node.js/TypeScript | Matches upstream `.mjs` tooling and desktop runtime |
 | Durable index | SQLite through `node:sqlite` | Local transactions without a separately compiled native add-on; canonical files remain portable |
 | Canonical contracts | Runtime Zod now; JSON Schema target | Validates current TypeScript IPC/manifests while preserving a language-neutral worker target |
-| Worker gateway | Node gateway plus isolated Python runtimes | Keeps the authenticated API narrow while pinning ComfyUI/Qwen to the base runtime, LatentSync to upstream-compatible Python 3.10, and the official LTX trainer to its own environment |
+| Worker gateway | Node gateway plus isolated Python runtimes | Keeps the authenticated API narrow while pinning ComfyUI/Qwen to the base runtime and LatentSync to upstream-compatible Python 3.10; the optional LTX trainer belongs to a separately built adaptation profile |
 | Workflow engine | ComfyUI bound to loopback | Versionable graphs and current model integration without exposing its UI publicly |
 | Media processing | FFmpeg/ffprobe | Deterministic assembly, normalization, probing, and export |
-| Worker packaging | Docker image pinned by digest | Repeatable GPU setup with no per-session installation |
+| Worker packaging | Profile-specific Docker images pinned by digest | Repeatable core GPU setup with no per-session installation, without coupling optional training dependencies to ordinary jobs |
 | Cloud provider | RunPod through an adapter | Temporary GPU lifecycle, templates, API control, persistent network cache |
 | Writing providers | Provider-neutral contract; OpenAI Responses, Anthropic Messages, and Gemini GenerateContent adapters | Bring-your-own-key choice, structured outputs/tool use, and no canonical-data lock-in |
 | External skills | Declarative, versioned studio capability packages first; compatible Agent Skill/MCP bridges only after security review | Extensibility with explicit routing, permissions, validation, execution proof, and rollback |
@@ -296,7 +296,7 @@ The current foley slice provides planning assistance, a separate `foley` job/out
 - The trained LoRA or equivalent artifact is project-scoped, hashed, benchmarked against the reference-only baseline, and rejected if it regresses identity, style range, composition, safety, runtime, or cost beyond the accepted threshold.
 - A production workflow never starts training implicitly because a generation failed.
 
-The current candidate input requires exactly one approved adaptation-dataset manifest plus explicit reference-only-benchmark-failed and exact-job rights confirmations before estimate. The local builder records 4–100 approved samples by ordered asset ID/hash/caption/rights/consent, and the worker contract binds the official pinned LTX trainer in an isolated environment. The trainer/image has not passed build/live quality, cost, regression, promotion, or rollback qualification, so the candidate cannot start paid work or promote an artifact.
+The current candidate input requires exactly one approved adaptation-dataset manifest plus explicit reference-only-benchmark-failed and exact-job rights confirmations before estimate. The local builder records 4–100 approved samples by ordered asset ID/hash/caption/rights/consent, and the worker contract pins the official LTX trainer. The normal core image deliberately does not contain that trainer. A future adaptation image must add the isolated trainer, publish its own digest, and pass compatible build/live quality, cost, regression, promotion, and rollback qualification before this candidate can start paid work or promote an artifact.
 
 ## 7. Remote worker architecture
 
@@ -321,6 +321,8 @@ flowchart TB
 ```
 
 The gateway provides health, capability, upload, job, progress, artifact, drain, and shutdown operations. It validates signed job contracts, restricts file paths to the assigned workspace, redacts secrets, and refuses unrecognized workflow versions. Production jobs cannot invoke ComfyUI Manager, package installers, Git, arbitrary downloads, or runtime dependency changes.
+
+The normal profile contains image, voice, LTX inference, LatentSync repair, gateway, and watchdog dependencies. Advanced workflows are not copied into its production pack. If a candidate adaptation request reaches a core worker during controlled testing, the missing trainer is reported and the job fails closed; it is never installed while the worker is running.
 
 ComfyUI is an internal implementation detail. It runs headlessly, binds to `127.0.0.1`, accepts compiled workflows from the gateway, and emits progress/preview/output events; only the gateway is reachable through an authenticated, encrypted channel. The normal user never needs its browser graph. Any future expert diagnostic access must be time-limited, authenticated, off by default, and unable to bypass workflow/version recording.
 

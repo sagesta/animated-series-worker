@@ -32,7 +32,7 @@ afterEach(() => {
 })
 
 describe('GPU worker promotion', () => {
-  it('promotes every core, advanced, and local workflow only from complete evidence', () => {
+  it('promotes only the complete core workflow set and leaves advanced candidates locked', () => {
     const candidatePackPath = resolve(projectRoot, 'config', 'workflow-pack.candidate.json')
     const candidateManifestPath = resolve(
       projectRoot,
@@ -50,8 +50,19 @@ describe('GPU worker promotion', () => {
     const root = mkdtempSync(resolve(tmpdir(), 'studio-promotion-'))
     temporaryRoots.push(root)
 
+    const coreWorkflows = candidatePack.workflows.filter(
+      (workflow: { qualificationTier?: string }) => workflow.qualificationTier !== 'advanced'
+    )
+    const coreModelIds = new Set(
+      coreWorkflows.flatMap((workflow: { requiredModels?: Array<{ modelId: string }> }) =>
+        (workflow.requiredModels ?? []).map((model) => model.modelId)
+      )
+    )
+    const coreModels = candidateManifest.models.filter((model: { modelId: string }) =>
+      coreModelIds.has(model.modelId)
+    )
     const modelHashes = Object.fromEntries(
-      candidateManifest.models.map((model: { modelId: string }) => [model.modelId, sha(model.modelId)])
+      coreModels.map((model: { modelId: string }) => [model.modelId, sha(model.modelId)])
     )
     const workflowHashes: Record<string, string> = {}
     const installedNodeTypes = new Set<string>()
@@ -75,7 +86,7 @@ describe('GPU worker promotion', () => {
     writeJson(modelReceiptPath, {
       schemaVersion: 1,
       qualificationMode: true,
-      models: candidateManifest.models.map(
+      models: coreModels.map(
         (model: {
           modelId: string
           repository: string
@@ -98,9 +109,9 @@ describe('GPU worker promotion', () => {
         stableJson({ ...candidatePack, workerImageDigest: null })
       ),
       comfyUiCommit: candidatePack.comfyUiCommit,
-      vramGb: 80,
-      nvidiaDriverVersion: '595.45.01',
-      ltxTrainerCudaVersion: '13.2',
+      vramGb: 48,
+      nvidiaDriverVersion: '572.83',
+      ltxTrainerCudaVersion: 'unavailable',
       installedNodeTypes: [...installedNodeTypes],
       modelHashes,
       workflowHashes
@@ -112,7 +123,7 @@ describe('GPU worker promotion', () => {
       workerImageDigest: imageDigest,
       testedAt,
       reviewer: 'Fixture reviewer',
-      licenseApprovals: candidateManifest.models.map((model: { modelId: string }) => ({
+      licenseApprovals: coreModels.map((model: { modelId: string }) => ({
         modelId: model.modelId,
         decision: 'accepted',
         reviewer: 'Fixture reviewer',
@@ -147,7 +158,7 @@ describe('GPU worker promotion', () => {
     writeJson(evidencePath, {
       ...passingEvidence,
       tests: passingEvidence.tests.map((test: { testId: string }) =>
-        test.testId === 'BENCH-ADAPTATION' ? { ...test, passed: false } : test
+        test.testId === 'BENCH-LTX-FINAL' ? { ...test, passed: false } : test
       )
     })
     expect(() =>
@@ -162,14 +173,20 @@ describe('GPU worker promotion', () => {
     execFileSync(process.execPath, promotionArguments, { cwd: projectRoot })
 
     const productionPack = JSON.parse(readFileSync(productionPackPath, 'utf8'))
-    expect(productionPack.workflows).toHaveLength(candidatePack.workflows.length)
+    expect(productionPack.workflows).toHaveLength(coreWorkflows.length)
     expect(productionPack.workflows.every((workflow: { qualificationState: string }) =>
       workflow.qualificationState === 'qualified'
     )).toBe(true)
-    expect(
-      productionPack.workflows.filter(
-        (workflow: { qualificationTier?: string }) => workflow.qualificationTier === 'advanced'
-      )
-    ).toHaveLength(5)
+    expect(productionPack.workflows.some(
+      (workflow: { qualificationTier?: string }) => workflow.qualificationTier === 'advanced'
+    )).toBe(false)
+    expect(productionPack.workflows.some(
+      (workflow: { workflowId: string }) => workflow.workflowId === 'ltx25-project-lora-adaptation'
+    )).toBe(false)
+    const productionManifest = JSON.parse(readFileSync(productionManifestPath, 'utf8'))
+    expect(productionManifest.models).toHaveLength(coreModels.length)
+    expect(productionManifest.models.some(
+      (model: { modelId: string }) => model.modelId === 'Lightricks/LTX-2.5/dev-transformer-bf16'
+    )).toBe(false)
   })
 })

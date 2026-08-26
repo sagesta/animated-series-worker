@@ -278,7 +278,7 @@ Base path: `/v1`. Transport must be encrypted and authenticated with a short-liv
 | --- | --- |
 | `GET /health` | Process health; no model load required |
 | `GET /ready` | Runtime, mount, GPU, disk, and core workflow readiness |
-| `GET /capabilities` | Exact worker image, GPU/VRAM/disk, NVIDIA driver, base/LatentSync/LTX-trainer Python, trainer torch/CUDA, model, workflow, node, and schema versions |
+| `GET /capabilities` | Exact worker image/profile, GPU/VRAM/disk, NVIDIA driver, base/LatentSync Python, optional trainer availability/version fields, model, workflow, node, and schema versions; the core profile reports trainer fields as unavailable rather than installing it |
 | `POST /uploads` | Resumable, size-limited input upload with expected hash |
 | `POST /jobs` | Validate and enqueue a signed compiled job |
 | `GET /jobs/{id}` | Durable status, progress, timing, and sanitized errors |

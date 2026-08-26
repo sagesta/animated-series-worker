@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "candidateCreatedAt": "2026-08-25T12:00:00.000Z",
+  "candidateCreatedAt": "2026-08-25T20:00:00.000Z",
   "qualificationState": "candidate",
   "components": {
     "comfyUi": {
@@ -35,7 +35,9 @@
       "commit": "a229c3948406bc2cf6eaf4873e662e70c6a04746",
       "pythonVersion": "3.10",
       "reason": "The pinned upstream setup declares Python 3.10.13, so the worker uses the maintained Python 3.10 line; its mediapipe 0.10.11 dependency has no Python 3.12 wheel."
-    },
+    }
+  },
+  "deferredComponents": {
     "ltxTrainer": {
       "repository": "https://github.com/Lightricks/LTX-2.git",
       "commit": "400fd31054597515f47125691032c04b1c3ee24e",
@@ -44,7 +46,8 @@
       "cudaRuntime": "13.2",
       "minimumNvidiaDriverMajor": 595,
       "environment": "isolated-venv",
-      "buildCheck": "import ltx_core, ltx_trainer; process_dataset.py --help; train.py --help"
+      "buildCheck": "import ltx_core, ltx_trainer; process_dataset.py --help; train.py --help",
+      "reason": "Optional project adaptation is not part of the normal generation worker. It requires a separately built and qualified image only after the reference-only benchmark proves training is necessary."
     }
   },
   "requiredBeforeQualification": [

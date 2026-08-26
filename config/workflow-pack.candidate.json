@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "packId": "animated-series-production",
-  "packVersion": "0.10.1-candidate.2",
+  "packVersion": "0.10.1-candidate.3",
   "comfyUiCommit": "783545f689a0af730065994b46b382ae24844c99",
-  "workerImage": "animated-series-studio/worker:0.10.1-candidate.2",
+  "workerImage": "ghcr.io/sagesta/animated-series-worker:0.10.1-candidate.3",
   "workerImageDigest": null,
   "workflows": [
     {

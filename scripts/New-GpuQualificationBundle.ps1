@@ -17,8 +17,15 @@ if (Test-Path -LiteralPath $outputPath) {
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $pack = Get-Content -LiteralPath $packPath -Raw | ConvertFrom-Json
 $evidence = Get-Content -LiteralPath $evidenceTemplatePath -Raw | ConvertFrom-Json
+$coreModelIds = @(
+  $pack.workflows |
+    Where-Object { $_.qualificationTier -ne 'advanced' } |
+    ForEach-Object { $_.requiredModels } |
+    ForEach-Object { $_.modelId } |
+    Sort-Object -Unique
+)
 $evidence.licenseApprovals = @(
-  $manifest.models | ForEach-Object {
+  $manifest.models | Where-Object { $coreModelIds -contains $_.modelId } | ForEach-Object {
     [ordered]@{
       modelId = $_.modelId
       decision = 'review-required'
@@ -53,7 +60,7 @@ GPU WORKER QUALIFICATION — NO GPU HAS BEEN STARTED
 2. Import and review the API-format ComfyUI templates with scripts\Import-ComfyWorkflow.mjs.
 3. Build the candidate image with scripts\Build-GpuWorker.ps1 -AllowCandidate. Push it to your private registry and record its immutable digest.
 4. Create one controlled RunPod qualification worker using the generated environment template. Do not expose ComfyUI port 8188; expose only authenticated gateway port 8000.
-5. Download studio-model-qualification.json and studio-capability.json. Run every listed benchmark, security, recovery, cost, and shutdown test and link its evidence.
+5. Download studio-model-qualification.json and studio-capability.json. Run every listed core benchmark, security, recovery, cost, and shutdown test and link its evidence. Advanced control, native-audio, foley, and adaptation candidates stay locked.
 6. Terminate the qualification Pod and confirm provider termination. Storage may continue to cost money if a persistent volume is retained.
 7. Run scripts\Promote-GpuWorker.mjs with the three evidence files. It creates production files only if every lock passes.
 

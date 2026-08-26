@@ -26,13 +26,7 @@ const runtimePins = JSON.parse(
 
 describe('GPU worker release configuration', () => {
   it('pins every source revision and the required Kornia compatibility version', () => {
-    const pins = [
-      'COMFY_UI_COMMIT',
-      'COMFY_LTX_COMMIT',
-      'QWEN_TTS_COMMIT',
-      'LATENTSYNC_COMMIT',
-      'LTX_TRAINER_COMMIT'
-    ]
+    const pins = ['COMFY_UI_COMMIT', 'COMFY_LTX_COMMIT', 'QWEN_TTS_COMMIT', 'LATENTSYNC_COMMIT']
 
     for (const pin of pins) {
       expect(dockerfile).toMatch(new RegExp(`ARG ${pin}=[a-f0-9]{40}(?:\\r?\\n|$)`))
@@ -51,11 +45,9 @@ describe('GPU worker release configuration', () => {
     expect(dockerfile).toContain('/opt/tts-venv')
     expect(dockerfile).toContain('/opt/latentsync-venv')
     expect(dockerfile).toContain('"python${LATENTSYNC_PYTHON_VERSION}" -m venv')
-    expect(dockerfile).toContain('ARG UV_VERSION=0.12.5')
-    expect(dockerfile).toContain('/opt/ltx-trainer-venv')
-    expect(dockerfile).toContain('process_dataset.py --help')
-    expect(dockerfile).toContain('train.py --help')
-    expect(runtimePins.components.ltxTrainer).toMatchObject({
+    expect(dockerfile).not.toContain('LTX_TRAINER_COMMIT')
+    expect(dockerfile).not.toContain('/opt/ltx-trainer-venv')
+    expect(runtimePins.deferredComponents.ltxTrainer).toMatchObject({
       cudaRuntime: '13.2',
       minimumNvidiaDriverMajor: 595
     })
@@ -115,7 +107,7 @@ describe('GPU worker release configuration', () => {
     )
   })
 
-  it('keeps project adaptation on the official dev transformer and isolated trainer', () => {
+  it('keeps project adaptation locked while excluding its trainer from the core image', () => {
     const pack = JSON.parse(
       readFileSync(resolve(projectRoot, 'config', 'workflow-pack.candidate.json'), 'utf8')
     )
@@ -137,19 +129,15 @@ describe('GPU worker release configuration', () => {
     expect(runner).toContain('elif workflow_id == "ltx25-project-lora-adaptation"')
     expect(runner).toContain('LTX_TRAINER_COMMIT = "400fd31054597515f47125691032c04b1c3ee24e"')
     expect(gateway).toContain("'/opt/ltx-trainer-venv/bin/python'")
+    expect(gateway).toContain('The pinned LTX trainer runtime is unavailable.')
+    expect(dockerfile).not.toContain('/opt/ltx-trainer-venv')
   })
 
-  it('requires one atomic core and advanced qualification before promotion', () => {
+  it('promotes the core independently while advanced profiles remain locked', () => {
     const required = [
-      'BENCH-LTX-NATIVE-AUDIO',
-      'BENCH-QWEN-CONTROL',
-      'BENCH-LTX-CONTROL',
       'BENCH-CREATIVE-QC',
-      'BENCH-FOLEY',
-      'BENCH-ADAPTATION',
       'SECURITY-NODE-ALLOWLIST',
       'RECOVERY-DOWNLOAD-RESUME',
-      'COMPAT-TRAINER-CUDA-DRIVER',
       'LOCAL-FINISHING-SUITE'
     ]
     const templateIds = qualificationTemplate.tests.map((item: { testId: string }) => item.testId)
@@ -157,7 +145,17 @@ describe('GPU worker release configuration', () => {
       expect(promotionScript).toContain(`'${testId}'`)
       expect(templateIds).toContain(testId)
     }
-    expect(promotionScript).toContain('candidatePack.workflows.map((workflow) =>')
-    expect(promotionScript).not.toContain('const productionWorkflows = coreWorkflows.map')
+    for (const deferred of [
+      'BENCH-LTX-NATIVE-AUDIO',
+      'BENCH-QWEN-CONTROL',
+      'BENCH-LTX-CONTROL',
+      'BENCH-FOLEY',
+      'BENCH-ADAPTATION',
+      'COMPAT-TRAINER-CUDA-DRIVER'
+    ]) {
+      expect(promotionScript).not.toContain(`'${deferred}'`)
+      expect(templateIds).not.toContain(deferred)
+    }
+    expect(promotionScript).toContain('const productionWorkflows = coreWorkflows.map')
   })
 })

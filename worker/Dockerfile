@@ -6,10 +6,8 @@ ARG COMFY_UI_COMMIT=783545f689a0af730065994b46b382ae24844c99
 ARG COMFY_LTX_COMMIT=15d09abb5a187a8dcaea2fc31fe51ee96e6c9d0d
 ARG QWEN_TTS_COMMIT=022e286b98fbec7e1e916cb940cdf532cd9f488e
 ARG LATENTSYNC_COMMIT=a229c3948406bc2cf6eaf4873e662e70c6a04746
-ARG LTX_TRAINER_COMMIT=400fd31054597515f47125691032c04b1c3ee24e
 ARG COMFY_TRANSFORMERS_VERSION=5.14.1
 ARG LATENTSYNC_PYTHON_VERSION=3.10
-ARG UV_VERSION=0.12.5
 # Retain the original build-cache anchor; the reported release is injected only
 # after dependency layers through STUDIO_RELEASE so a tag change cannot rebuild runtimes.
 ARG WORKER_RELEASE=0.10.1-candidate.1
@@ -51,17 +49,6 @@ RUN git clone --filter=blob:none https://github.com/bytedance/LatentSync.git /op
   && "python${LATENTSYNC_PYTHON_VERSION}" -m venv /opt/latentsync-venv \
   && /opt/latentsync-venv/bin/pip install --no-cache-dir -r /opt/LatentSync/requirements.txt
 
-# The official ltx-trainer package is the only supported implementation of FR-058's
-# project-scoped LTX adaptation. uv is pinned solely to create its isolated environment;
-# neither dependency can be replaced by the existing ComfyUI, TTS, or LatentSync runtimes.
-RUN git clone --filter=blob:none https://github.com/Lightricks/LTX-2.git /opt/LTX-2 \
-  && git -C /opt/LTX-2 checkout --detach "${LTX_TRAINER_COMMIT}" \
-  && pip install --no-cache-dir "uv==${UV_VERSION}" \
-  && UV_PROJECT_ENVIRONMENT=/opt/ltx-trainer-venv uv sync --directory /opt/LTX-2 --no-dev --package ltx-trainer \
-  && /opt/ltx-trainer-venv/bin/python -c "import ltx_core, ltx_trainer" \
-  && /opt/ltx-trainer-venv/bin/python /opt/LTX-2/packages/ltx-trainer/scripts/process_dataset.py --help >/dev/null \
-  && /opt/ltx-trainer-venv/bin/python /opt/LTX-2/packages/ltx-trainer/scripts/train.py --help >/dev/null
-
 # Qwen3-TTS uses the Python sox wrapper for audio transforms; install and verify
 # the matching system executable and common codecs as an explicit runtime dependency.
 RUN apt-get update \
@@ -76,7 +63,7 @@ COPY config/${WORKFLOW_PACK_FILE} /opt/studio/workflow-pack.runtime.json
 COPY config/${MODEL_MANIFEST_FILE} /opt/studio/model-install-manifest.runtime.json
 COPY config/workflows /opt/studio/workflows
 
-ARG STUDIO_RELEASE=0.10.1-candidate.2
+ARG STUDIO_RELEASE=0.10.1-candidate.3
 ENV STUDIO_GATEWAY_PORT=8000 \
   STUDIO_COMFY_URL=http://127.0.0.1:8188 \
   STUDIO_COMFY_INPUT_ROOT=/opt/ComfyUI/input \
@@ -87,8 +74,6 @@ ENV STUDIO_GATEWAY_PORT=8000 \
   STUDIO_TTS_PYTHON=/opt/tts-venv/bin/python \
   STUDIO_LATENTSYNC_ROOT=/opt/LatentSync \
   STUDIO_LATENTSYNC_PYTHON=/opt/latentsync-venv/bin/python \
-  STUDIO_LTX_TRAINER_ROOT=/opt/LTX-2 \
-  STUDIO_LTX_TRAINER_PYTHON=/opt/ltx-trainer-venv/bin/python \
   HF_HOME=/workspace/models/huggingface-cache \
   HF_HUB_OFFLINE=1 \
   TRANSFORMERS_OFFLINE=1 \

@@ -134,7 +134,7 @@ Each batch has:
 - Maximum workers.
 - Stop threshold that leaves time to sync and terminate.
 
-The current source reads current RunPod catalogue rates and existing active-Pod rates at no cost, then creates a per-workflow estimate using one selected GPU, expected minutes, the tighter workflow/session hard limit, and current rate. Cost approval and worker-start confirmation are separate records. The app tracks elapsed estimates and a provider-reconciled actual field; it does not pretend an estimate is an invoice. Live benchmarks must replace candidate runtime assumptions before promotion, and persistent storage remains separately billable even without active compute.
+The current source reads current RunPod catalogue rates and existing active-Pod rates at no cost, then creates a per-workflow estimate using one selected GPU, expected minutes, the tighter workflow/session hard limit, and current rate. Cost approval and worker-start confirmation are separate records. The app tracks elapsed estimates and a provider-reconciled actual field; it does not pretend an estimate is an invoice. Live benchmarks must replace candidate runtime assumptions before promotion, and persistent storage remains separately billable even without active compute. Core generation is benchmarked against its smaller profile; optional advanced/trainer images must record their own pull/start/runtime/storage costs and cannot borrow the core cost receipt.
 
 Budget state:
 

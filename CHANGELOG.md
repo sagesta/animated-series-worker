@@ -4,10 +4,42 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (core worker registry publication)
+
+- Published the exact locally smoke-tested core worker as `ghcr.io/sagesta/animated-series-worker@sha256:875eea3747e89369df5f375aa600bf6de634950c988a82494a2671c0e643603e`. Registry inspection reports config digest `sha256:7ffde53bf446b896596a3ddee68c5527370c1d2c4e8fcd6af33888df9ec7d7c5`, matching the local image ID, and a pull by immutable digest completed with the same image ID.
+- Keyless-signed the exact immutable digest with Sigstore and stored the signature as OCI referrer `sha256:47fa41fbdeb19f2821d897826d761f7dd792ae15c4a97d51d18e4cdb318faaec`. Cosign `v3.1.3` verified the digest claim, trusted Google-issued signing certificate, and transparency-log inclusion at Rekor index `2598763822`.
+- Added D-053 and a manual-only/main-only `sign-worker-image.yml` canonical signer. It fixes the GHCR package, requires strict manifest/config digests, uses commit-pinned Cosign/login actions, requests only read/OIDC/package-write permissions, binds the `worker-signing` environment, and verifies the exact GitHub workflow identity after signing. Four local policy tests pass; publishing/protecting/dispatching the workflow remains external evidence.
+- Kept the image undeployed and release-locked. The canonical workflow still needs publication to `main`, protected-environment configuration, and a successful retained OIDC signing run; signing does not provide model/license approval, model-backed GPU qualification, media-quality proof, provider lifecycle/cost evidence, or a production-readiness receipt, and no RunPod resource was created.
+
+User impact: the core candidate can now be addressed and pulled reproducibly by immutable GHCR digest, but paid generation and production promotion remain locked.
+
+Data/migration impact: no project, canon, media, credential, provider, or deployment state changed. The temporary local upload archive was deleted after the registry and pull verification completed.
+
+Documentation impact: synchronized status, build backlog, local verification, and changelog with the published digest and remaining signature/qualification gates.
+
+Rollback: remove or deprecate the `.3` registry tag and digest reference, then publish a newly built and re-smoked candidate under a new version. Do not reuse the cancelled `.2` upload.
+
+### Changed — 2026-08-25 (smaller core GPU worker and cancelled monolithic upload)
+
+- Cancelled the active GHCR push of `ghcr.io/sagesta/animated-series-worker:0.10.1-candidate.2` after confirming the process was still uploading. A post-cancellation registry inspection returned `manifest unknown`, so no usable candidate tag or digest was published.
+- Removed the optional LTX adaptation trainer, its `uv` environment, and CUDA 13.2 runtime from the normal Docker image. Qwen image/TTS, LTX inference, LatentSync, ComfyUI, the authenticated gateway, preflight, and watchdog remain in the core profile.
+- Bumped the invalidated candidate to `0.10.1-candidate.3` and bound its declared image name to `ghcr.io/sagesta/animated-series-worker:0.10.1-candidate.3`. The prior local image and interrupted upload cannot qualify or promote this pack.
+- Built `.3` locally as `sha256:7ffde53bf446b896596a3ddee68c5527370c1d2c4e8fcd6af33888df9ec7d7c5` at 29,285,117,474 bytes, 6,274,816,227 bytes (17.65%) smaller than `.2`. The model-free authenticated smoke passed with the trainer absent/unavailable, 965 node types, nine workflow hashes, and zero model hashes. The smoke container was removed, `.3` has no `RepoDigest`, and no replacement upload or deployment was started.
+- Changed promotion to qualify every core/local workflow and only the models they reference. Advanced native-audio/control/foley/adaptation candidates remain non-billable and are omitted from a core production pack rather than blocking it. The core gate now targets its declared 48 GB maximum instead of inheriting the adaptation trainer's 80 GB/R595 requirement.
+- Kept the pinned adaptation contract and trainer source decision as deferred evidence. A future adaptation image must be built, published, tested, and promoted independently only after the reference-only consistency benchmark proves training is needed.
+
+User impact: the ordinary image, voice, video, and lip-repair worker no longer carries an optional training stack or waits for unrelated adaptation evidence. Creator Mode and all spend/approval locks are unchanged; this change still does not unlock or start paid generation.
+
+Data/migration impact: none for projects, canon, media, credentials, or provider state. Candidate pack/model versions and fingerprints changed, invalidating the old local worker evidence. Partially uploaded unreferenced registry blobs may remain subject to registry garbage collection, but there is no published candidate manifest to deploy.
+
+Documentation impact: synchronized PRD, architecture, decisions, worker/GPU operations, implementation, API, security, cost, tests, traceability, backlog, status, local verification, README, and changelog around D-052 and the core-versus-advanced qualification boundary.
+
+Rollback: restore the earlier Dockerfile, candidate pack/manifests, evidence template, and promotion gate together, then rebuild and re-smoke a new candidate. Do not resume or reuse the interrupted `candidate.2` upload; it has no registry digest and belongs to the superseded monolithic pack.
+
 ### Added — 2026-08-25 (production completion candidate and executable local proof)
 
 - Added reviewed, converted, hash-locked candidate graphs for native LTX audio-driven dialogue and control-guided Qwen/LTX, plus exact hash-locked runner contracts for rights-aware model-free foley and project-scoped LTX adaptation. The importer now rejects UI-format and unauthorized-node content while the converter preserves only reviewed API semantics.
-- Added the official pinned LTX trainer in its own worker environment and a creator-facing adaptation intake that assembles 4–100 approved project samples with ordered asset IDs, SHA-256 values, captions, resolution buckets, per-sample rights/consent, and project-only confirmations. The worker rehashes each uploaded sample and refuses a changed order, identity, or reviewed file.
+- Added the official pinned LTX trainer contract and a creator-facing adaptation intake that assembles 4–100 approved project samples with ordered asset IDs, SHA-256 values, captions, resolution buckets, per-sample rights/consent, and project-only confirmations. The worker runner rehashes each uploaded sample and refuses a changed order, identity, or reviewed file; the later D-052 change removes the trainer runtime from the normal core image and defers it to a separate profile.
 - Added five bounded public-domain novel excerpts with source metadata and genre/length variation. All five pass the pinned outline and character chunk boundaries; empty, one-character, exact 500,000-character, malformed, missing-field, extra-field, and broken-JSON cases exercise the validator/process boundaries without network access.
 - Added bounded YouTube Analytics CSV import in the trusted desktop process. It handles quoted fields, durations, percentages, optional metrics, and explicit total rows; rejects unsafe filenames, oversize/malformed/ambiguous/duplicate rows; records the file SHA-256 and selected row; and keeps saving as a separate creator decision.
 - Added real Electron acceptance paths for verified backup/delete/restore with approved lineage, direct cross-project refusal followed by explicit reviewed copy, and immutable release packaging with byte count and SHA-256 verification for every output file. Existing first-run, 1280×720 disclosure, and keyboard correction-summary paths remain in the same suite.
@@ -16,7 +48,7 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 - Tightened imported-media integrity so a valid file is still refused when its MIME type does not match the selected production role. Removed ordinary Settings/package displays of local paths.
 - Updated the worker compatibility pins: Transformers 5.14.1 avoids the reviewed LTX 5.15 regression, Kornia remains 0.8.2 for the pinned pyramid API, LatentSync uses the upstream-declared Python 3.10 line because `mediapipe==0.10.11` has no Python 3.12 wheel, and Qwen3-TTS now verifies its `sox` executable and common codecs.
 - Bound the worker's reported release identity to the built image tag so capability evidence cannot silently retain the Dockerfile's default candidate label.
-- Closed a promotion-gate gap: the evidence receipt and promotion tool now require native-audio LTX, Qwen/LTX controls, creative QC, foley, adaptation, local finishing, node security, download resume, and trainer CUDA/driver compatibility, then promote every candidate workflow atomically instead of excluding the advanced tier.
+- Initially closed a promotion-gate gap by requiring all advanced evidence in one atomic pack; the later D-052 change retains strict evidence while separating core promotion from optional advanced/trainer profiles.
 - Bumped the complete runtime/workflow/model candidate to `0.10.1-candidate.2`; build and qualification scripts now derive the reported worker release from the selected image tag/pack instead of a stale hard-coded label.
 - Built the exact candidate under WSL2 Docker and passed a model-free ComfyUI/gateway smoke on the local 4 GB GPU. Preflight now reports ComfyUI CUDA separately from the NVIDIA driver and captured the exact local image ID, 965 node types, nine workflow hashes, zero model hashes, authentication refusal/readiness, and loopback-only host binding. The local image has no registry digest/signature and does not satisfy model, quality, cloud-lifecycle, cost, or production qualification.
 - Rebuilt the branded unsigned NSIS candidate from the final source, recorded its SHA-256, and repeated the isolated-profile launch smoke with four Electron processes.
