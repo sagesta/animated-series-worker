@@ -25,6 +25,15 @@ trap cleanup EXIT INT TERM
 
 mkdir -p /workspace/models /workspace/studio-jobs /opt/ComfyUI/input /opt/ComfyUI/output
 
+# ComfyUI's built-in model registry scans /opt/ComfyUI/models. The immutable
+# worker keeps large model bytes on the mounted workspace, so expose only the
+# allowlisted model categories through fixed links before ComfyUI starts.
+for model_category in diffusion_models text_encoders vae latent_upscale_models; do
+  mkdir -p "/workspace/models/${model_category}"
+  rm -rf "/opt/ComfyUI/models/${model_category}"
+  ln -s "/workspace/models/${model_category}" "/opt/ComfyUI/models/${model_category}"
+done
+
 case "${STUDIO_MODEL_BOOTSTRAP_MODE:-off}" in
   off) ;;
   qualification) python /opt/studio/bootstrap_models.py --qualification ;;

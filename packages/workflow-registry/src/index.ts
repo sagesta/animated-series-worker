@@ -109,6 +109,7 @@ export const CapabilityReportSchema = z
     comfyUiCommit: z.string().regex(/^[a-f0-9]{40}$/),
     gpuName: z.string().min(1),
     vramGb: z.number().positive(),
+    gpuClassVramGb: z.number().positive().optional(),
     freeDiskGb: z.number().nonnegative(),
     pythonVersion: z.string().min(1),
     cudaVersion: z.string().min(1),
@@ -288,7 +289,7 @@ export class WorkflowRegistry {
       blockers.push('The worker workflow pack does not match the approved production pack.')
     if (report.comfyUiCommit !== this.pack.comfyUiCommit)
       blockers.push('ComfyUI does not match the approved commit.')
-    if (report.vramGb < workflow.minimumVramGb)
+    if ((report.gpuClassVramGb ?? report.vramGb) < workflow.minimumVramGb)
       blockers.push(`This workflow needs at least ${workflow.minimumVramGb} GB of GPU memory.`)
     if (!report.smokeTestPassed) blockers.push('The worker smoke test has not passed.')
     for (const nodeType of workflow.allowedNodeTypes) {

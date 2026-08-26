@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1.7
+# Qualification hotfixes inherit the exact already-published candidate so the
+# registry reuses its heavyweight immutable layers. Fold every change back into
+# worker/Dockerfile before the next full candidate build.
+FROM ghcr.io/sagesta/animated-series-worker@sha256:875eea3747e89369df5f375aa600bf6de634950c988a82494a2671c0e643603e
+
+COPY --link worker/gateway.mjs worker/preflight.mjs worker/entrypoint.sh /opt/studio/
+
+ARG STUDIO_RELEASE=0.10.1-candidate.5
+ENV STUDIO_WORKER_RELEASE=${STUDIO_RELEASE}
+
+ENTRYPOINT ["/opt/studio/entrypoint.sh"]

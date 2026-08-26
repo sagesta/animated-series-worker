@@ -6,9 +6,9 @@ Current source implementation: 0.10.1
 
 Date: 2026-08-23
 
-Status: local control plane implemented; paid media generation qualification pending
+Status: local control plane implemented; paid media qualification partially executed and still release-blocked
 
-Implementation note: [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) and [STATUS.md](STATUS.md) describe which requirements now have code/local evidence and which still require real GPU, model-license, quality, shutdown, long-form, signing, or clean-machine proof. A requirement is not weakened merely because its external acceptance gate remains locked.
+Implementation note: [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md), [LIVE_GPU_QUALIFICATION_2026-08-26.md](LIVE_GPU_QUALIFICATION_2026-08-26.md), and [STATUS.md](STATUS.md) describe which requirements now have code/local/live evidence and which still require quality, recovery, storage, cost, long-form, rights, or clean-machine proof. A requirement is not weakened merely because part of its external acceptance gate ran.
 
 ## 1. Product statement
 

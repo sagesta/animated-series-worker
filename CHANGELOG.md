@@ -4,6 +4,22 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (controlled L40S core qualification)
+
+- Published candidate `0.10.1-candidate.5` as `ghcr.io/sagesta/animated-series-worker@sha256:3b1142ede47d387a890b36e7e5e0ae212c3f2304387e128f4f7991ad5c33b0e9` by rebasing the already-published parent with a small linked layer. Protected GitHub OIDC run `32994632107` verified config `sha256:9dc427e506059a685b7b5f588ab0b02161bd87c4fcc080301a21e117b8f3dcb1`, signed the exact digest, and verified the canonical workflow identity.
+- Ran one controlled RunPod Secure Cloud L40S Pod. Preflight recorded the 48 GB class, pinned runtime, nine workflow hashes, and 11 model hashes. One uninterrupted sequence technically completed identity image, targeted edit, voice design, two-line TTS, LTX draft/final, and assistive QC; every downloaded artifact matched its declared size and SHA-256.
+- Fixed three live-only integration faults found during the run: model directories were not visible to ComfyUI, RunPod's proxy stripped the standard range header, and ComfyUI retained VRAM before the isolated TTS process. Candidate 5 maps fixed model categories at startup, accepts an authenticated `X-Studio-Range`, releases ComfyUI models before Python workflows, reports the 48 GB vendor class separately from 44.4 GiB usable memory, and exposes bounded diagnostics only in controlled qualification mode.
+- Kept production locked. The targeted edit did not change the scarf from red to blue and changed framing; the one-second final request produced 0.75 seconds; human media review, exact Gemma provenance, durable model storage, and several recovery/shutdown/cost gates remain incomplete. No production pack, manifest, or readiness receipt was created.
+- Explicitly deleted the Pod at 17:40:11Z after 73.923 minutes; a follow-up provider query returned no Pod. Estimated compute was USD 1.219724 at USD 0.99/hour, excluding separately billed storage and not claiming a final invoice.
+
+User impact: the core image/voice/video path now has real compatible-GPU execution evidence and the costly worker was shut down, but paid production remains safely locked on observed quality and operational gaps.
+
+Data/migration impact: no project or database migration. Qualification artifacts remain local and ignored; the published immutable image and signature are external release artifacts. The non-persistent Pod volume and its downloaded models were discarded with the Pod.
+
+Documentation impact: added the exact live evidence record and synchronized status, implementation, GPU operations, backlog, local verification, README, and changelog.
+
+Rollback: revert the source fixes and deprecate candidate 5 only by publishing a newly versioned replacement; do not overwrite or reuse its immutable digest. Keep the failed acceptance evidence.
+
 ### Changed — 2026-08-26 (qualification bootstrap safety)
 
 - Hardened the paid GPU qualification bundle so it downloads only policy-eligible, accepted core models, uses a RunPod secret reference for the Hugging Face token, and enables online model access only during qualification bootstrap.

@@ -177,6 +177,7 @@ const report = {
   comfyUiCommit: pack.comfyUiCommit,
   gpuName: device.name ?? command('nvidia-smi', ['--query-gpu=name', '--format=csv,noheader']),
   vramGb: Math.round(((device.vram_total ?? 0) / 1024 ** 3) * 10) / 10,
+  gpuClassVramGb: Math.round((device.vram_total ?? 0) / 1_000_000_000),
   freeDiskGb: Math.round(((fileSystem.bavail * fileSystem.bsize) / 1024 ** 3) * 10) / 10,
   pythonVersion: command('python', ['--version']),
   cudaVersion,

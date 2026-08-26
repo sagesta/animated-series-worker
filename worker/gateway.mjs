@@ -560,12 +560,16 @@ async function runWorkerPython(job, workflow) {
     throw new Error('The pinned LTX trainer runtime is unavailable.')
   }
   await new Promise((resolvePromise, rejectPromise) => {
+    let stderr = ''
     const child = spawn(runnerPython, ['/opt/studio/python_runner.py', specPath], {
       cwd: directory,
       env: { ...process.env },
       detached: true,
       shell: false,
-      stdio: ['ignore', 'ignore', 'ignore']
+      stdio: ['ignore', 'ignore', 'pipe']
+    })
+    child.stderr?.on('data', (chunk) => {
+      if (stderr.length < 4_000) stderr += String(chunk).slice(0, 4_000 - stderr.length)
     })
     jobProcesses.set(job.jobId, child)
     const timeout = setTimeout(
@@ -584,15 +588,36 @@ async function runWorkerPython(job, workflow) {
       clearTimeout(timeout)
       jobProcesses.delete(job.jobId)
       if (job.state === 'cancelled') return resolvePromise()
-      if (code !== 0)
+      if (code !== 0) {
+        const detail = qualificationMode ? stderr.replace(/\s+/g, ' ').trim().slice(-350) : ''
         return rejectPromise(
-          new Error(`The allowlisted Python workflow stopped (${signal ?? code}).`)
+          new Error(
+            `The allowlisted Python workflow stopped (${signal ?? code}).${detail ? ` ${detail}` : ''}`
+          )
         )
+      }
       resolvePromise()
     })
   })
   if (job.state === 'cancelled') return []
   return collectDirectoryArtifacts(job, outputDirectory)
+}
+
+async function releaseComfyModels() {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30_000)
+  try {
+    const response = await fetch(`${comfyBaseUrl}/free`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ unload_models: true, free_memory: true }),
+      redirect: 'error',
+      signal: controller.signal
+    })
+    if (!response.ok) throw new Error(`ComfyUI memory release returned ${response.status}.`)
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 async function execute(job, workflow) {
@@ -602,6 +627,7 @@ async function execute(job, workflow) {
     job.updatedAt = new Date().toISOString()
     persist(job)
     if (workflow.engine === 'worker-python') {
+      await releaseComfyModels()
       const artifacts = await runWorkerPython(job, workflow)
       if (job.state === 'cancelled') return
       job.state = 'verifying'
@@ -652,6 +678,13 @@ async function execute(job, workflow) {
     job.state = job.state === 'cancelled' ? 'cancelled' : 'failed'
     job.errorCode = error?.name === 'AbortError' ? 'worker-timeout' : 'workflow-failed'
     job.message = 'The worker stopped this job safely. No automatic creative retry was started.'
+    if (qualificationMode) {
+      job.qualificationDiagnostic = String(error?.message ?? error)
+        .replace(/\b(?:rpa|hf)_[A-Za-z0-9_-]+\b/g, '[redacted]')
+        .replaceAll(root, '[job-root]')
+        .replaceAll(modelRoot, '[model-root]')
+        .slice(0, 500)
+    }
     job.updatedAt = new Date().toISOString()
     persist(job)
   }
@@ -943,7 +976,7 @@ const server = http.createServer(async (request, response) => {
         return send(response, 404, {
           error: { code: 'not-found', message: 'Artifact file is unavailable.' }
         })
-      const rangeHeader = String(request.headers.range ?? '')
+      const rangeHeader = String(request.headers.range ?? request.headers['x-studio-range'] ?? '')
       const range = /^bytes=(\d+)-(\d+)$/.exec(rangeHeader)
       if (!range)
         return send(

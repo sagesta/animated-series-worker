@@ -2,7 +2,7 @@
 
 This folder is the authoritative build specification for Animated Series Studio. If code and documentation disagree, the change is incomplete until they are reconciled and tested.
 
-Current version 0.10.1 implements quick idea/script intake and a default Creator Mode over the local production control plane, project-aware creative assistance, canon/media review, governed GPU orchestration, authenticated worker, deterministic local finishing, project-local release/idea/performance/learning records, and manual YouTube package. Advanced Studio keeps the detailed controls optional. The normal core GPU worker is independently packaged from optional advanced/training profiles. Paid generation remains behind a strict external qualification lock; it cannot run until exact workflow/model/image/license/benchmark/shutdown evidence creates the matching production pack and readiness receipt. [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) is the current implementation overlay; [STATUS.md](STATUS.md) separates implemented code from live external proof.
+Current version 0.10.1 implements quick idea/script intake and a default Creator Mode over the local production control plane, project-aware creative assistance, canon/media review, governed GPU orchestration, authenticated worker, deterministic local finishing, project-local release/idea/performance/learning records, and manual YouTube package. Advanced Studio keeps the detailed controls optional. The normal core GPU worker is independently packaged from optional advanced/training profiles. A controlled L40S run now provides exact model/runtime/workflow/output and provider-delete evidence, but paid production remains locked because creative/duration acceptance and other promotion gates failed or remain incomplete. [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md) is the current implementation overlay; [STATUS.md](STATUS.md) separates implemented code from live external proof.
 
 ## Product and experience
 
@@ -15,6 +15,7 @@ Current version 0.10.1 implements quick idea/script intake and a default Creator
 | [YouTube release workflow](YOUTUBE_RELEASE_WORKFLOW.md) | Which thumbnail, release-details, research, policy, packaging, and learning features were adopted after the reference-repository review? |
 | [Status](STATUS.md) | What exists now, what is being built, and what is not yet safe to claim? |
 | [Production implementation](PRODUCTION_IMPLEMENTATION.md) | How does the implemented version-0.10.1 application, worker, qualification gate, recovery, finishing, and release flow operate? |
+| [Live GPU qualification](LIVE_GPU_QUALIFICATION_2026-08-26.md) | What exactly ran on the L40S, what passed technically, what failed acceptance, what did it cost, and was the Pod deleted? |
 | [Local verification evidence](LOCAL_VERIFICATION_2026-08-25.md) | Which checks and artifact fingerprints passed on the development workstation, and which production proofs are still external? |
 | [Candidate model-license review](MODEL_LICENSE_REVIEW_2026-08-26.md) | Which exact model and transitive-license evidence was checked, and what still requires an authorized human decision? |
 | [Glossary](GLOSSARY.md) | What do the specialist terms mean in plain language? |

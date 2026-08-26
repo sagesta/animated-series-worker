@@ -149,7 +149,8 @@ if (advancedWorkflows.length === 0) fail('The candidate pack must retain separat
 const maximumVram = Math.max(
   ...coreWorkflows.map((workflow) => workflow.minimumVramGb ?? 0)
 )
-if (!(capability.vramGb >= maximumVram)) fail(`The core qualification GPU must prove at least ${maximumVram} GB VRAM.`)
+if (!((capability.gpuClassVramGb ?? capability.vramGb) >= maximumVram))
+  fail(`The core qualification GPU must prove at least ${maximumVram} GB VRAM.`)
 
 const testResults = new Map()
 for (const item of evidence.tests ?? []) {

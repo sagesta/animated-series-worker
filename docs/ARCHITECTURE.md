@@ -1,6 +1,6 @@
 # System architecture
 
-Current implementation note (0.10.1): the default quick idea/script intake and Creator Mode stage controller, local control plane, governed field-level idea assistant, canon/media/release/performance/learning stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. Exact remote workflows and production receipts remain externally unqualified. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): the default quick idea/script intake and Creator Mode stage controller, local control plane, governed field-level idea assistant, canon/media/release/performance/learning stores, restricted media viewer, RunPod provider/orchestrator, workflow registry, worker gateway/preflight/watchdog, model bootstrap, transfer client, local FFmpeg finishing, and qualification/promotion gates are implemented. One controlled L40S run proved the exact candidate's model-backed core execution and explicit deletion, but failed/incomplete acceptance gates prevented a production receipt. See [LIVE_GPU_QUALIFICATION_2026-08-26.md](LIVE_GPU_QUALIFICATION_2026-08-26.md).
 
 ## 1. Architectural outcome
 

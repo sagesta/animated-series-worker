@@ -13,6 +13,8 @@ const qualificationBundleScript = readFileSync(
 )
 const dockerIgnore = readFileSync(resolve(projectRoot, '.dockerignore'), 'utf8')
 const preflight = readFileSync(resolve(projectRoot, 'worker', 'preflight.mjs'), 'utf8')
+const entrypoint = readFileSync(resolve(projectRoot, 'worker', 'entrypoint.sh'), 'utf8')
+const gateway = readFileSync(resolve(projectRoot, 'worker', 'gateway.mjs'), 'utf8')
 const promotionScript = readFileSync(
   resolve(projectRoot, 'scripts', 'Promote-GpuWorker.mjs'),
   'utf8'
@@ -105,6 +107,19 @@ describe('GPU worker release configuration', () => {
     expect(preflight).toContain('cudaVersion,')
     expect(preflight).toContain('nvidiaDriverVersion,')
     expect(preflight).not.toContain('cudaVersion: nvidiaDriverVersion')
+    expect(preflight).toContain('gpuClassVramGb:')
+  })
+
+  it('maps workspace models into ComfyUI and supports proxy-safe ranged downloads', () => {
+    for (const category of ['diffusion_models', 'text_encoders', 'vae', 'latent_upscale_models']) {
+      expect(entrypoint).toContain(category)
+    }
+    expect(entrypoint).toContain('ln -s "/workspace/models/${model_category}"')
+    expect(gateway).toContain("request.headers.range ?? request.headers['x-studio-range']")
+    expect(gateway).toContain('job.qualificationDiagnostic')
+    expect(gateway).toContain('fetch(`${comfyBaseUrl}/free`')
+    expect(gateway).toContain('unload_models: true, free_memory: true')
+    expect(gateway).toContain("stdio: ['ignore', 'ignore', 'pipe']")
   })
 
   it('locks the procedural foley contract to the candidate pack and worker runner', () => {

@@ -1,19 +1,19 @@
 # Local verification evidence — 2026-08-25
 
-This record distinguishes reproducible development-machine evidence from production qualification. It is not a substitute for model-license review, a controlled RunPod run, code signing, or a clean-machine acceptance session.
+This record distinguishes reproducible development-machine evidence from production qualification. The later controlled RunPod evidence is recorded separately in [LIVE_GPU_QUALIFICATION_2026-08-26.md](LIVE_GPU_QUALIFICATION_2026-08-26.md); neither record substitutes for the remaining human, recovery, storage, invoice, or clean-machine gates.
 
 ## Application quality gate
 
 | Check | Result | Evidence captured locally |
 | --- | --- | --- |
-| Documentation traceability | Pass | 93 requirement references, 62 unique decision IDs, pinned upstream lock `4cff5ae3a4a2` |
+| Documentation traceability | Pass | 93 requirement references, 64 decision IDs, pinned upstream lock `4cff5ae3a4a2` |
 | TypeScript | Pass | `tsc --noEmit` |
 | Formatting | Pass | Repository Prettier check; generated Playwright output is excluded |
 | Lint | Pass | ESLint with zero warnings allowed |
 | Worker unit tests | Pass | 9 Python tests |
 | Pinned upstream validators | Pass | 1,414 assertions across six skill families |
 | Candidate model-license evidence | Pass on 2026-08-26 | Eight pinned repositories plus one transitive Gemma source covered; all decisions remain pending and all model hashes remain null |
-| Application unit/integration suite | Pass on single-worker rerun | 160 tests across 31 Vitest files; the initial parallel run passed 30 files but timed out while starting the final renderer worker |
+| Application unit/integration suite | Pass | 162 tests across 31 Vitest files in the post-qualification full quality run |
 | Production Electron build | Pass | Main, preload, and renderer bundles built |
 | Desktop E2E | Pass for the six current local scenarios | 6 Playwright-for-Electron tests at one worker, 39.8 seconds; the first scenario captured and visually checked the recommended next step, expanded eight-checkpoint production run, and locked one-off asset tool at 1280×720 |
 

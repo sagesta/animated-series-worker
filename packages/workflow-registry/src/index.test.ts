@@ -104,6 +104,7 @@ describe('locked workflow registry', () => {
       comfyUiCommit: 'e'.repeat(40),
       gpuName: 'RTX 4090',
       vramGb: 16,
+      gpuClassVramGb: 16,
       freeDiskGb: 20,
       pythonVersion: '3.12',
       cudaVersion: '12.8',

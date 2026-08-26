@@ -4,9 +4,11 @@ Version: 0.10.1
 
 Last updated: 2026-08-26
 
-Status: implemented local control plane; paid generation locked pending controlled GPU qualification
+Status: implemented local control plane; controlled core GPU run completed; paid production remains locked pending failed/incomplete acceptance gates
 
 This document is the current implementation overlay for Animated Series Studio. Product requirements remain in [PRD.md](PRD.md). Where an older phase description says a version-0.9 component is “not started,” this document and [STATUS.md](STATUS.md) are authoritative.
+
+The 2026-08-26 controlled L40S run proved the signed candidate 5 runtime, 11 model hashes, seven technically successful core workflows, verified transfers, and explicit provider deletion. It did not authorize promotion: the targeted edit missed its requested blue-scarf change, the one-second final-video request produced 0.75 seconds, human media review is incomplete, storage was Pod-local, and several recovery/shutdown/cost gates remain open. The exact boundary is recorded in [LIVE_GPU_QUALIFICATION_2026-08-26.md](LIVE_GPU_QUALIFICATION_2026-08-26.md).
 
 ## 1. What exists now
 
@@ -116,7 +118,7 @@ The candidate pack contains reviewed, hash-locked API graphs for Qwen character/
 
 At worker startup, preflight verifies GPU/VRAM, disk, ComfyUI commit, installed nodes, model hashes, workflow hashes, the normalized workflow-pack fingerprint, image digest, and a tiny loopback smoke workflow. The desktop repeats qualification against the selected workflow before uploading inputs.
 
-Local verification on 2026-08-25 built the smaller core candidate `0.10.1-candidate.3` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. On 2026-08-26 that exact image was published, pulled by immutable digest, keyless-signed with Sigstore, and signature-verified. Protected GitHub OIDC run `32967547472` and a separate local Cosign check verified the exact canonical workflow identity. This evidence still does not provide any model hash, a compatible 18–48 GB core benchmark, media quality, provider lifecycle, cost, or production promotion.
+Local verification on 2026-08-25 built the smaller core candidate `0.10.1-candidate.3` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. On 2026-08-26 that exact image was published, pulled by immutable digest, keyless-signed with Sigstore, and signature-verified. Protected GitHub OIDC run `32967547472` and a separate local Cosign check verified the exact canonical workflow identity. Candidate 5 then rebased the live integration fixes, was canonically signed in run `32994632107`, and produced the partial L40S evidence described above. The model hashes and technical executions now exist, but failed creative/duration acceptance and incomplete lifecycle/storage/cost evidence still prevent production promotion.
 
 The gateway accepts only a registered workflow/version and its declared parameters. `$PARAM:<key>` and `$INPUT:<index>` are the only template placeholders. Uploaded assets are size/hash checked, copied into a lease/job namespace under the Comfy input directory, and removed during purge. Outputs are copied into the job workspace and hashed before download.
 
@@ -173,10 +175,10 @@ Title and description validation uses current YouTube field limits. The package 
 
 The following are deliberately not claimed complete on this development machine:
 
-- the candidate Docker image passed local model-free preflight and was published, pulled, personally and canonically keyless-signed, and signature-verified by immutable registry digest; protected GitHub OIDC run `32967547472` passed exact workflow-identity verification, but the image has not run with the declared production models;
-- the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
-- policy-eligible LTX/Qwen/Gemma source terms and the original-designed-voice policy have been accepted, but exact Gemma encoder provenance, per-recording real-person voice rights, and every model hash remain gated;
-- no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
+- candidate 5 passed live model-backed preflight and seven technical workflow executions on an L40S, and protected GitHub OIDC run `32994632107` verified its exact immutable signature; it remains a candidate because creative and operational acceptance is incomplete;
+- the targeted edit failed its explicit blue-scarf instruction, the final video was 0.75 seconds for a one-second request, and human image/audio/video approval remains open;
+- policy-eligible LTX/Qwen/Gemma source terms and the original-designed-voice policy have been accepted and 11 live hashes recorded, but exact Gemma encoder provenance, the original bootstrap receipt, and per-recording real-person voice rights remain gated;
+- one real RunPod Pod, model bootstrap, gateway, uploads/downloads, and explicit provider termination were exercised; uncertain-response recovery, upload interruption/resume, reconciliation, idle/hard-deadline shutdown, durable model storage, concurrency, and final invoice proof remain open;
 - no 20–35 minute pilot episode or one-off film has passed human continuity, motion, lip, audio, recovery, and budget acceptance;
 - the Windows artifact is not yet a signed production installer and has not passed a clean-machine non-technical acceptance run;
 - optional read-only YouTube OAuth and automatic YouTube publishing remain outside this release; checked CSV import, structured local performance evidence, and human-reviewed learning are implemented without any account mutation.

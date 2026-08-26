@@ -1,6 +1,6 @@
 # Automatic cloud GPU operations
 
-Current implementation note (0.10.1): official RunPod REST lifecycle, lease reconciliation, one-GPU job orchestration, cost/start approvals, authenticated gateway, loopback ComfyUI, preflight, watchdog, resumable transfers, purge/termination, candidate qualification, and atomic core-profile promotion are implemented. No live Pod qualification was performed on this development machine. See [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
+Current implementation note (0.10.1): official RunPod REST lifecycle, lease reconciliation, one-GPU job orchestration, cost/start approvals, authenticated gateway, loopback ComfyUI, preflight, watchdog, resumable transfers, purge/termination, candidate qualification, and atomic core-profile promotion are implemented. A controlled L40S Pod run created and updated one Pod, verified 11 model hashes and seven core workflow executions, and explicitly deleted the Pod. Production remains locked because creative/duration acceptance, durable model storage, and several recovery/shutdown/cost gates did not pass. See [live GPU qualification](LIVE_GPU_QUALIFICATION_2026-08-26.md) and [PRODUCTION_IMPLEMENTATION.md](PRODUCTION_IMPLEMENTATION.md).
 
 ## 1. User-facing promise
 
@@ -12,7 +12,7 @@ After one guided setup, the user does not install LTX, Qwen, Python, CUDA, Comfy
 
 - Provider: RunPod through `GPUProvider`.
 - Compute: temporary on-demand Pod created from a pinned template/worker image.
-- Model cache: persistent network volume.
+- Model cache: persistent network volume for production. The qualification used a non-persistent 350 GB Pod volume and therefore did not satisfy this requirement.
 - Creative source and final results: authoritative local storage.
 - Control: current RunPod REST API v2 from the local orchestrator.
 - Execution: authenticated worker gateway; ComfyUI is internal.
@@ -20,9 +20,9 @@ After one guided setup, the user does not install LTX, Qwen, Python, CUDA, Comfy
 
 RunPod documents template-based Pod creation, REST start/stop/terminate operations, and network volumes that persist independently of compute. Current source links and prices are in `SOURCES.md`.
 
-### Current implementation boundary — version 0.3.0
+### Historical implementation boundary — version 0.3.0
 
-The desktop implements only the first account step: an explicit read-only `GET /v2/pods` key/account check, a read-only `GET /v2/catalog/gpus` planning-price check, Windows-protected encrypted key storage, local safety-default storage, refresh, removal, and aggregate warnings when the account already has active Pods. It has no Pod/template/volume create, state-transition, terminate, upload, worker, ComfyUI, or model endpoint. Therefore this version cannot start a charge.
+Version 0.3.0 implemented only the first read-only account step and could not start a charge. Version 0.10.1 supersedes that boundary with the governed lifecycle described in this document and the controlled evidence linked above.
 
 ## 3. One-time setup wizard
 
@@ -34,7 +34,7 @@ The desktop implements only the first account step: an explicit read-only `GET /
 4. Desktop calls the API v2 read-only Pod/account check; a separate read-only catalogue call supplies current planning prices.
 5. Key is never written to project files, `.env`, manifests, logs, screenshots, or support bundles.
 
-Steps 1–5 are implemented except that future create/terminate permissions cannot be proven without a controlled resource test. Storage, worker template, and the paid safety test below remain locked.
+Steps 1–5 are implemented, and the controlled qualification proved current create/update/delete permissions with one bounded Pod. Durable production storage, uncertain-response recovery, concurrency, idle/hard-deadline shutdown, and final invoice evidence remain locked.
 
 ### Storage
 
