@@ -169,7 +169,7 @@ Title and description validation uses current YouTube field limits. The package 
 
 The following are deliberately not claimed complete on this development machine:
 
-- the candidate Docker image passed local model-free preflight and was published, pulled, keyless-signed, and signature-verified by immutable registry digest; the canonical GitHub OIDC policy/workflow is implemented and locally tested but not yet activated through a protected GitHub environment, and the image has not run with the declared production models;
+- the candidate Docker image passed local model-free preflight and was published, pulled, personally and canonically keyless-signed, and signature-verified by immutable registry digest; protected GitHub OIDC run `32967547472` passed exact workflow-identity verification, but the image has not run with the declared production models;
 - the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
 - model hashes and commercial-use license decisions have not been recorded;
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
