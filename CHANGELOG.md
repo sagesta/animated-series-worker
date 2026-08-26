@@ -4,6 +4,21 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (targeted GPU requalification gate)
+
+- Added a fail-closed targeted runner for the merged Qwen-edit and LTX-final `1.0.1` graphs. It pins the approved parent and scarf-mask hashes, requires the live worker to expose the exact integrated workflow hashes and pack fingerprint, checks that only the masked scarf region changes, and probes 1/2/4-second videos within one frame at 24 fps.
+- Added local integrity verification for the five unaffected historical output sets and their applicable workflow definitions without rerunning those workflows or rewriting the original qualification evidence.
+- Added a read-only RunPod inventory action. At `2026-08-26T18:34:14.037Z` it found no Pods and no network volumes, so no Pod was created, no model set was downloaded again, and added RunPod cost is USD 0.00.
+- Kept the historical candidate-pack version, worker image, signed candidate-5 digest, model pins, license decisions, and LatentSync exclusion unchanged. No replacement image was built, published, signed, or assigned a digest.
+
+User impact: both defects are corrected in code and locally regression-tested, but production remains locked because no corrected GPU media exists and the project owner has not performed the required creative review.
+
+Data/migration impact: no project or database migration. Historical `1.0.0` jobs, artifacts, hashes, and receipts remain immutable; any future targeted run writes to a separate evidence directory.
+
+Documentation impact: added the targeted correction record and synchronized status, backlog, test-plan, and documentation indexes with the blocked live-evidence boundary.
+
+Rollback: remove the targeted-runner additions and this evidence record without altering either merged workflow correction or any historical qualification artifact. Do not select historical `1.0.0` graphs for production.
+
 ### Fixed — 2026-08-26 (LTX-2.5 final-duration rounding)
 
 - Traced the live 0.75-second result to the pinned `EmptyLTXVLatentVideo` temporal mapping: the old graph requested 13 frames for 1 second at 12 fps, which became two latent frames and decoded to only nine frames.
