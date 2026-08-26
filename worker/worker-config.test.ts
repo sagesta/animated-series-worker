@@ -23,6 +23,10 @@ const liveQualificationController = readFileSync(
   resolve(projectRoot, 'scripts', 'Run-LiveGpuQualification.cjs'),
   'utf8'
 )
+const coreGpuBenchmarkRunner = readFileSync(
+  resolve(projectRoot, 'scripts', 'Run-CoreGpuBenchmarks.cjs'),
+  'utf8'
+)
 const qualificationTemplate = JSON.parse(
   readFileSync(resolve(projectRoot, 'config', 'gpu-qualification-evidence.template.json'), 'utf8')
 )
@@ -126,6 +130,20 @@ describe('GPU worker release configuration', () => {
     expect(gateway).toContain("stdio: ['ignore', 'ignore', 'pipe']")
     expect(liveQualificationController).toContain(
       "if (state.controllerStatus === 'terminated') return state"
+    )
+    expect(liveQualificationController).toContain("ACTION === 'inventory'")
+    expect(liveQualificationController).toContain("runPod('/networkvolumes', context.apiKey)")
+    expect(coreGpuBenchmarkRunner).toContain("MODE === 'targeted-fixes'")
+    expect(coreGpuBenchmarkRunner).toContain("MODE === 'verify-baseline-artifacts'")
+    expect(coreGpuBenchmarkRunner).toContain('workflowVersion(definition.workflowId)')
+    expect(coreGpuBenchmarkRunner).not.toContain("workflowVersion: '1.0.0'")
+    expect(coreGpuBenchmarkRunner).toContain('assertLiveTargetedPack(capability)')
+    expect(coreGpuBenchmarkRunner).toContain(
+      'The live worker does not embed the integrated candidate pack'
+    )
+    expect(coreGpuBenchmarkRunner).toContain("join(TARGETED_RESULT_ROOT, 'studio-capability.json')")
+    expect(coreGpuBenchmarkRunner).toContain(
+      '5cbb0a510c6200e030d6caea61f92772813e477ecfa433523279df70a15cff7e'
     )
   })
 

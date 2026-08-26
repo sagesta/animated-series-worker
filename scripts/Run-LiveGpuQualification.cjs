@@ -375,6 +375,29 @@ async function status() {
   }
 }
 
+async function inventory() {
+  const context = await protectedContext()
+  const [podsPayload, volumesPayload] = await Promise.all([
+    listPods(context.apiKey),
+    runPod('/networkvolumes', context.apiKey)
+  ])
+  const volumes = Array.isArray(volumesPayload)
+    ? volumesPayload
+    : Array.isArray(volumesPayload?.networkVolumes)
+      ? volumesPayload.networkVolumes
+      : []
+  return {
+    checkedAt: new Date().toISOString(),
+    pods: podsPayload.map(sanitizePod),
+    networkVolumes: volumes.map((volume) => ({
+      id: volume.id,
+      name: volume.name,
+      sizeGb: Number(volume.size ?? 0),
+      dataCenterId: volume.dataCenterId ?? null
+    }))
+  }
+}
+
 async function recoverQualification() {
   if (await exists(STATE_PATH)) return readJson(STATE_PATH)
   const context = await protectedContext()
@@ -560,7 +583,9 @@ async function monitor() {
 app.whenReady().then(async () => {
   try {
     const result =
-      ACTION === 'create'
+      ACTION === 'inventory'
+        ? await inventory()
+        : ACTION === 'create'
         ? await createQualification()
         : ACTION === 'recover'
           ? await recoverQualification()

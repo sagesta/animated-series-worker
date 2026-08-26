@@ -1,16 +1,29 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Electron launches this maintainer runner as CommonJS. */
-const { app, safeStorage } = require('electron')
+const { app, nativeImage, safeStorage } = require('electron')
+const { execFile } = require('node:child_process')
 const { createHash, randomBytes, randomUUID } = require('node:crypto')
 const { mkdir, readFile, rename, writeFile } = require('node:fs/promises')
 const https = require('node:https')
 const { basename, dirname, join, resolve } = require('node:path')
+const { promisify } = require('node:util')
+const {
+  compareMaskedBitmaps,
+  validateDurationProbe,
+  verifyBaselineArtifacts,
+  verifyUnaffectedWorkflowDefinitions
+} = require('./targeted-gpu-evidence.cjs')
 
 const PROJECT_ROOT = resolve(__dirname, '..')
 const STATE_PATH = join(PROJECT_ROOT, 'qualification', 'live-runpod-qualification.json')
 const RESULT_ROOT = join(PROJECT_ROOT, 'qualification', 'live-core-benchmark')
+const TARGETED_RESULT_ROOT = join(PROJECT_ROOT, 'qualification', 'live-targeted-fix')
 const CHUNK_BYTES = 4 * 1024 ** 2
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 const MODE = process.argv[2] || 'all'
+const execFileAsync = promisify(execFile)
+const TARGETED_PARENT_SHA256 = 'd29e24c81779cfa3a2b24519a0ac658d86072bb9e0a607505a66081eee85e9df'
+const TARGETED_SCARF_MASK_SHA256 =
+  '5cbb0a510c6200e030d6caea61f92772813e477ecfa433523279df70a15cff7e'
 
 app.setName('animated-series-studio')
 
@@ -20,6 +33,17 @@ function identity() {
 
 function sha(value) {
   return createHash('sha256').update(value).digest('hex')
+}
+
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map((item) => stableJson(item)).join(',')}]`
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
 }
 
 async function atomicWrite(path, value) {
@@ -72,11 +96,11 @@ async function request(run, path, init = {}, expected = [200]) {
   return contentType.includes('application/json') ? response.json() : Buffer.from(await response.arrayBuffer())
 }
 
-async function waitForCapability(run) {
+async function waitForCapability(run, capabilityPath) {
   while (Date.now() < Date.parse(run.state.hardDeadline) - 45 * 60_000) {
     try {
       const capability = await request(run, '/v1/capabilities')
-      await writeJson(join(PROJECT_ROOT, 'qualification', 'studio-capability.json'), capability)
+      await writeJson(capabilityPath, capability)
       return capability
     } catch (error) {
       const message = String(error?.message || error)
@@ -160,7 +184,14 @@ async function downloadArtifact(run, jobId, artifact, destination) {
   return destination
 }
 
-async function runJob(run, definition, inputs = []) {
+function workflowVersion(workflowId) {
+  const pack = require(join(PROJECT_ROOT, 'config', 'workflow-pack.candidate.json'))
+  const workflow = pack.workflows.find((candidate) => candidate.workflowId === workflowId)
+  if (!workflow) throw new Error(`The candidate pack does not contain ${workflowId}.`)
+  return workflow.version
+}
+
+async function runJob(run, definition, inputs = [], resultRoot = RESULT_ROOT) {
   const jobId = identity()
   const inputAssets = []
   for (const input of inputs) inputAssets.push(await upload(run, jobId, input))
@@ -175,7 +206,7 @@ async function runJob(run, definition, inputs = []) {
       })
     ),
     workflowId: definition.workflowId,
-    workflowVersion: '1.0.0',
+    workflowVersion: definition.workflowVersion || workflowVersion(definition.workflowId),
     parameters: definition.parameters,
     inputAssets
   }
@@ -196,13 +227,13 @@ async function runJob(run, definition, inputs = []) {
     receipt = await request(run, `/v1/jobs/${jobId}`)
   }
   if (receipt.state !== 'succeeded') {
-    await writeJson(join(RESULT_ROOT, `${definition.workflowId}-failure.json`), receipt)
+    await writeJson(join(resultRoot, `${definition.workflowId}-failure.json`), receipt)
     throw new Error(
       `${definition.workflowId} stopped in state ${receipt.state}; prompt=${receipt.comfyPromptId || 'not-queued'}; job=${jobId}: ${receipt.message}`
         + `${receipt.qualificationDiagnostic ? ` Diagnostic: ${receipt.qualificationDiagnostic}` : ''}`
     )
   }
-  const directory = join(RESULT_ROOT, definition.workflowId)
+  const directory = join(resultRoot, definition.resultDirectoryName || definition.workflowId)
   await mkdir(directory, { recursive: true })
   const artifacts = []
   for (const artifact of receipt.artifacts) {
@@ -222,6 +253,166 @@ async function runJob(run, definition, inputs = []) {
   }
   await writeJson(join(directory, 'receipt.json'), result)
   return result
+}
+
+async function probeVideo(path) {
+  const { stdout } = await execFileAsync(
+    'ffprobe',
+    [
+      '-v',
+      'error',
+      '-count_frames',
+      '-select_streams',
+      'v:0',
+      '-show_entries',
+      'stream=nb_read_frames,duration,r_frame_rate',
+      '-of',
+      'json',
+      path
+    ],
+    { windowsHide: true, timeout: 30_000 }
+  )
+  const payload = JSON.parse(stdout)
+  const stream = payload.streams?.[0] || {}
+  const [rateNumerator, rateDenominator] = String(stream.r_frame_rate || '').split('/').map(Number)
+  const framesPerSecond = rateDenominator > 0 ? rateNumerator / rateDenominator : Number.NaN
+  const frameCount = Number(stream.nb_read_frames)
+  const durationSeconds = Number.isFinite(Number(stream.duration))
+    ? Number(stream.duration)
+    : frameCount / framesPerSecond
+  return {
+    durationSeconds,
+    frameCount,
+    framesPerSecond
+  }
+}
+
+function targetedEditAnalysis(parentPath, editedPath, maskPath) {
+  const parent = nativeImage.createFromPath(parentPath)
+  const edited = nativeImage.createFromPath(editedPath)
+  const mask = nativeImage.createFromPath(maskPath)
+  if (parent.isEmpty() || edited.isEmpty() || mask.isEmpty()) {
+    throw new Error('The targeted image evidence could not be decoded.')
+  }
+  const size = parent.getSize()
+  if (
+    edited.getSize().width !== size.width ||
+    edited.getSize().height !== size.height ||
+    mask.getSize().width !== size.width ||
+    mask.getSize().height !== size.height
+  ) {
+    throw new Error('The parent, edited output, and mask dimensions do not match.')
+  }
+  return compareMaskedBitmaps(
+    parent.getBitmap(),
+    edited.getBitmap(),
+    mask.getBitmap(),
+    size.width,
+    size.height
+  )
+}
+
+async function runTargetedFixes(run) {
+  const parentPath = resolve(process.argv[3] || '')
+  const maskPath = resolve(process.argv[4] || '')
+  if (!process.argv[3] || !process.argv[4]) {
+    throw new Error('Targeted fixes require the approved parent image and scarf mask paths.')
+  }
+  const [parentBytes, maskBytes] = await Promise.all([readFile(parentPath), readFile(maskPath)])
+  if (sha(parentBytes) !== TARGETED_PARENT_SHA256 || sha(maskBytes) !== TARGETED_SCARF_MASK_SHA256) {
+    throw new Error('The targeted rerun inputs do not match the approved parent and scarf mask.')
+  }
+  await mkdir(TARGETED_RESULT_ROOT, { recursive: true })
+
+  const editResult = await runJob(
+    run,
+    {
+      testId: 'BENCH-IMAGE-EDIT-TARGETED-FIX',
+      workflowId: 'qwen-image-targeted-edit',
+      maximumRuntimeMinutes: 12,
+      parameters: {
+        instruction:
+          'Preserve the same character identity, face, hair, glasses, pose, lighting, and background. Change only the scarf from red to deep blue.',
+        seed: 260827,
+        strength: 1
+      }
+    },
+    [parentPath, maskPath],
+    TARGETED_RESULT_ROOT
+  )
+  const editedImage = editResult.artifacts.find((artifact) => artifact.mimeType.startsWith('image/'))
+  if (!editedImage) throw new Error('The targeted edit rerun did not produce an image.')
+  const editAnalysis = targetedEditAnalysis(parentPath, editedImage.localPath, maskPath)
+  if (!editAnalysis.passed) {
+    throw new Error('The targeted edit failed the scarf-region image-diff acceptance check.')
+  }
+
+  const durations = []
+  for (const requestedDurationSeconds of [1, 2, 4]) {
+    const result = await runJob(
+      run,
+      {
+        testId: `BENCH-LTX-FINAL-${requestedDurationSeconds}S-TARGETED-FIX`,
+        workflowId: 'ltx2-image-to-video-final',
+        resultDirectoryName: `ltx2-image-to-video-final-${requestedDurationSeconds}s`,
+        maximumRuntimeMinutes: 60,
+        parameters: {
+          motionPrompt:
+            'The character breathes naturally and glances toward the river. Very subtle camera push-in, stable facial identity, stable clothing and background, polished animation.',
+          durationSeconds: requestedDurationSeconds,
+          seed: 260831,
+          framesPerSecond: 24
+        }
+      },
+      [parentPath],
+      TARGETED_RESULT_ROOT
+    )
+    const video = result.artifacts.find((artifact) => artifact.mimeType.startsWith('video/'))
+    if (!video) throw new Error(`The ${requestedDurationSeconds}s LTX rerun did not produce video.`)
+    const analysis = validateDurationProbe(
+      await probeVideo(video.localPath),
+      requestedDurationSeconds,
+      24
+    )
+    if (!analysis.passed) {
+      throw new Error(`The ${requestedDurationSeconds}s LTX rerun exceeded the one-frame tolerance.`)
+    }
+    durations.push({ result, analysis })
+  }
+
+  const summary = {
+    schemaVersion: 1,
+    qualificationId: run.state.qualificationId,
+    workerImageDigest: run.state.imageDigest,
+    completedAt: new Date().toISOString(),
+    humanReviewRequired: true,
+    promotionAuthorized: false,
+    targetedEdit: { result: editResult, analysis: editAnalysis },
+    ltxDurationTests: durations
+  }
+  await writeJson(join(TARGETED_RESULT_ROOT, 'summary.json'), summary)
+  process.stdout.write(
+    `${JSON.stringify({ phase: 'targeted-fixes-complete', summaryPath: join(TARGETED_RESULT_ROOT, 'summary.json') })}\n`
+  )
+}
+
+function assertLiveTargetedPack(capability) {
+  const pack = require(join(PROJECT_ROOT, 'config', 'workflow-pack.candidate.json'))
+  const expectedFingerprint = sha(stableJson({ ...pack, workerImageDigest: null }))
+  if (capability.workflowPackFingerprint !== expectedFingerprint) {
+    throw new Error(
+      'The live worker does not embed the integrated candidate pack; targeted verification stopped.'
+    )
+  }
+  for (const workflowId of ['qwen-image-targeted-edit', 'ltx2-image-to-video-final']) {
+    const workflow = pack.workflows.find((candidate) => candidate.workflowId === workflowId)
+    if (!workflow || workflow.version !== '1.0.1' || !workflow.templateSha256) {
+      throw new Error(`${workflowId} is not present as immutable workflow version 1.0.1.`)
+    }
+    if (capability.workflowHashes?.[`${workflowId}@1.0.1`] !== workflow.templateSha256) {
+      throw new Error(`The live worker does not expose the exact ${workflowId}@1.0.1 hash.`)
+    }
+  }
 }
 
 function modelReceipt(capability) {
@@ -264,9 +455,49 @@ async function securityChecks(run) {
 }
 
 async function main() {
+  if (MODE === 'verify-baseline-artifacts') {
+    const summaryPath = resolve(process.argv[3] || '')
+    if (!process.argv[3]) throw new Error('A baseline qualification summary path is required.')
+    const summary = JSON.parse(await readFile(summaryPath, 'utf8'))
+    const capabilityPath = process.argv[4]
+      ? resolve(process.argv[4])
+      : resolve(dirname(summaryPath), '..', 'studio-capability.json')
+    const capability = JSON.parse(await readFile(capabilityPath, 'utf8'))
+    const outputArtifacts = await verifyBaselineArtifacts(summary, [
+      'BENCH-IMAGE-EDIT',
+      'BENCH-LTX-FINAL'
+    ])
+    const pack = require(join(PROJECT_ROOT, 'config', 'workflow-pack.candidate.json'))
+    const workflowDefinitions = verifyUnaffectedWorkflowDefinitions(pack, capability, [
+      'qwen-image-character-board',
+      'qwen3-tts-voice-design',
+      'qwen3-tts-line-book',
+      'ltx2-image-to-video-draft',
+      'assistive-creative-qc'
+    ])
+    const report = {
+      passed: outputArtifacts.passed && workflowDefinitions.passed,
+      outputArtifacts,
+      workflowDefinitions
+    }
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`)
+    if (!report.passed || outputArtifacts.tests.length !== 5) {
+      throw new Error('The five unaffected baseline artifact sets did not pass hash verification.')
+    }
+    return
+  }
   const run = await context()
-  await mkdir(RESULT_ROOT, { recursive: true })
-  const capability = await waitForCapability(run)
+  const activeResultRoot = MODE === 'targeted-fixes' ? TARGETED_RESULT_ROOT : RESULT_ROOT
+  await mkdir(activeResultRoot, { recursive: true })
+  const capabilityPath =
+    MODE === 'targeted-fixes'
+      ? join(TARGETED_RESULT_ROOT, 'studio-capability.json')
+      : join(PROJECT_ROOT, 'qualification', 'studio-capability.json')
+  const modelReceiptPath =
+    MODE === 'targeted-fixes'
+      ? join(TARGETED_RESULT_ROOT, 'studio-model-qualification.json')
+      : join(PROJECT_ROOT, 'qualification', 'studio-model-qualification.json')
+  const capability = await waitForCapability(run, capabilityPath)
   if (
     capability.workerImageDigest !== run.state.imageDigest ||
     !String(capability.gpuName).includes('NVIDIA L40S') ||
@@ -276,8 +507,14 @@ async function main() {
   ) {
     throw new Error('The live capability report does not match the controlled core qualification.')
   }
-  await writeJson(join(PROJECT_ROOT, 'qualification', 'studio-model-qualification.json'), modelReceipt(capability))
-  await writeJson(join(RESULT_ROOT, 'security-checks.json'), await securityChecks(run))
+  await writeJson(modelReceiptPath, modelReceipt(capability))
+  await writeJson(join(activeResultRoot, 'security-checks.json'), await securityChecks(run))
+
+  if (MODE === 'targeted-fixes') {
+    assertLiveTargetedPack(capability)
+    await runTargetedFixes(run)
+    return
+  }
 
   if (MODE === 'inspect-job') {
     const jobId = process.argv[3]
