@@ -171,7 +171,7 @@ The following are deliberately not claimed complete on this development machine:
 
 - the candidate Docker image passed local model-free preflight and was published, pulled, personally and canonically keyless-signed, and signature-verified by immutable registry digest; protected GitHub OIDC run `32967547472` passed exact workflow-identity verification, but the image has not run with the declared production models;
 - the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
-- model-license evidence and the individual LTX acceptance have been recorded, but other policy-eligible core decisions and every model hash remain missing;
+- policy-eligible LTX/Qwen/Gemma source terms and the original-designed-voice policy have been accepted, but exact Gemma encoder provenance, per-recording real-person voice rights, and every model hash remain gated;
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
 - no 20–35 minute pilot episode or one-off film has passed human continuity, motion, lip, audio, recovery, and budget acceptance;
 - the Windows artifact is not yet a signed production installer and has not passed a clean-machine non-technical acceptance run;

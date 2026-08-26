@@ -4,6 +4,21 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (core model terms and voice policy acceptance)
+
+- Recorded the individual project owner's explicit acceptance of the Apache-2.0 terms for the pinned Qwen Image, Qwen Image Edit, Qwen3-TTS VoiceDesign, Qwen3-TTS Base, and transitive Gemma 4 sources.
+- Added a machine-readable voice-rights policy: original designed voices for fictional characters are allowed, while any real-person reference remains blocked until that recording has a project-scoped rights, consent, use-scope, and revocation record. Unconsented cloning or imitation remains prohibited.
+- Updated the evidence checker to require every policy-eligible core source, including transitive Gemma, to retain a named, dated accepted decision and to preserve the voice-reference safeguards. Excluded advanced sources remain pending.
+- Updated qualification-bundle generation evidence so all 11 policy-eligible core model components carry the accepted source decisions; model hashes and every external GPU/runtime/quality/shutdown gate remain required.
+
+User impact: the no-cost core terms review is complete, but no model download or paid generation is unlocked. Voice design can proceed only within the recorded project rights policy.
+
+Data/migration impact: none. No model file, registry image, RunPod resource, project data, or billing state changed.
+
+Documentation impact: synchronized the model-license dossier, status, backlog, implementation boundary, local verification, README, and changelog.
+
+Rollback: restore the affected source decisions to pending and remove the aggregate core/voice decisions. This does not alter the separate hash, qualification, readiness, or advanced-profile locks.
+
 ### Changed — 2026-08-26 (individual LTX acceptance and LatentSync core exclusion)
 
 - Recorded the project owner's explicit statement that this is an individual project and subsequent acceptance of the LTX-2.5 license/gated terms for the stated commercial YouTube use. The exact source, timestamp, use context, conditions, and remaining Gemma/model/GPU blockers stay machine-readable.

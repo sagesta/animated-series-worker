@@ -4,11 +4,24 @@
   "reviewPurpose": "Commercial, monetized YouTube animation production",
   "evidenceReviewedAt": "2026-08-26",
   "decisionState": "pending-authorized-reviewer",
+  "coreDecisionState": "accepted-with-runtime-and-asset-rights-gates",
   "legalAdvice": false,
+  "voiceRightsPolicy": {
+    "scope": "individual-project",
+    "designedVoices": "allowed-for-original-fictional-characters",
+    "referenceVoices": "requires-a-project-scoped-rights-and-consent-record-for-each-recording",
+    "prohibitedUse": "unconsented-cloning-or-imitation-of-a-real-person",
+    "decision": {
+      "status": "accepted",
+      "reviewer": "individual-project-owner",
+      "reviewedAt": "2026-08-26T14:36:09.5983277Z",
+      "notes": "The owner approved original designed voices and accepted that every real-person reference voice remains blocked until its specific recording, consent, scope, and revocation basis are documented."
+    }
+  },
   "rules": [
     "Evidence review is not license acceptance.",
     "Only a person authorized to bind the creator or relevant legal entity may record an accepted decision.",
-    "Downloading, gated-access acceptance, model use, or production promotion must remain blocked until every core decision is accepted and dated.",
+    "Core source terms are accepted and dated, but downloading and production promotion remain blocked until exact model hashes and external qualification evidence exist.",
     "Voice or likeness use also requires separately documented rights and consent; a permissive model license does not provide them."
   ],
   "sources": [
@@ -28,9 +41,14 @@
         "Retain the Apache-2.0 license and applicable copyright, patent, trademark, attribution, and NOTICE material when distributing covered artifacts.",
         "Do not treat the model license as permission for copyrighted, trademarked, private, or likeness-bearing inputs."
       ],
-      "blockers": ["Authorized reviewer has not accepted the terms for the intended use."],
+      "blockers": ["Model hashes and compatible-GPU qualification remain missing."],
       "transitiveSourceIds": [],
-      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+      "decision": {
+        "status": "accepted",
+        "reviewer": "individual-project-owner",
+        "reviewedAt": "2026-08-26T14:36:09.5983277Z",
+        "notes": "User explicitly approved the Apache-2.0 terms and recorded attribution, notice, source-rights, and trademark boundaries for this individual commercial project."
+      }
     },
     {
       "sourceId": "comfy-org-qwen-image-edit",
@@ -48,9 +66,14 @@
         "Retain the Apache-2.0 license and applicable copyright, patent, trademark, attribution, and NOTICE material when distributing covered artifacts.",
         "Targeted editing does not grant rights in the edited source material."
       ],
-      "blockers": ["Authorized reviewer has not accepted the terms for the intended use."],
+      "blockers": ["Model hashes and compatible-GPU qualification remain missing."],
       "transitiveSourceIds": [],
-      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+      "decision": {
+        "status": "accepted",
+        "reviewer": "individual-project-owner",
+        "reviewedAt": "2026-08-26T14:36:09.5983277Z",
+        "notes": "User explicitly approved the Apache-2.0 terms and recorded attribution, notice, source-rights, and trademark boundaries for this individual commercial project."
+      }
     },
     {
       "sourceId": "qwen3-tts-voice-design",
@@ -69,9 +92,14 @@
         "Use only designed voices or reference voices with documented speaker authorization, scope, and revocation handling.",
         "Do not imply that a model license supplies consent, publicity, performance, or impersonation rights."
       ],
-      "blockers": ["Authorized reviewer has not accepted the terms for the intended use.", "Each reference voice still requires project-specific rights and consent evidence."],
+      "blockers": ["Model hashes and compatible-GPU qualification remain missing.", "Each real-person reference voice still requires project-specific rights and consent evidence."],
       "transitiveSourceIds": [],
-      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+      "decision": {
+        "status": "accepted",
+        "reviewer": "individual-project-owner",
+        "reviewedAt": "2026-08-26T14:36:09.5983277Z",
+        "notes": "User explicitly approved the Apache-2.0 terms and the original-designed-voice policy. Any real-person reference remains separately blocked until its project-scoped rights and consent record exists."
+      }
     },
     {
       "sourceId": "qwen3-tts-base",
@@ -90,9 +118,14 @@
         "Reusable voice-clone prompts may only derive from documented, authorized reference voices.",
         "Do not imply that a model license supplies consent, publicity, performance, or impersonation rights."
       ],
-      "blockers": ["Authorized reviewer has not accepted the terms for the intended use.", "Each reference voice still requires project-specific rights and consent evidence."],
+      "blockers": ["Model hashes and compatible-GPU qualification remain missing.", "Each real-person reference voice still requires project-specific rights and consent evidence."],
       "transitiveSourceIds": [],
-      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+      "decision": {
+        "status": "accepted",
+        "reviewer": "individual-project-owner",
+        "reviewedAt": "2026-08-26T14:36:09.5983277Z",
+        "notes": "User explicitly approved the Apache-2.0 terms and the original-designed-voice policy. Any real-person reference remains separately blocked until its project-scoped rights and consent record exists."
+      }
     },
     {
       "sourceId": "bytedance-latentsync-1.6",
@@ -212,11 +245,15 @@
         "Treat LTX's custom projection/conversion and LTX license as additional obligations, not replacements for the upstream license."
       ],
       "blockers": [
-        "The LTX repository does not separately pin the upstream Google checkpoint/revision used to produce the packaged custom encoder.",
-        "Authorized reviewer has not confirmed the combined LTX and Gemma notice obligations."
+        "The LTX repository does not separately pin the upstream Google checkpoint/revision used to produce the packaged custom encoder."
       ],
       "transitiveSourceIds": [],
-      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+      "decision": {
+        "status": "accepted",
+        "reviewer": "individual-project-owner",
+        "reviewedAt": "2026-08-26T14:36:09.5983277Z",
+        "notes": "User explicitly approved the Apache-2.0 terms and combined LTX/Gemma attribution and notice duties. The exact encoder provenance remains a technical promotion blocker."
+      }
     }
   ]
 }

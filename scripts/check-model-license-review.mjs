@@ -18,9 +18,23 @@ if (review.candidateManifestVersion !== manifest.manifestVersion) {
   fail('License review and candidate model manifest versions do not match.')
 }
 if (review.decisionState !== 'pending-authorized-reviewer') {
-  fail('Candidate license evidence must stay pending until an authorized reviewer decides it.')
+  fail('The overall candidate evidence must stay pending while excluded advanced sources are unresolved.')
+}
+if (review.coreDecisionState !== 'accepted-with-runtime-and-asset-rights-gates') {
+  fail('The policy-eligible core source decisions must retain their accepted gated state.')
 }
 if (review.legalAdvice !== false) fail('The evidence record must state that it is not legal advice.')
+if (
+  review.voiceRightsPolicy?.decision?.status !== 'accepted' ||
+  typeof review.voiceRightsPolicy?.decision?.reviewer !== 'string' ||
+  review.voiceRightsPolicy.decision.reviewer.trim().length === 0 ||
+  Number.isNaN(Date.parse(review.voiceRightsPolicy?.decision?.reviewedAt)) ||
+  review.voiceRightsPolicy?.referenceVoices !==
+    'requires-a-project-scoped-rights-and-consent-record-for-each-recording' ||
+  review.voiceRightsPolicy?.prohibitedUse !== 'unconsented-cloning-or-imitation-of-a-real-person'
+) {
+  fail('The accepted voice policy must preserve per-recording consent and prohibit unconsented imitation.')
+}
 if (
   promotionPolicy.schemaVersion !== 1 ||
   typeof promotionPolicy.policyVersion !== 'string' ||
@@ -116,6 +130,29 @@ const advancedModelIds = new Set(
     )
     .flatMap((workflow) => (workflow.requiredModels ?? []).map((model) => model.modelId))
 )
+const coreSourceIds = new Set()
+for (const source of review.sources ?? []) {
+  if (
+    manifest.models.some(
+      (model) =>
+        model.repository === source.repository &&
+        model.revision === source.revision &&
+        coreModelIds.has(model.modelId)
+    )
+  ) {
+    coreSourceIds.add(source.sourceId)
+  }
+}
+for (const sourceId of [...coreSourceIds]) {
+  const source = review.sources.find((candidate) => candidate.sourceId === sourceId)
+  for (const transitiveId of source?.transitiveSourceIds ?? []) coreSourceIds.add(transitiveId)
+}
+for (const sourceId of coreSourceIds) {
+  const source = review.sources.find((candidate) => candidate.sourceId === sourceId)
+  if (source?.decision?.status !== 'accepted') {
+    fail(`Policy-eligible core source ${sourceId} must retain a named, dated accepted decision.`)
+  }
+}
 for (const [key, model] of manifestSources) {
   const source = reviewSources.get(key)
   const expectedScopes = new Set()
