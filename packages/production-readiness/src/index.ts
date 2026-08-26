@@ -26,6 +26,12 @@ export const ProductionReadinessReceiptSchema = z
         smokeWorkflowPassed: z.literal(true)
       })
       .strict(),
+    promotionPolicy: z
+      .object({
+        version: z.string().min(1).max(64),
+        excludedCandidateWorkflows: z.array(z.string().min(1).max(191)).max(50)
+      })
+      .strict(),
     automaticShutdown: z
       .object({
         idleExitPassed: z.literal(true),

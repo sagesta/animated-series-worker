@@ -71,6 +71,10 @@ function fixture(): { packPath: string; receiptPath: string } {
         preflightPassed: true,
         smokeWorkflowPassed: true
       },
+      promotionPolicy: {
+        version: '2026-08-26.1',
+        excludedCandidateWorkflows: ['latentsync-lip-repair']
+      },
       automaticShutdown: {
         idleExitPassed: true,
         hardDeadlineExitPassed: true,
@@ -94,6 +98,12 @@ describe('production readiness receipt', () => {
       modelStorageReady: true,
       workerImageReady: true,
       automaticShutdownTested: true,
+      receipt: {
+        promotionPolicy: {
+          version: '2026-08-26.1',
+          excludedCandidateWorkflows: ['latentsync-lip-repair']
+        }
+      },
       blockers: []
     })
   })

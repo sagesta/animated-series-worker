@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "2026-08-26.1",
+  "excludedWorkflowIds": ["latentsync-lip-repair"],
+  "decision": {
+    "status": "accepted",
+    "decidedBy": "individual-project-owner",
+    "decidedAt": "2026-08-26T13:52:33.4627110Z",
+    "reason": "The pinned LatentSync weights do not include or directly link their binding OpenRAIL++-M license text. Keep targeted lip repair available only as a separately reviewed advanced candidate; do not let it or its Stability VAE block the first core Qwen/LTX release."
+  }
+}

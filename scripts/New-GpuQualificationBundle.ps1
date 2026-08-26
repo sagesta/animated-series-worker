@@ -8,6 +8,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $manifestPath = Join-Path $projectRoot 'config\model-install-manifest.candidate.json'
 $packPath = Join-Path $projectRoot 'config\workflow-pack.candidate.json'
 $evidenceTemplatePath = Join-Path $projectRoot 'config\gpu-qualification-evidence.template.json'
+$promotionPolicyPath = Join-Path $projectRoot 'config\core-promotion-policy.json'
+$licenseReviewPath = Join-Path $projectRoot 'config\model-license-review.candidate.json'
 $outputPath = [System.IO.Path]::GetFullPath($OutputDirectory)
 
 if (Test-Path -LiteralPath $outputPath) {
@@ -17,22 +19,30 @@ if (Test-Path -LiteralPath $outputPath) {
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $pack = Get-Content -LiteralPath $packPath -Raw | ConvertFrom-Json
 $evidence = Get-Content -LiteralPath $evidenceTemplatePath -Raw | ConvertFrom-Json
+$promotionPolicy = Get-Content -LiteralPath $promotionPolicyPath -Raw | ConvertFrom-Json
+$licenseReview = Get-Content -LiteralPath $licenseReviewPath -Raw | ConvertFrom-Json
+$excludedWorkflowIds = @($promotionPolicy.excludedWorkflowIds)
 $coreModelIds = @(
   $pack.workflows |
-    Where-Object { $_.qualificationTier -ne 'advanced' } |
+    Where-Object { $_.qualificationTier -ne 'advanced' -and $excludedWorkflowIds -notcontains $_.workflowId } |
     ForEach-Object { $_.requiredModels } |
     ForEach-Object { $_.modelId } |
     Sort-Object -Unique
 )
 $evidence.licenseApprovals = @(
   $manifest.models | Where-Object { $coreModelIds -contains $_.modelId } | ForEach-Object {
+    $manifestModel = $_
+    $sourceReview = $licenseReview.sources |
+      Where-Object { $_.manifestSource -eq $true -and $_.repository -eq $manifestModel.repository -and $_.revision -eq $manifestModel.revision } |
+      Select-Object -First 1
+    $accepted = $sourceReview.decision.status -eq 'accepted'
     [ordered]@{
-      modelId = $_.modelId
-      decision = 'review-required'
-      reviewer = ''
-      reviewedAt = $null
-      licenseUrl = $_.licenseUrl
-      notes = ''
+      modelId = $manifestModel.modelId
+      decision = if ($accepted) { 'accepted' } else { 'review-required' }
+      reviewer = if ($accepted) { $sourceReview.decision.reviewer } else { '' }
+      reviewedAt = if ($accepted) { $sourceReview.decision.reviewedAt } else { $null }
+      licenseUrl = $manifestModel.licenseUrl
+      notes = if ($accepted) { $sourceReview.decision.notes } else { '' }
     }
   }
 )
@@ -60,7 +70,7 @@ GPU WORKER QUALIFICATION — NO GPU HAS BEEN STARTED
 2. Import and review the API-format ComfyUI templates with scripts\Import-ComfyWorkflow.mjs.
 3. Build the candidate image with scripts\Build-GpuWorker.ps1 -AllowCandidate. Push it to your private registry and record its immutable digest.
 4. Create one controlled RunPod qualification worker using the generated environment template. Do not expose ComfyUI port 8188; expose only authenticated gateway port 8000.
-5. Download studio-model-qualification.json and studio-capability.json. Run every listed core benchmark, security, recovery, cost, and shutdown test and link its evidence. Advanced control, native-audio, foley, and adaptation candidates stay locked.
+5. Download studio-model-qualification.json and studio-capability.json. Run every listed core benchmark, security, recovery, cost, and shutdown test and link its evidence. LatentSync lip repair and the advanced control, native-audio, foley, and adaptation candidates stay locked for separate evidence.
 6. Terminate the qualification Pod and confirm provider termination. Storage may continue to cost money if a persistent volume is retained.
 7. Run scripts\Promote-GpuWorker.mjs with the three evidence files. It creates production files only if every lock passes.
 

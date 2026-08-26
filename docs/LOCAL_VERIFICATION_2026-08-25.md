@@ -42,7 +42,7 @@ On 2026-08-26 the exact `.3` image was published as `ghcr.io/sagesta/animated-se
 
 This GPU cannot qualify the 18–48 GB core workflows or any separately packaged advanced profile. The deferred LTX trainer's CUDA 13.2 runtime has an official forward-compatibility floor of R595; that restriction now belongs only to a future adaptation image, not the core worker. The model-free preflight proves image construction, dependency import, gateway authentication/binding, and a trivial Comfy graph only. It is not model, media-quality, cost, provider-lifecycle, or production qualification.
 
-The separate [2026-08-26 model-license evidence review](MODEL_LICENSE_REVIEW_2026-08-26.md) completed without downloads or gated-term acceptance. It narrows the legal gate but does not close it: LTX still requires an authorized entity/revenue/terms decision, LatentSync still lacks a directly included or linked binding license text for the pinned weights, Gemma attribution/provenance must be retained, and every voice/reference remains subject to separate rights and consent.
+The separate [2026-08-26 model-license evidence review](MODEL_LICENSE_REVIEW_2026-08-26.md) completed without downloads. The individual project owner accepted the LTX-2.5 terms for the stated commercial use; the deterministic bundle test carries those five component approvals while excluding LatentSync and its Stability VAE from core. The legal gate is still incomplete: Qwen/Gemma obligations and every voice/reference right remain explicit, and LatentSync still lacks a directly included or linked binding license text for the pinned weights.
 
 Still required before production promotion:
 

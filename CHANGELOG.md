@@ -4,6 +4,21 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (individual LTX acceptance and LatentSync core exclusion)
+
+- Recorded the project owner's explicit statement that this is an individual project and subsequent acceptance of the LTX-2.5 license/gated terms for the stated commercial YouTube use. The exact source, timestamp, use context, conditions, and remaining Gemma/model/GPU blockers stay machine-readable.
+- Added D-054 and a named, dated restrictive promotion policy that excludes `latentsync-lip-repair`, ByteDance LatentSync weights, and the Stability VAE from first core qualification/promotion. The candidate runner remains available only for a later separate license and advanced-profile qualification.
+- Updated qualification-bundle generation to derive its core model set through that policy and carry accepted LTX decisions into the five matching component approvals. Promotion no longer requires the six lip-repair benchmarks and records the exclusion-policy version in the readiness receipt.
+- Extended tests to prove LatentSync/its VAE cannot enter a core production pack even when optional lip fixtures fail. The signed `0.10.1-candidate.3` worker bytes and workflow-pack fingerprint are unchanged; this is a restrictive release-policy change, not a new image claim.
+
+User impact: the ambiguous lip-repair license no longer blocks the first image/voice/LTX-video qualification path, while lip repair stays unavailable until separately proven. No GPU or model was started.
+
+Data/migration impact: none. No project data, model file, registry image, provider resource, or billing state changed.
+
+Documentation impact: synchronized decisions, license dossier, implementation, GPU operations, backlog, status, tests, traceability, local evidence, README, and changelog.
+
+Rollback: remove D-054 and the promotion policy only if a binding LatentSync weight license is accepted and the separate profile passes its full qualification. Do not silently restore it to core.
+
 ### Changed — 2026-08-26 (no-cost model-license evidence review)
 
 - Inventoried all 15 candidate artifacts as eight exact pinned source repositories plus the transitive Gemma 4 source inside LTX-2.5's custom text encoder. Added a machine-readable evidence record and deterministic coverage guard tied to the actual core/advanced workflow scopes.

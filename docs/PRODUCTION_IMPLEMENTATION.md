@@ -98,7 +98,7 @@ RunPod can still charge for retained persistent storage after compute stops. A P
 
 Optional adaptation is a separate worker profile, not a repair performed on the core worker. The candidate contract and exact trainer pin remain recorded, but adaptation cannot enter a production pack until a separately built trainer image has its own digest and passes the full training/license/driver/quality/cost/rollback evidence set. The core promotion filters every `advanced` candidate out of the production pack, so native-audio/control/foley/adaptation work stays visibly locked without blocking the first image/voice/video/lip-repair release.
 
-The model installer reads only `config/model-install-manifest.*.json`. Each entry contains an allowlisted Hugging Face repository, immutable revision, source path, destination, license URL, and production hash. It rejects absolute/traversal destinations and undeclared repositories. The separate `config/model-license-review.candidate.json` records evidence for all eight pinned repositories plus the transitive Gemma 4 encoder source without changing any manifest entry to accepted. Its deterministic check requires complete source/scope coverage and pending, unnamed, undated decisions until an authorized reviewer acts.
+The model installer reads only `config/model-install-manifest.*.json`. Each entry contains an allowlisted Hugging Face repository, immutable revision, source path, destination, license URL, and production hash. It rejects absolute/traversal destinations and undeclared repositories. The separate `config/model-license-review.candidate.json` records evidence for all eight pinned repositories plus the transitive Gemma 4 encoder source without changing any manifest entry to accepted. Its deterministic check requires complete policy-derived source/scope coverage, named/dated/explained acceptances, and unnamed/undated pending decisions. The individual LTX-2.5 acceptance is recorded; other source decisions remain separate.
 
 - `STUDIO_MODEL_BOOTSTRAP_MODE=qualification` downloads pinned candidate entries only after the release engineer explicitly lists reviewed model IDs in `STUDIO_ACCEPTED_MODEL_LICENSES`; it computes a qualification receipt.
 - `STUDIO_MODEL_BOOTSTRAP_MODE=production` accepts only an already promoted manifest whose hashes and license decisions are locked. The app supplies only the model IDs needed for that job, so a reusable volume is filled on demand.
@@ -110,7 +110,7 @@ The ordinary creator does not set up the GPU every episode. A maintainer builds 
 
 ComfyUI is the execution engine, not the review interface. A production Comfy workflow must be an API-format prompt stored under `config/workflows`, have a SHA-256 in the production pack, and use only reviewed node types. The importer refuses UI-format/unsafe workflow content and records its exact node inventory.
 
-The candidate pack contains reviewed, hash-locked API graphs for Qwen character/storyboard frames, Qwen targeted edits, an LTX single-stage draft, an LTX two-stage final, native LTX audio-driven dialogue, control-guided Qwen, and control-guided LTX. Rights-aware foley and project adaptation have exact hash-locked runner contracts. All are structurally checked and non-billable. Core promotion is atomic across every core and local-finishing entry and includes only the models those workflows reference. Advanced entries remain candidate-only until a separately packaged profile passes its own declared model, GPU runtime, output quality, cost, rights, security, recovery, and shutdown evidence.
+The candidate pack contains reviewed, hash-locked API graphs for Qwen character/storyboard frames, Qwen targeted edits, an LTX single-stage draft, an LTX two-stage final, native LTX audio-driven dialogue, control-guided Qwen, and control-guided LTX. Rights-aware foley and project adaptation have exact hash-locked runner contracts. All are structurally checked and non-billable. Core promotion is atomic across every policy-eligible core and local-finishing entry and includes only the models those workflows reference. `core-promotion-policy.json` restrictively excludes LatentSync lip repair and its model dependencies without changing the already signed candidate worker bytes. Advanced and policy-excluded entries remain candidate-only until a separate profile passes its own declared license, model, GPU runtime, output quality, cost, rights, security, recovery, and shutdown evidence.
 
 At worker startup, preflight verifies GPU/VRAM, disk, ComfyUI commit, installed nodes, model hashes, workflow hashes, the normalized workflow-pack fingerprint, image digest, and a tiny loopback smoke workflow. The desktop repeats qualification against the selected workflow before uploading inputs.
 
@@ -120,7 +120,7 @@ The gateway accepts only a registered workflow/version and its declared paramete
 
 ## 8. Locked one-time GPU qualification
 
-The repository ships candidate pins, not fabricated production evidence. The no-cost [candidate model-license review](MODEL_LICENSE_REVIEW_2026-08-26.md) inventories all pinned and known transitive sources, records the LTX/LatentSync blockers, and leaves every legal decision pending. These no-cost preparation tools are implemented:
+The repository ships candidate pins, not fabricated production evidence. The no-cost [candidate model-license review](MODEL_LICENSE_REVIEW_2026-08-26.md) inventories all pinned and known transitive sources, records the individual LTX acceptance, keeps the remaining decisions explicit, and isolates the LatentSync blocker outside core promotion. These no-cost preparation tools are implemented:
 
 ```powershell
 .\scripts\New-GpuQualificationBundle.ps1
@@ -128,7 +128,7 @@ The repository ships candidate pins, not fabricated production evidence. The no-
 node scripts\Import-ComfyWorkflow.mjs --workflow-id <id> --input <api-workflow.json>
 ```
 
-The controlled core run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. Core qualification runs every required image, edit, voice, line-book, draft/final, animated lip-sync, creative-QC, local-finishing, security, resumable-transfer, reconciliation, shutdown, and cost test. Its current maximum declared workflow requirement is 48 GB. Native-audio/control/foley/adaptation tests and the trainer's 80 GB/R595 compatibility proof belong to later profile-specific qualification and cannot be represented by the core receipt.
+The controlled core run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. Core qualification runs every required image, edit, voice, line-book, draft/final, creative-QC, local-finishing, security, resumable-transfer, reconciliation, shutdown, and cost test. Its current maximum declared workflow requirement is 48 GB. LatentSync lip repair, native-audio/control/foley/adaptation tests, and the trainer's 80 GB/R595 compatibility proof belong to later profile-specific qualification and cannot be represented by the core receipt.
 
 Promotion requires three external artifacts:
 
@@ -171,7 +171,7 @@ The following are deliberately not claimed complete on this development machine:
 
 - the candidate Docker image passed local model-free preflight and was published, pulled, personally and canonically keyless-signed, and signature-verified by immutable registry digest; protected GitHub OIDC run `32967547472` passed exact workflow-identity verification, but the image has not run with the declared production models;
 - the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
-- model-license evidence has been recorded, but no commercial-use decision has been accepted and no model hash exists;
+- model-license evidence and the individual LTX acceptance have been recorded, but other policy-eligible core decisions and every model hash remain missing;
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
 - no 20–35 minute pilot episode or one-off film has passed human continuity, motion, lip, audio, recovery, and budget acceptance;
 - the Windows artifact is not yet a signed production installer and has not passed a clean-machine non-technical acceptance run;

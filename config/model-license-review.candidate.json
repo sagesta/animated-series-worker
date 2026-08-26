@@ -99,7 +99,7 @@
       "manifestSource": true,
       "repository": "ByteDance/LatentSync-1.6",
       "revision": "c42c7e6c8e9c213626389fa7d9a3c444b8536353",
-      "qualificationScopes": ["core"],
+      "qualificationScopes": ["advanced"],
       "licenseId": "OpenRAIL++-M (repository metadata: openrail++)",
       "licenseEvidenceUrls": [
         "https://huggingface.co/ByteDance/LatentSync-1.6/tree/c42c7e6c8e9c213626389fa7d9a3c444b8536353",
@@ -123,7 +123,7 @@
       "manifestSource": true,
       "repository": "stabilityai/sd-vae-ft-mse",
       "revision": "31f26fdeee1355a5c34592e401dd41e45d25a493",
-      "qualificationScopes": ["core"],
+      "qualificationScopes": ["advanced"],
       "licenseId": "MIT",
       "licenseEvidenceUrls": [
         "https://huggingface.co/stabilityai/sd-vae-ft-mse/tree/31f26fdeee1355a5c34592e401dd41e45d25a493"
@@ -145,7 +145,12 @@
         "https://huggingface.co/Lightricks/LTX-2.5/tree/6c7e5e573ac1667efc83407806fe9b0b93730e60",
         "https://github.com/Lightricks/LTX-2/blob/main/LICENSE.md"
       ],
-      "assessment": "commercial-use-conditional-on-entity-revenue-and-full-restrictions",
+      "assessment": "accepted-for-individual-commercial-use-subject-to-full-license-conditions",
+      "useContext": {
+        "projectOwnership": "individual",
+        "intendedUse": "Commercial, monetized YouTube animation production",
+        "revenueThresholdAssessment": "The USD 10,000,000 Commercial Entity threshold is not applicable to the user's individual-project attestation."
+      },
       "conditions": [
         "An entity with aggregate annual revenue of at least USD 10,000,000 must obtain a paid commercial agreement before commercial use.",
         "An entity below that threshold may proceed only after an authorized reviewer accepts the community license, use restrictions, and applicable AI-law, transparency, provenance, safety, and distribution duties.",
@@ -154,13 +159,16 @@
         "Preserve and do not bypass any safety, disclosure, watermarking, provenance, or transparency feature included in the model or output path."
       ],
       "blockers": [
-        "An authorized reviewer must confirm the relevant entity and its aggregate annual revenue category.",
-        "If the threshold is met, a paid commercial agreement must be obtained and recorded.",
-        "The gated model terms have not been accepted on the creator's behalf.",
-        "The custom Gemma 4 encoder's upstream attribution must be retained and its provenance confirmed."
+        "The custom Gemma 4 encoder's upstream attribution must be retained and its provenance confirmed.",
+        "Model hashes and compatible-GPU qualification remain missing."
       ],
       "transitiveSourceIds": ["google-gemma-4-12b"],
-      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+      "decision": {
+        "status": "accepted",
+        "reviewer": "individual-project-owner",
+        "reviewedAt": "2026-08-26T13:52:33.4627110Z",
+        "notes": "User attested that this is an individual project and then explicitly accepted the LTX-2.5 license and gated terms for the stated intended use."
+      }
     },
     {
       "sourceId": "lightricks-ltx-2.3-ic-lora",

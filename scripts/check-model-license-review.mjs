@@ -8,6 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const manifest = JSON.parse(readFileSync(join(root, 'config/model-install-manifest.candidate.json'), 'utf8'))
 const pack = JSON.parse(readFileSync(join(root, 'config/workflow-pack.candidate.json'), 'utf8'))
 const review = JSON.parse(readFileSync(join(root, 'config/model-license-review.candidate.json'), 'utf8'))
+const promotionPolicy = JSON.parse(readFileSync(join(root, 'config/core-promotion-policy.json'), 'utf8'))
 const errors = []
 
 const fail = (message) => errors.push(message)
@@ -20,6 +21,19 @@ if (review.decisionState !== 'pending-authorized-reviewer') {
   fail('Candidate license evidence must stay pending until an authorized reviewer decides it.')
 }
 if (review.legalAdvice !== false) fail('The evidence record must state that it is not legal advice.')
+if (
+  promotionPolicy.schemaVersion !== 1 ||
+  typeof promotionPolicy.policyVersion !== 'string' ||
+  promotionPolicy.policyVersion.trim().length === 0 ||
+  promotionPolicy.decision?.status !== 'accepted' ||
+  typeof promotionPolicy.decision?.decidedBy !== 'string' ||
+  promotionPolicy.decision.decidedBy.trim().length === 0 ||
+  Number.isNaN(Date.parse(promotionPolicy.decision?.decidedAt)) ||
+  typeof promotionPolicy.decision?.reason !== 'string' ||
+  promotionPolicy.decision.reason.trim().length === 0
+) {
+  fail('The core promotion policy must be accepted, named, dated, and explained.')
+}
 
 const manifestSources = new Map()
 for (const model of manifest.models) {
@@ -38,18 +52,36 @@ for (const source of review.sources ?? []) {
     fail(`License evidence is missing for ${source.sourceId}.`)
   }
   if (!Array.isArray(source.blockers) || source.blockers.length === 0) fail(`A pending blocker is missing for ${source.sourceId}.`)
-  if (
+  if (source.decision?.status === 'accepted') {
+    if (
+      typeof source.decision.reviewer !== 'string' ||
+      source.decision.reviewer.trim().length === 0 ||
+      Number.isNaN(Date.parse(source.decision.reviewedAt)) ||
+      typeof source.decision.notes !== 'string' ||
+      source.decision.notes.trim().length === 0
+    ) {
+      fail(`Accepted decision for ${source.sourceId} must be named, dated, and explained.`)
+    }
+  } else if (
     source.decision?.status !== 'pending-authorized-reviewer' ||
     source.decision?.reviewer !== null ||
     source.decision?.reviewedAt !== null
   ) {
-    fail(`Candidate decision for ${source.sourceId} must remain unnamed, undated, and pending.`)
+    fail(`Pending decision for ${source.sourceId} must remain unnamed and undated.`)
   }
   if (source.manifestSource === true) {
     const key = sourceKey(source.repository, source.revision)
     if (reviewSources.has(key)) fail(`Duplicate manifest-source review: ${key}`)
     reviewSources.set(key, source)
   }
+}
+
+const ltxReview = review.sources.find((source) => source.sourceId === 'lightricks-ltx-2.5')
+if (
+  ltxReview?.decision?.status !== 'accepted' ||
+  ltxReview?.useContext?.projectOwnership !== 'individual'
+) {
+  fail('The recorded LTX-2.5 decision must retain the individual-project acceptance context.')
 }
 
 for (const key of manifestSources.keys()) {
@@ -59,14 +91,29 @@ for (const key of reviewSources.keys()) {
   if (!manifestSources.has(key)) fail(`License evidence references an unpinned manifest source ${key}.`)
 }
 
+const excludedWorkflowIds = new Set(promotionPolicy.excludedWorkflowIds ?? [])
+if (!Array.isArray(promotionPolicy.excludedWorkflowIds)) {
+  fail('The core promotion policy must declare an excludedWorkflowIds array.')
+}
+for (const workflowId of excludedWorkflowIds) {
+  if (!pack.workflows.some((workflow) => workflow.workflowId === workflowId)) {
+    fail(`The core promotion policy excludes unknown workflow ${workflowId}.`)
+  }
+}
 const coreModelIds = new Set(
   pack.workflows
-    .filter((workflow) => workflow.qualificationTier !== 'advanced')
+    .filter(
+      (workflow) =>
+        workflow.qualificationTier !== 'advanced' && !excludedWorkflowIds.has(workflow.workflowId)
+    )
     .flatMap((workflow) => (workflow.requiredModels ?? []).map((model) => model.modelId))
 )
 const advancedModelIds = new Set(
   pack.workflows
-    .filter((workflow) => workflow.qualificationTier === 'advanced')
+    .filter(
+      (workflow) =>
+        workflow.qualificationTier === 'advanced' || excludedWorkflowIds.has(workflow.workflowId)
+    )
     .flatMap((workflow) => (workflow.requiredModels ?? []).map((model) => model.modelId))
 )
 for (const [key, model] of manifestSources) {

@@ -35,6 +35,6 @@
     { "testId": "COST-RECEIPT", "passed": false, "evidence": "" }
   ],
   "notes": [
-    "This receipt promotes only the complete core workflow set. Advanced control, native-audio, foley, and optional adaptation candidates remain locked for separate image and evidence profiles."
+    "This receipt promotes only the policy-eligible core workflow set. LatentSync lip repair, advanced control, native-audio, foley, and optional adaptation candidates remain locked for separate evidence profiles."
   ]
 }

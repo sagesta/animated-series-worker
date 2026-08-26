@@ -62,7 +62,7 @@ Large model weights should normally live on the network volume so a worker image
 
 After publication and pull-by-digest verification, canonical signing uses the manual main-only `sign-worker-image.yml` workflow. The protected `worker-signing` job checks both the immutable manifest digest and local config/image digest, signs only `ghcr.io/sagesta/animated-series-worker`, and verifies the result against the exact GitHub workflow OIDC identity recorded in [SECURITY_AND_RECOVERY.md](SECURITY_AND_RECOVERY.md). Signing neither deploys the image nor unlocks RunPod; model, license, compatible-GPU, recovery, shutdown, quality, and readiness evidence remain separate gates.
 
-The optional LTX trainer and other separately qualified advanced-profile dependencies are not installed in the core image. They require their own immutable image, template, digest, capability report, evidence receipt, and rollback path. Selecting another registry does not remove this packaging requirement.
+The optional LTX trainer is not installed in the core image. D-054 also excludes the bundled-but-inert LatentSync candidate and its model downloads from first core promotion; a future lip-repair release requires its own accepted license decision and separately qualified profile evidence. Other advanced-profile dependencies require their own immutable image where needed, template, digest, capability report, evidence receipt, and rollback path. Selecting another registry does not remove this packaging requirement.
 
 ### Safety test
 

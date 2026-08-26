@@ -47,11 +47,17 @@ describe('GPU worker promotion', () => {
     )
     const candidatePack = JSON.parse(readFileSync(candidatePackPath, 'utf8'))
     const candidateManifest = JSON.parse(readFileSync(candidateManifestPath, 'utf8'))
+    const promotionPolicy = JSON.parse(
+      readFileSync(resolve(projectRoot, 'config', 'core-promotion-policy.json'), 'utf8')
+    )
+    const excludedWorkflowIds = new Set<string>(promotionPolicy.excludedWorkflowIds)
     const root = mkdtempSync(resolve(tmpdir(), 'studio-promotion-'))
     temporaryRoots.push(root)
 
     const coreWorkflows = candidatePack.workflows.filter(
-      (workflow: { qualificationTier?: string }) => workflow.qualificationTier !== 'advanced'
+      (workflow: { qualificationTier?: string; workflowId: string }) =>
+        workflow.qualificationTier !== 'advanced' &&
+        !excludedWorkflowIds.has(workflow.workflowId)
     )
     const coreModelIds = new Set(
       coreWorkflows.flatMap((workflow: { requiredModels?: Array<{ modelId: string }> }) =>
@@ -131,8 +137,10 @@ describe('GPU worker promotion', () => {
       })),
       tests: evidenceTemplate.tests.map((test: { testId: string }) => ({
         testId: test.testId,
-        passed: true,
-        evidence: 'controlled fixture evidence'
+        passed: !test.testId.startsWith('BENCH-LIP-'),
+        evidence: test.testId.startsWith('BENCH-LIP-')
+          ? 'deferred by the accepted core promotion policy'
+          : 'controlled fixture evidence'
       }))
     }
 
@@ -183,10 +191,24 @@ describe('GPU worker promotion', () => {
     expect(productionPack.workflows.some(
       (workflow: { workflowId: string }) => workflow.workflowId === 'ltx25-project-lora-adaptation'
     )).toBe(false)
+    expect(productionPack.workflows.some(
+      (workflow: { workflowId: string }) => workflow.workflowId === 'latentsync-lip-repair'
+    )).toBe(false)
     const productionManifest = JSON.parse(readFileSync(productionManifestPath, 'utf8'))
     expect(productionManifest.models).toHaveLength(coreModels.length)
     expect(productionManifest.models.some(
       (model: { modelId: string }) => model.modelId === 'Lightricks/LTX-2.5/dev-transformer-bf16'
     )).toBe(false)
+    expect(productionManifest.models.some(
+      (model: { modelId: string }) => model.modelId === 'ByteDance/LatentSync-1.6'
+    )).toBe(false)
+    expect(productionManifest.models.some(
+      (model: { modelId: string }) => model.modelId === 'stabilityai/sd-vae-ft-mse'
+    )).toBe(false)
+    const readiness = JSON.parse(readFileSync(readinessPath, 'utf8'))
+    expect(readiness.promotionPolicy).toEqual({
+      version: promotionPolicy.policyVersion,
+      excludedCandidateWorkflows: ['latentsync-lip-repair']
+    })
   })
 })

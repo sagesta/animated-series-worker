@@ -11,12 +11,6 @@ const REQUIRED_TESTS = new Set([
   'BENCH-LTX-DRAFT',
   'BENCH-LTX-FINAL',
   'BENCH-CREATIVE-QC',
-  'BENCH-LIP-CLOSE',
-  'BENCH-LIP-MEDIUM',
-  'BENCH-LIP-PROFILE',
-  'BENCH-LIP-MULTI-PERSON',
-  'BENCH-LIP-ANIMATED',
-  'BENCH-LIP-OFF-SCREEN',
   'SECURITY-GATEWAY-AUTH',
   'SECURITY-COMFY-LOOPBACK',
   'SECURITY-NODE-ALLOWLIST',
@@ -100,11 +94,13 @@ const args = parseArguments()
 const root = resolve(import.meta.dirname, '..')
 const candidatePackPath = resolve(root, args['candidate-pack'] ?? 'config/workflow-pack.candidate.json')
 const candidateManifestPath = resolve(root, args['candidate-manifest'] ?? 'config/model-install-manifest.candidate.json')
+const promotionPolicyPath = resolve(root, args['promotion-policy'] ?? 'config/core-promotion-policy.json')
 const productionPackPath = resolve(root, args['production-pack'] ?? 'config/workflow-pack.production.json')
 const productionManifestPath = resolve(root, args['production-manifest'] ?? 'config/model-install-manifest.production.json')
 const readinessPath = resolve(root, args['readiness'] ?? 'config/production-readiness.json')
 const candidatePack = readJson(candidatePackPath, 'Candidate workflow pack')
 const candidateManifest = readJson(candidateManifestPath, 'Candidate model manifest')
+const promotionPolicy = readJson(promotionPolicyPath, 'Core promotion policy')
 const modelReceipt = readJson(resolve(args['model-receipt']), 'Model qualification receipt')
 const capability = readJson(resolve(args['capability-report']), 'Worker capability report')
 const evidence = readJson(resolve(args.evidence), 'GPU qualification evidence')
@@ -125,8 +121,25 @@ if (!evidence.reviewer || Number.isNaN(Date.parse(evidence.testedAt))) fail('Rev
 const fingerprint = sha256(stableJson({ ...candidatePack, workerImageDigest: null }))
 if (capability.workflowPackFingerprint !== fingerprint) fail('The tested worker used a different workflow pack.')
 if (capability.comfyUiCommit !== candidatePack.comfyUiCommit) fail('The tested ComfyUI commit differs from the pack.')
-const coreWorkflows = candidatePack.workflows.filter(
+if (
+  promotionPolicy.schemaVersion !== 1 ||
+  promotionPolicy.decision?.status !== 'accepted' ||
+  !promotionPolicy.decision?.decidedBy ||
+  Number.isNaN(Date.parse(promotionPolicy.decision?.decidedAt))
+) {
+  fail('The core promotion exclusion policy is not an accepted, named, dated decision.')
+}
+const excludedWorkflowIds = new Set(promotionPolicy.excludedWorkflowIds ?? [])
+const declaredCoreWorkflows = candidatePack.workflows.filter(
   (workflow) => workflow.qualificationTier !== 'advanced'
+)
+for (const workflowId of excludedWorkflowIds) {
+  if (!declaredCoreWorkflows.some((workflow) => workflow.workflowId === workflowId)) {
+    fail(`Core promotion policy excludes an unknown or non-core workflow: ${workflowId}.`)
+  }
+}
+const coreWorkflows = declaredCoreWorkflows.filter(
+  (workflow) => !excludedWorkflowIds.has(workflow.workflowId)
 )
 const advancedWorkflows = candidatePack.workflows.filter(
   (workflow) => workflow.qualificationTier === 'advanced'
@@ -236,6 +249,10 @@ const readiness = {
     modelHashesVerified: productionModels.length
   },
   workerImage: { pulledByDigest: true, preflightPassed: true, smokeWorkflowPassed: true },
+  promotionPolicy: {
+    version: promotionPolicy.policyVersion,
+    excludedCandidateWorkflows: [...excludedWorkflowIds].sort()
+  },
   automaticShutdown: {
     idleExitPassed: true,
     hardDeadlineExitPassed: true,
