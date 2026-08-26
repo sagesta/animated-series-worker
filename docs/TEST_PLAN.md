@@ -107,6 +107,7 @@ The suite contains 67 automated tests. The enhanced renderer paths provide a loc
 - **AT-017:** Present a 24GB worker to a job requiring at least 32GB; readiness fails before paid generation/upload and worker terminates.
 - **AT-018:** Cross the warning threshold and approach hard budget; scheduler stops new assignments and preserves sync/termination reserve.
 - **AT-019:** Termination API is delayed/ambiguous; app keeps alerting/reconciling and never claims billing stopped without evidence.
+- **AT-063:** Generate a core qualification bundle and prove it refuses any unaccepted core license, lists exactly the policy-eligible required/accepted model IDs, excludes LatentSync and advanced models, references the `huggingface_token` RunPod secret without exposing its value, and enables online Hugging Face access only for qualification bootstrap.
 
 ### Video and review
 

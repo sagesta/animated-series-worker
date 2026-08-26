@@ -65,6 +65,23 @@ describe('GPU worker release configuration', () => {
     expect(dockerIgnore).not.toContain('!node_modules')
   })
 
+  it('limits paid qualification downloads to accepted core models through a RunPod secret', () => {
+    expect(qualificationBundleScript).toContain(
+      "STUDIO_REQUIRED_MODEL_IDS = ($coreModelIds -join ',')"
+    )
+    expect(qualificationBundleScript).toContain(
+      "STUDIO_ACCEPTED_MODEL_LICENSES = ($acceptedCoreModelIds -join ',')"
+    )
+    expect(qualificationBundleScript).toContain(
+      "HF_TOKEN = '{{ RUNPOD_SECRET_huggingface_token }}'"
+    )
+    expect(qualificationBundleScript).toContain("HF_HUB_OFFLINE = '0'")
+    expect(qualificationBundleScript).toContain("TRANSFORMERS_OFFLINE = '0'")
+    expect(qualificationBundleScript).toContain(
+      'Core qualification is blocked until these model licenses are accepted'
+    )
+  })
+
   it('embeds a decodable RGBA PNG for the real ComfyUI preflight prompt', () => {
     const encoded = /const SMOKE_PNG_BASE64 =\s*\n\s*'([^']+)'/.exec(preflight)?.[1]
     expect(encoded).toBeTruthy()

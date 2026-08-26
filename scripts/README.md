@@ -11,7 +11,7 @@ node scripts\Import-ComfyWorkflow.mjs --workflow-id <workflow-id> --input <api-w
 node scripts\Promote-GpuWorker.mjs --model-receipt <model-receipt.json> --capability-report <capability.json> --evidence <qualification-evidence.json>
 ```
 
-The bundle command is no-cost. The build command needs Docker but does not rent a GPU. The controlled RunPod qualification described in the bundle is paid and requires a deliberate provider action. Promotion refuses missing license, model, workflow, runtime, quality, security, recovery, cost, or shutdown evidence and will not overwrite an earlier production release.
+The bundle command is no-cost. It refuses unaccepted core licenses, emits only the policy-eligible model IDs, and references a RunPod secret named `huggingface_token`; do not paste that credential into the generated JSON. The build command needs Docker but does not rent a GPU. The controlled RunPod qualification described in the bundle is paid and requires a deliberate provider action. Promotion refuses missing license, model, workflow, runtime, quality, security, recovery, cost, or shutdown evidence and will not overwrite an earlier production release.
 
 ## Local finishing tools
 

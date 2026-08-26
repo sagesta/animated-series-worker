@@ -4,6 +4,12 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (qualification bootstrap safety)
+
+- Hardened the paid GPU qualification bundle so it downloads only policy-eligible, accepted core models, uses a RunPod secret reference for the Hugging Face token, and enables online model access only during qualification bootstrap.
+
+User impact: a qualification Pod cannot silently download excluded models or fail because the signed image defaults to offline inference mode. Data or migration impact: none; the maintainer must provide the `huggingface_token` RunPod secret. Documentation impact: synchronized the production implementation and generated operator instructions. Rollback: revert this change before generating a new qualification bundle; never reuse a bundle with broader or plain-text credential settings.
+
 ### Changed — 2026-08-26 (core model terms and voice policy acceptance)
 
 - Recorded the individual project owner's explicit acceptance of the Apache-2.0 terms for the pinned Qwen Image, Qwen Image Edit, Qwen3-TTS VoiceDesign, Qwen3-TTS Base, and transitive Gemma 4 sources.

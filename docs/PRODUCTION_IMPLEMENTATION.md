@@ -104,6 +104,8 @@ The model installer reads only `config/model-install-manifest.*.json`. Each entr
 - `STUDIO_MODEL_BOOTSTRAP_MODE=production` accepts only an already promoted manifest whose hashes and license decisions are locked. The app supplies only the model IDs needed for that job, so a reusable volume is filled on demand.
 - Offline flags are set for actual inference. A running production job cannot fetch another model or node.
 
+The qualification bundle derives both `STUDIO_REQUIRED_MODEL_IDS` and `STUDIO_ACCEPTED_MODEL_LICENSES` from the policy-eligible, accepted core set. It temporarily sets `HF_HUB_OFFLINE=0` and `TRANSFORMERS_OFFLINE=0` only for pinned bootstrap downloads and references the Hugging Face credential through the RunPod secret `huggingface_token`; the credential must never be stored as a plain Pod environment value or in qualification evidence.
+
 The ordinary creator does not set up the GPU every episode. A maintainer builds and qualifies one worker release; after that the app creates and configures temporary workers automatically from the locked image and cached models.
 
 ## 7. ComfyUI workflow reliability
@@ -129,6 +131,8 @@ node scripts\Import-ComfyWorkflow.mjs --workflow-id <id> --input <api-workflow.j
 ```
 
 The controlled core run sets both `STUDIO_QUALIFICATION_MODE=controlled` and `STUDIO_MODEL_BOOTSTRAP_MODE=qualification`. Normal application-created workers never set the qualification flag. Core qualification runs every required image, edit, voice, line-book, draft/final, creative-QC, local-finishing, security, resumable-transfer, reconciliation, shutdown, and cost test. Its current maximum declared workflow requirement is 48 GB. LatentSync lip repair, native-audio/control/foley/adaptation tests, and the trainer's 80 GB/R595 compatibility proof belong to later profile-specific qualification and cannot be represented by the core receipt.
+
+Before the paid Pod is created, the maintainer must confirm that the RunPod secret `huggingface_token` contains a Hugging Face read token authorized for every gated core repository. The Pod receives only the secret reference, exact core model list, immutable image digest, one-time gateway-token hash, lease ID, hard deadline, and idle timeout. All receipts must be downloaded before termination; any retained network volume is a separate continuing cost.
 
 Promotion requires three external artifacts:
 

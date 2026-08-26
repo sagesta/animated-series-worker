@@ -44,7 +44,7 @@ Steps 1–5 are implemented except that future create/terminate permissions cann
 4. Upload/cache pinned models by checksum.
 5. Verify model inventory and free-space reserve.
 
-Initial planning size is 200GB, subject to measured model pack size. The app shows the provider's current storage price before creation.
+The pinned, policy-eligible core download set measures 151,109,498,566 bytes (140.73 GiB) from Hugging Face's revision metadata. Initial qualification planning therefore uses a 200GB `/workspace` volume, leaving working room for caches and receipts; the separately published worker image is not stored in that volume. The app shows the provider's current storage price before creation.
 
 ### Worker template
 
@@ -59,6 +59,8 @@ The versioned image contains:
 - Workflow pack and capability manifest.
 
 Large model weights should normally live on the network volume so a worker image update does not duplicate them. The image is pinned by digest.
+
+Qualification uses a RunPod secret named `huggingface_token`. The generated template passes only `{{ RUNPOD_SECRET_huggingface_token }}`, derives the accepted and required core model lists from policy, and enables Hugging Face network access only for the pinned bootstrap. Ordinary inference remains offline.
 
 After publication and pull-by-digest verification, canonical signing uses the manual main-only `sign-worker-image.yml` workflow. The protected `worker-signing` job checks both the immutable manifest digest and local config/image digest, signs only `ghcr.io/sagesta/animated-series-worker`, and verifies the result against the exact GitHub workflow OIDC identity recorded in [SECURITY_AND_RECOVERY.md](SECURITY_AND_RECOVERY.md). Signing neither deploys the image nor unlocks RunPod; model, license, compatible-GPU, recovery, shutdown, quality, and readiness evidence remain separate gates.
 
