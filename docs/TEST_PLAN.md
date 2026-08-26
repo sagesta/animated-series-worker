@@ -93,7 +93,7 @@ The suite contains 67 automated tests. The enhanced renderer paths provide a loc
 
 ### Images and voices
 
-- **AT-009:** Generate the locked image benchmark and pass human identity/style consistency criteria across required views and environments.
+- **AT-009:** Generate the locked image benchmark and pass human identity/style consistency criteria across required views and environments. For the targeted-edit regression, provide the approved parent followed by its exact region mask, request `change the scarf from red to deep blue`, prove the output differs inside the mask and matches the parent outside it within the declared pixel threshold, then retain the before/mask/after hashes for human review.
 - **AT-010:** Generate two reusable voice profiles and pass speaker identity, language, delivery, and pronunciation review across calibration lines.
 - **AT-011:** Change one pronunciation entry; only affected lines and downstream media become stale.
 - **AT-012:** Attempt release with a consent-required voice lacking evidence; release is blocked with a clear remedy.

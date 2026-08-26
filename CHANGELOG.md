@@ -18,6 +18,20 @@ Documentation impact: synchronized the media pipeline, production implementation
 
 Rollback: restore final workflow `1.0.0` and its prior template hash only for non-production diagnosis if the targeted qualification fails; do not relabel or overwrite any historical artifact, pack, or receipt.
 
+### Fixed — 2026-08-26 (Qwen targeted-edit region binding, pending live proof)
+
+- Added prospective workflow `qwen-image-targeted-edit@1.0.1` instead of changing historical `1.0.0` evidence. It requires the immutable parent followed by a white-on-black region mask, binds the edit instruction and inpaint latent to that mask, and composites the generated pixels over the original-resolution parent only inside the editable region.
+- Removed the negative instruction `changed clothing`, which directly opposed the requested scarf correction, and raised the accepted denoise range from the failed `0.3` run to a `0.6` minimum with a `1.0` default matching the reviewed Qwen-Image-Edit 2511 graph.
+- Added a SHA-256-locked 512×512 scarf mask fixture plus registry/UI regressions that prove parent/mask order, masked conditioning/sampling/compositing, low-strength refusal, and the new workflow hash.
+
+User impact: targeted corrections now require an explicit approved mask and cannot change pixels outside it through the workflow output composite. The fix remains a non-billable candidate until the exact blue-scarf GPU rerun passes and the creator reviews the output.
+
+Data/migration impact: no project or database migration. Existing `1.0.0` jobs, assets, and failed qualification evidence remain immutable; new work selects `1.0.1` prospectively.
+
+Documentation impact: synchronized the image pipeline, implementation/status boundary, AT-009, traceability, backlog, and changelog.
+
+Rollback: select the historical `1.0.0` graph only for evidence inspection, or revert `1.0.1` before building a replacement worker. Never overwrite the signed candidate-5 digest or reinterpret its failed output.
+
 ### Changed — 2026-08-26 (controlled L40S core qualification)
 
 - Published candidate `0.10.1-candidate.5` as `ghcr.io/sagesta/animated-series-worker@sha256:3b1142ede47d387a890b36e7e5e0ae212c3f2304387e128f4f7991ad5c33b0e9` by rebasing the already-published parent with a small linked layer. Protected GitHub OIDC run `32994632107` verified config `sha256:9dc427e506059a685b7b5f588ab0b02161bd87c4fcc080301a21e117b8f3dcb1`, signed the exact digest, and verified the canonical workflow identity.

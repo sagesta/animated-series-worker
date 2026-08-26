@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "qwen-scarf-region-mask-2026-08-26",
+  "sourceArtifact": {
+    "fileName": "1-character-board_00001_.png",
+    "width": 512,
+    "height": 512,
+    "sha256": "d29e24c81779cfa3a2b24519a0ac658d86072bb9e0a607505a66081eee85e9df"
+  },
+  "maskArtifact": {
+    "fileName": "qwen-scarf-region-mask.png",
+    "semantics": "Black pixels must remain byte-identical to the parent; white pixels identify the red scarf material allowed to change.",
+    "channel": "red",
+    "width": 512,
+    "height": 512,
+    "sha256": "5cbb0a510c6200e030d6caea61f92772813e477ecfa433523279df70a15cff7e"
+  },
+  "qualificationInstruction": "Preserve the same character identity, face, hair, glasses, pose, lighting, and background. The white region in the supplied mask is the only editable region. Change the scarf from red to deep blue."
+}

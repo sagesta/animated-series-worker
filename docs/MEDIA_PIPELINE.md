@@ -42,6 +42,8 @@ The exact checkpoint and quantization are selected by the Phase 0 benchmark and 
 
 Do not independently prompt every view from text; each later board must condition on approved images.
 
+Targeted Qwen corrections use workflow `qwen-image-targeted-edit@1.0.1` prospectively. The request must bind exactly two approved image assets in order: the immutable parent and a white-on-black region mask. The mask is attached both to the edit conditioning and the inpaint latent, and the decoded result is composited over the original-resolution parent only where the mask is white. The Qwen-Image-Edit 2511 sampler uses a minimum denoise strength of `0.6` and a default of `1.0`; the negative conditioning is empty so it cannot oppose an intentional clothing correction. Existing `1.0.0` manifests and failed evidence remain unchanged. Local structural tests prove the binding and outside-mask composite, but the blue-scarf result still requires the targeted live GPU run and human review.
+
 For a deliberate character style/redesign change, preserve the approved identity anchors and old presentation pack, create a new presentation version, generate the required multi-view/expression/wardrobe consistency board, and test it in representative environments and multi-character compositions. Only after approval may the continuity engine bind it to the selected shot/scene/episode/season/future scope. A 2D-to-3D-look change is therefore a traceable new presentation, not an in-place prompt edit.
 
 The profile's visual-style notes seed the first style-bible discussion only. Once a style or character presentation is locked, revising the profile produces an impact question rather than silently restyling images.
