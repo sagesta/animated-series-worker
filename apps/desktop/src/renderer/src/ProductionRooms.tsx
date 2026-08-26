@@ -14,6 +14,7 @@ import {
 } from '@studio/contracts'
 import { RequiredMark, TextRequirement, ValidationAlert } from './FormGuidance'
 import { IdeaAssistant } from './IdeaAssistant'
+import { targetedEditInputError, targetedEditParameters } from './targetedEdit'
 
 const assetKindOptions: Array<{ value: MediaAssetKind; label: string }> = [
   { value: 'reference-image', label: 'Character or visual reference' },
@@ -1352,7 +1353,7 @@ function workflowParameters(
     return { ...shared, prompt: instruction, negativePrompt: '', seed, width: 1536, height: 1024 }
   }
   if (workflow.workflowId === 'qwen-image-targeted-edit') {
-    return { ...shared, instruction, seed, strength: 0.35 }
+    return { ...shared, ...targetedEditParameters(instruction, seed) }
   }
   if (workflow.workflowId === 'qwen-image-controlled-board') {
     return { ...shared, prompt: instruction, controlManifestJson: sourceManifest, seed }
@@ -1737,13 +1738,12 @@ export function GenerateRoom({
       setMessage('Enter the exact words spoken in the approved voice reference.')
       return
     }
-    if (
-      selected.workflowId === 'qwen-image-targeted-edit' &&
-      (selectedMedia.length !== 1 || !selectedMedia[0]?.mimeType.startsWith('image/'))
-    ) {
-      setMessage(
-        'Choose exactly one approved image to correct. The original will remain unchanged.'
-      )
+    const targetedEditError =
+      selected.workflowId === 'qwen-image-targeted-edit'
+        ? targetedEditInputError(selectedMedia)
+        : null
+    if (targetedEditError) {
+      setMessage(targetedEditError)
       return
     }
     if (
@@ -2716,7 +2716,11 @@ export function GenerateRoom({
             <p>Select exactly one rights-cleared approved voice reference.</p>
           )}
           {selected?.workflowId === 'qwen-image-targeted-edit' && (
-            <p>Select exactly one approved image. The correction will become a new child asset.</p>
+            <p>
+              Select exactly two approved images in this order: 1) the parent image, 2) its
+              white-on-black region mask. Only the white region may change; the correction becomes a
+              new child asset.
+            </p>
           )}
           {['ltx2-image-to-video-draft', 'ltx2-image-to-video-final'].includes(
             selected?.workflowId ?? ''

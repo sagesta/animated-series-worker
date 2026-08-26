@@ -100,7 +100,7 @@
     },
     {
       "workflowId": "qwen-image-targeted-edit",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "label": "Targeted character or environment correction",
       "jobKind": "qwen-image-edit",
       "engine": "comfyui",
@@ -110,20 +110,23 @@
       "maximumRuntimeMinutes": 12,
       "outputKind": "image",
       "templatePath": "workflows/candidate/qwen-image-targeted-edit.api.json",
-      "templateSha256": "27347435d2bf33f3cd135e19477ef38af664f9d9145492de140236b21913c2ed",
+      "templateSha256": "bc99ab8a15bf375d482fd48ebccb9e40a838aa0bf35cabacf6fe4e8fcca15ff9",
       "allowedNodeTypes": [
         "CFGNorm",
         "CLIPLoader",
+        "ConditioningSetMask",
         "FluxKontextImageScale",
         "FluxKontextMultiReferenceLatentMethod",
+        "ImageCompositeMasked",
         "KSampler",
         "LoadImage",
+        "LoadImageMask",
         "ModelSamplingAuraFlow",
         "SaveImage",
         "TextEncodeQwenImageEditPlus",
         "UNETLoader",
         "VAEDecode",
-        "VAEEncode",
+        "VAEEncodeForInpaint",
         "VAELoader"
       ],
       "requiredModels": [
@@ -167,13 +170,15 @@
           "label": "Change strength",
           "type": "number",
           "required": false,
-          "minimum": 0.05,
+          "minimum": 0.6,
           "maximum": 1,
-          "defaultValue": 0.35
+          "defaultValue": 1
         }
       ],
       "notes": [
-        "Preserves the original as an immutable parent asset."
+        "Requires two approved image inputs in order: the immutable parent image, then a white-on-black region mask.",
+        "The edit instruction is conditioned on the selected mask, sampling is noise-masked, and the generated pixels are composited over the parent only inside the white region.",
+        "Strength below 0.6 is refused because the Qwen-Image-Edit 2511 graph did not apply the requested targeted color correction at 0.3."
       ]
     },
     {

@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -291,6 +291,90 @@ describe('locked workflow registry', () => {
         1 / framesPerSecond
       )
     }
+  })
+
+  it('binds the scarf correction instruction and region mask without changing pixels outside it', () => {
+    const registry = new WorkflowRegistry(
+      resolve(process.cwd(), 'config', 'workflow-pack.candidate.json')
+    )
+    const edit = registry.compile(
+      'qwen-image-targeted-edit',
+      '1.0.1',
+      {
+        instruction:
+          'Preserve the same face, pose, lighting, and background. Change only the scarf from red to deep blue.',
+        seed: 260827
+      },
+      { allowCandidate: true }
+    )
+
+    expect(edit.prompt['8']).toMatchObject({
+      class_type: 'TextEncodeQwenImageEditPlus',
+      inputs: { prompt: expect.stringContaining('scarf from red to deep blue') }
+    })
+    expect(edit.prompt['9']).toMatchObject({ inputs: { prompt: '' } })
+    expect(edit.prompt['16']).toEqual({
+      class_type: 'LoadImageMask',
+      inputs: { image: '$INPUT:1', channel: 'red' }
+    })
+    expect(edit.prompt['17']).toMatchObject({
+      class_type: 'ConditioningSetMask',
+      inputs: { conditioning: ['10', 0], mask: ['16', 0], set_cond_area: 'mask bounds' }
+    })
+    expect(edit.prompt['12']).toMatchObject({
+      class_type: 'VAEEncodeForInpaint',
+      inputs: { pixels: ['2', 0], mask: ['16', 0] }
+    })
+    expect(edit.prompt['13']).toMatchObject({
+      class_type: 'KSampler',
+      inputs: { positive: ['17', 0], latent_image: ['12', 0], denoise: 1 }
+    })
+    expect(edit.prompt['18']).toEqual({
+      class_type: 'ImageCompositeMasked',
+      inputs: {
+        destination: ['1', 0],
+        source: ['14', 0],
+        x: 0,
+        y: 0,
+        resize_source: true,
+        mask: ['16', 0]
+      }
+    })
+    expect(edit.prompt['15']).toMatchObject({ inputs: { images: ['18', 0] } })
+    const mask = readFileSync(
+      resolve(
+        process.cwd(),
+        'tests',
+        'fixtures',
+        'qwen-targeted-edit',
+        'qwen-scarf-region-mask.png'
+      )
+    )
+    const maskFixture = JSON.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          'tests',
+          'fixtures',
+          'qwen-targeted-edit',
+          'qwen-scarf-region-mask.json'
+        ),
+        'utf8'
+      )
+    ) as { maskArtifact: { sha256: string } }
+    expect(createHash('sha256').update(mask).digest('hex')).toBe(maskFixture.maskArtifact.sha256)
+    expect(() =>
+      registry.compile(
+        'qwen-image-targeted-edit',
+        '1.0.1',
+        {
+          instruction: 'Change only the scarf from red to deep blue.',
+          seed: 260827,
+          strength: 0.3
+        },
+        { allowCandidate: true }
+      )
+    ).toThrow('below its safe minimum')
   })
 
   it('compiles the advanced A2V and control graphs without prompt-network nodes', () => {
