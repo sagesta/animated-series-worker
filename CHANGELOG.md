@@ -4,6 +4,21 @@ All notable changes to Animated Series Studio are recorded here. Each entry must
 
 ## Unreleased
 
+### Changed — 2026-08-26 (no-cost model-license evidence review)
+
+- Inventoried all 15 candidate artifacts as eight exact pinned source repositories plus the transitive Gemma 4 source inside LTX-2.5's custom text encoder. Added a machine-readable evidence record and deterministic coverage guard tied to the actual core/advanced workflow scopes.
+- Recorded current authoritative license evidence: Apache-2.0 for the Qwen image/TTS sources, MIT for the Stability VAE, separately licensed Apache code and `openrail++`-tagged weights for LatentSync, the 2026-08-11 LTX-2.x terms for LTX-2.5, the earlier LTX-2 terms for the advanced-only IC-LoRA, and Apache-2.0 for upstream Gemma 4.
+- Kept every decision `pending-authorized-reviewer`, every candidate `licenseReview` value `required`, and every model hash null. LTX remains blocked on the relevant entity/revenue category, gated terms, full restrictions, and any required paid agreement; LatentSync remains blocked until the binding weight-license text is confirmed; voice and likeness permissions remain project-specific.
+- Added `pnpm test:model-licenses` to the normal test chain. It rejects missing/stale source coverage, wrong workflow scope, a missing Gemma transitive link, premature named/dated acceptance, or any model hash/acceptance mutation.
+
+User impact: the next legal review is now a finite checklist instead of an open-ended model search, while paid generation remains locked and incurs no RunPod spend.
+
+Data/migration impact: none. No model weight was downloaded, no gated terms were accepted, no provider resource was created, and no project data changed.
+
+Documentation impact: added the candidate model-license dossier and synchronized sources, implementation, status, tests, traceability, backlog, local evidence, README, and changelog.
+
+Rollback: remove the evidence record/check and these documentation updates. This does not unlock production; the candidate manifest's existing `licenseReview: required` and null hashes remain the authoritative safety state.
+
 ### Changed — 2026-08-26 (core worker registry publication)
 
 - Published the exact locally smoke-tested core worker as `ghcr.io/sagesta/animated-series-worker@sha256:875eea3747e89369df5f375aa600bf6de634950c988a82494a2671c0e643603e`. Registry inspection reports config digest `sha256:7ffde53bf446b896596a3ddee68c5527370c1d2c4e8fcd6af33888df9ec7d7c5`, matching the local image ID, and a pull by immutable digest completed with the same image ID.

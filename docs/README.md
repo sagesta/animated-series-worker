@@ -16,6 +16,7 @@ Current version 0.10.1 implements quick idea/script intake and a default Creator
 | [Status](STATUS.md) | What exists now, what is being built, and what is not yet safe to claim? |
 | [Production implementation](PRODUCTION_IMPLEMENTATION.md) | How does the implemented version-0.10.1 application, worker, qualification gate, recovery, finishing, and release flow operate? |
 | [Local verification evidence](LOCAL_VERIFICATION_2026-08-25.md) | Which checks and artifact fingerprints passed on the development workstation, and which production proofs are still external? |
+| [Candidate model-license review](MODEL_LICENSE_REVIEW_2026-08-26.md) | Which exact model and transitive-license evidence was checked, and what still requires an authorized human decision? |
 | [Glossary](GLOSSARY.md) | What do the specialist terms mean in plain language? |
 
 ## Engineering

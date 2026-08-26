@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "candidateManifestVersion": "0.10.1-candidate.3",
+  "reviewPurpose": "Commercial, monetized YouTube animation production",
+  "evidenceReviewedAt": "2026-08-26",
+  "decisionState": "pending-authorized-reviewer",
+  "legalAdvice": false,
+  "rules": [
+    "Evidence review is not license acceptance.",
+    "Only a person authorized to bind the creator or relevant legal entity may record an accepted decision.",
+    "Downloading, gated-access acceptance, model use, or production promotion must remain blocked until every core decision is accepted and dated.",
+    "Voice or likeness use also requires separately documented rights and consent; a permissive model license does not provide them."
+  ],
+  "sources": [
+    {
+      "sourceId": "comfy-org-qwen-image",
+      "manifestSource": true,
+      "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+      "revision": "7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f",
+      "qualificationScopes": ["core", "advanced"],
+      "licenseId": "Apache-2.0",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/tree/7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f",
+        "https://huggingface.co/Qwen/Qwen-Image-2512/blob/main/README.md"
+      ],
+      "assessment": "commercial-use-permitted-subject-to-apache-2.0",
+      "conditions": [
+        "Retain the Apache-2.0 license and applicable copyright, patent, trademark, attribution, and NOTICE material when distributing covered artifacts.",
+        "Do not treat the model license as permission for copyrighted, trademarked, private, or likeness-bearing inputs."
+      ],
+      "blockers": ["Authorized reviewer has not accepted the terms for the intended use."],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "comfy-org-qwen-image-edit",
+      "manifestSource": true,
+      "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI",
+      "revision": "984166f60a9b1fcede5e9b9287b7a7aebc050010",
+      "qualificationScopes": ["core", "advanced"],
+      "licenseId": "Apache-2.0",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/tree/984166f60a9b1fcede5e9b9287b7a7aebc050010",
+        "https://huggingface.co/Qwen/Qwen-Image-Edit-2511"
+      ],
+      "assessment": "commercial-use-permitted-subject-to-apache-2.0",
+      "conditions": [
+        "Retain the Apache-2.0 license and applicable copyright, patent, trademark, attribution, and NOTICE material when distributing covered artifacts.",
+        "Targeted editing does not grant rights in the edited source material."
+      ],
+      "blockers": ["Authorized reviewer has not accepted the terms for the intended use."],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "qwen3-tts-voice-design",
+      "manifestSource": true,
+      "repository": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "revision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "qualificationScopes": ["core"],
+      "licenseId": "Apache-2.0",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/5ecdb67327fd37bb2e042aab12ff7391903235d3",
+        "https://github.com/QwenLM/Qwen3-TTS"
+      ],
+      "assessment": "commercial-use-permitted-subject-to-apache-2.0-and-voice-rights",
+      "conditions": [
+        "Retain required Apache-2.0 license and notice material.",
+        "Use only designed voices or reference voices with documented speaker authorization, scope, and revocation handling.",
+        "Do not imply that a model license supplies consent, publicity, performance, or impersonation rights."
+      ],
+      "blockers": ["Authorized reviewer has not accepted the terms for the intended use.", "Each reference voice still requires project-specific rights and consent evidence."],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "qwen3-tts-base",
+      "manifestSource": true,
+      "repository": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+      "revision": "fd4b254389122332181a7c3db7f27e918eec64e3",
+      "qualificationScopes": ["core"],
+      "licenseId": "Apache-2.0",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base/tree/fd4b254389122332181a7c3db7f27e918eec64e3",
+        "https://github.com/QwenLM/Qwen3-TTS"
+      ],
+      "assessment": "commercial-use-permitted-subject-to-apache-2.0-and-voice-rights",
+      "conditions": [
+        "Retain required Apache-2.0 license and notice material.",
+        "Reusable voice-clone prompts may only derive from documented, authorized reference voices.",
+        "Do not imply that a model license supplies consent, publicity, performance, or impersonation rights."
+      ],
+      "blockers": ["Authorized reviewer has not accepted the terms for the intended use.", "Each reference voice still requires project-specific rights and consent evidence."],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "bytedance-latentsync-1.6",
+      "manifestSource": true,
+      "repository": "ByteDance/LatentSync-1.6",
+      "revision": "c42c7e6c8e9c213626389fa7d9a3c444b8536353",
+      "qualificationScopes": ["core"],
+      "licenseId": "OpenRAIL++-M (repository metadata: openrail++)",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/ByteDance/LatentSync-1.6/tree/c42c7e6c8e9c213626389fa7d9a3c444b8536353",
+        "https://huggingface.co/docs/hub/main/repositories-licenses",
+        "https://github.com/bytedance/LatentSync"
+      ],
+      "assessment": "blocked-until-exact-weight-license-is-confirmed",
+      "conditions": [
+        "Treat the Apache-2.0 code license and the separately tagged model-weight license as distinct grants.",
+        "Apply the exact OpenRAIL use restrictions and redistribution notices once the binding weight-license text is confirmed."
+      ],
+      "blockers": [
+        "The pinned model repository declares openrail++ but contains no directly linked or included binding license text for the weights.",
+        "Authorized reviewer has not accepted the exact model-weight terms for the intended use."
+      ],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "stability-sd-vae-ft-mse",
+      "manifestSource": true,
+      "repository": "stabilityai/sd-vae-ft-mse",
+      "revision": "31f26fdeee1355a5c34592e401dd41e45d25a493",
+      "qualificationScopes": ["core"],
+      "licenseId": "MIT",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/stabilityai/sd-vae-ft-mse/tree/31f26fdeee1355a5c34592e401dd41e45d25a493"
+      ],
+      "assessment": "commercial-use-permitted-subject-to-mit",
+      "conditions": ["Include the MIT copyright and permission notice in copies or substantial portions."],
+      "blockers": ["Authorized reviewer has not accepted the terms for the intended use."],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "lightricks-ltx-2.5",
+      "manifestSource": true,
+      "repository": "Lightricks/LTX-2.5",
+      "revision": "6c7e5e573ac1667efc83407806fe9b0b93730e60",
+      "qualificationScopes": ["core", "advanced"],
+      "licenseId": "LTX-2.x Community License Agreement (2026-08-11)",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/Lightricks/LTX-2.5/tree/6c7e5e573ac1667efc83407806fe9b0b93730e60",
+        "https://github.com/Lightricks/LTX-2/blob/main/LICENSE.md"
+      ],
+      "assessment": "commercial-use-conditional-on-entity-revenue-and-full-restrictions",
+      "conditions": [
+        "An entity with aggregate annual revenue of at least USD 10,000,000 must obtain a paid commercial agreement before commercial use.",
+        "An entity below that threshold may proceed only after an authorized reviewer accepts the community license, use restrictions, and applicable AI-law, transparency, provenance, safety, and distribution duties.",
+        "Commercial entities may use the free evaluation exception only when no direct or indirect payment arises and the work stays non-production and non-end-user-facing.",
+        "Any distribution or hosted access must carry the agreement, notices, restrictions, and downstream obligations required by the license.",
+        "Preserve and do not bypass any safety, disclosure, watermarking, provenance, or transparency feature included in the model or output path."
+      ],
+      "blockers": [
+        "An authorized reviewer must confirm the relevant entity and its aggregate annual revenue category.",
+        "If the threshold is met, a paid commercial agreement must be obtained and recorded.",
+        "The gated model terms have not been accepted on the creator's behalf.",
+        "The custom Gemma 4 encoder's upstream attribution must be retained and its provenance confirmed."
+      ],
+      "transitiveSourceIds": ["google-gemma-4-12b"],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "lightricks-ltx-2.3-ic-lora",
+      "manifestSource": true,
+      "repository": "Lightricks/LTX-2.3-22b-IC-LoRA-Ingredients",
+      "revision": "5e7a704da363fad353ba35d078f64e019b9a4d94",
+      "qualificationScopes": ["advanced"],
+      "licenseId": "LTX-2 Community License Agreement (2026-01-05)",
+      "licenseEvidenceUrls": [
+        "https://huggingface.co/Lightricks/LTX-2.3-22b-IC-LoRA-Ingredients/tree/5e7a704da363fad353ba35d078f64e019b9a4d94",
+        "https://github.com/Lightricks/LTX-2/blob/main/LICENSE"
+      ],
+      "assessment": "advanced-profile-blocked-pending-separate-license-and-compatibility-review",
+      "conditions": [
+        "Review and accept the earlier LTX-2 community license independently from the LTX-2.5 agreement.",
+        "Preserve all use restrictions, notices, and redistribution duties.",
+        "Do not mix this LTX-2.3 adapter into the LTX-2.5 production baseline without a separate compatibility qualification."
+      ],
+      "blockers": [
+        "Advanced profile is not part of core promotion.",
+        "Gated-access terms and the exact earlier community license have not been accepted by an authorized reviewer.",
+        "Compatibility with the LTX-2.5 baseline is unqualified."
+      ],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    },
+    {
+      "sourceId": "google-gemma-4-12b",
+      "manifestSource": false,
+      "repository": "Google/Gemma-4-12B",
+      "revision": null,
+      "qualificationScopes": ["core", "advanced"],
+      "licenseId": "Apache-2.0",
+      "licenseEvidenceUrls": [
+        "https://ai.google.dev/gemma/docs/core/model_card_4",
+        "https://ai.google.dev/gemma/apache_2"
+      ],
+      "assessment": "transitive-commercial-use-permitted-subject-to-apache-2.0-and-provenance-confirmation",
+      "conditions": [
+        "Retain Apache-2.0 and applicable attribution/NOTICE material for the Gemma-derived encoder distributed by Lightricks.",
+        "Treat LTX's custom projection/conversion and LTX license as additional obligations, not replacements for the upstream license."
+      ],
+      "blockers": [
+        "The LTX repository does not separately pin the upstream Google checkpoint/revision used to produce the packaged custom encoder.",
+        "Authorized reviewer has not confirmed the combined LTX and Gemma notice obligations."
+      ],
+      "transitiveSourceIds": [],
+      "decision": { "status": "pending-authorized-reviewer", "reviewer": null, "reviewedAt": null, "notes": null }
+    }
+  ]
+}

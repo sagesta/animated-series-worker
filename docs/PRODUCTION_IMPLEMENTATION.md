@@ -2,7 +2,7 @@
 
 Version: 0.10.1
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 Status: implemented local control plane; paid generation locked pending controlled GPU qualification
 
@@ -98,7 +98,7 @@ RunPod can still charge for retained persistent storage after compute stops. A P
 
 Optional adaptation is a separate worker profile, not a repair performed on the core worker. The candidate contract and exact trainer pin remain recorded, but adaptation cannot enter a production pack until a separately built trainer image has its own digest and passes the full training/license/driver/quality/cost/rollback evidence set. The core promotion filters every `advanced` candidate out of the production pack, so native-audio/control/foley/adaptation work stays visibly locked without blocking the first image/voice/video/lip-repair release.
 
-The model installer reads only `config/model-install-manifest.*.json`. Each entry contains an allowlisted Hugging Face repository, immutable revision, source path, destination, license URL, and production hash. It rejects absolute/traversal destinations and undeclared repositories.
+The model installer reads only `config/model-install-manifest.*.json`. Each entry contains an allowlisted Hugging Face repository, immutable revision, source path, destination, license URL, and production hash. It rejects absolute/traversal destinations and undeclared repositories. The separate `config/model-license-review.candidate.json` records evidence for all eight pinned repositories plus the transitive Gemma 4 encoder source without changing any manifest entry to accepted. Its deterministic check requires complete source/scope coverage and pending, unnamed, undated decisions until an authorized reviewer acts.
 
 - `STUDIO_MODEL_BOOTSTRAP_MODE=qualification` downloads pinned candidate entries only after the release engineer explicitly lists reviewed model IDs in `STUDIO_ACCEPTED_MODEL_LICENSES`; it computes a qualification receipt.
 - `STUDIO_MODEL_BOOTSTRAP_MODE=production` accepts only an already promoted manifest whose hashes and license decisions are locked. The app supplies only the model IDs needed for that job, so a reusable volume is filled on demand.
@@ -114,13 +114,13 @@ The candidate pack contains reviewed, hash-locked API graphs for Qwen character/
 
 At worker startup, preflight verifies GPU/VRAM, disk, ComfyUI commit, installed nodes, model hashes, workflow hashes, the normalized workflow-pack fingerprint, image digest, and a tiny loopback smoke workflow. The desktop repeats qualification against the selected workflow before uploading inputs.
 
-Local verification on 2026-08-25 built the smaller core candidate `0.10.1-candidate.3` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. On 2026-08-26 that exact image was published, pulled by immutable digest, keyless-signed with Sigstore, and signature-verified. D-053 now defines and locally tests the canonical GitHub OIDC workflow identity, but that workflow/environment has not been published, protected, or executed on GitHub. This evidence still does not provide any model hash, a compatible 18–80 GB benchmark, media quality, provider lifecycle, cost, or production promotion.
+Local verification on 2026-08-25 built the smaller core candidate `0.10.1-candidate.3` under WSL2 Docker and passed this model-free smoke on an RTX 3050 Ti. The report captured the local image ID, exact runtime versions, node inventory, and nine workflow hashes; gateway authentication and loopback-only host binding also passed. On 2026-08-26 that exact image was published, pulled by immutable digest, keyless-signed with Sigstore, and signature-verified. Protected GitHub OIDC run `32967547472` and a separate local Cosign check verified the exact canonical workflow identity. This evidence still does not provide any model hash, a compatible 18–48 GB core benchmark, media quality, provider lifecycle, cost, or production promotion.
 
 The gateway accepts only a registered workflow/version and its declared parameters. `$PARAM:<key>` and `$INPUT:<index>` are the only template placeholders. Uploaded assets are size/hash checked, copied into a lease/job namespace under the Comfy input directory, and removed during purge. Outputs are copied into the job workspace and hashed before download.
 
 ## 8. Locked one-time GPU qualification
 
-The repository ships candidate pins, not fabricated production evidence. These no-cost preparation tools are implemented:
+The repository ships candidate pins, not fabricated production evidence. The no-cost [candidate model-license review](MODEL_LICENSE_REVIEW_2026-08-26.md) inventories all pinned and known transitive sources, records the LTX/LatentSync blockers, and leaves every legal decision pending. These no-cost preparation tools are implemented:
 
 ```powershell
 .\scripts\New-GpuQualificationBundle.ps1
@@ -171,7 +171,7 @@ The following are deliberately not claimed complete on this development machine:
 
 - the candidate Docker image passed local model-free preflight and was published, pulled, personally and canonically keyless-signed, and signature-verified by immutable registry digest; protected GitHub OIDC run `32967547472` passed exact workflow-identity verification, but the image has not run with the declared production models;
 - the exact candidate API graphs and runner contracts still require controlled model-backed benchmarks on their declared compatible GPU classes;
-- model hashes and commercial-use license decisions have not been recorded;
+- model-license evidence has been recorded, but no commercial-use decision has been accepted and no model hash exists;
 - no real RunPod GPU, model download, live workflow, transfer, watchdog, or provider-termination qualification has run;
 - no 20–35 minute pilot episode or one-off film has passed human continuity, motion, lip, audio, recovery, and budget acceptance;
 - the Windows artifact is not yet a signed production installer and has not passed a clean-machine non-technical acceptance run;
