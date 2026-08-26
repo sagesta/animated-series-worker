@@ -1,12 +1,23 @@
 # Targeted GPU requalification — 2026-08-26 fixes
 
-Status: prepared and locally guarded; live targeted execution is blocked because no reusable qualified-model cache exists. Production promotion remains locked.
+Status: both workflow corrections are merged and locally validated; live targeted execution is blocked because no reusable qualified-model cache exists. Production promotion remains locked.
 
 ## Evidence boundary
 
 The 2026-08-26 core qualification proved seven technical workflow executions but exposed two release-blocking results: `qwen-image-targeted-edit` did not turn the scarf blue and changed pixels outside the intended area, while `ltx2-image-to-video-final` returned 0.75 seconds for a one-second request. This record is intentionally separate from the original [live qualification](LIVE_GPU_QUALIFICATION_2026-08-26.md); the historical artifacts and hashes are not rewritten.
 
-No targeted GPU job has run yet. Therefore this document does not claim that either correction is live-verified, visually accepted, merged, promoted, or production-ready.
+No targeted GPU job has run yet. Therefore this document does not claim that either correction is live-verified, visually accepted, promoted, or production-ready.
+
+The requested move from `blocking` to `fixed, pending human review` and closure of the two defect backlog entries is intentionally withheld. Code-fixed/local-validated is the strongest supported state until corrected GPU artifacts pass the targeted checks; the separate owner-only review gate remains open after that technical proof.
+
+## Integrated structural corrections
+
+| Defect | Root cause and correction | Integrated evidence | Live status |
+| --- | --- | --- | --- |
+| Qwen scarf edit | Historical `1.0.0` had no region-mask input or masked conditioning/inpaint/composite binding, its negative conditioning opposed clothing changes, and the failed runner used `0.3` denoise. `qwen-image-targeted-edit@1.0.1` requires parent then mask, binds the edit to the mask, restores parent pixels outside the mask, clears the contradictory negative prompt, and requires strength `0.6`–`1.0`. | Main commit `6cb1560`; template SHA-256 `bc99ab8a15bf375d482fd48ebccb9e40a838aa0bf35cabacf6fe4e8fcca15ff9`; deterministic fixture tests pass locally. | Corrected in code; no new blue-scarf GPU output exists. |
+| LTX final duration | Historical `1.0.0` requested 13 frames for one second at 12 fps, but the pinned temporal latent mapping reduced that to two latent frames and nine decoded frames. `ltx2-image-to-video-final@1.0.1` rounds generation up to a valid `8n+1` boundary and strictly slices the assembled stream to the independently bound requested duration. | Main commit `f9037d3`; template SHA-256 `8c8350f0bccedc3b845cdf0a6f80a1adc8e1d0f5c2592a298fa506596b40c1a5`; structural 1/2/4-second regression tests pass locally. The draft remains `1.0.0` at SHA-256 `658fe12a2ca4836ead6c58f0ac9f420d7e71b20eb0363f0f8ee96f901ae96bce`. | Corrected in code; no new 1/2/4-second GPU output exists. |
+
+The top-level candidate-pack version and worker image fields remain historical identifiers. No replacement worker image was built, published, signed, or assigned a digest for these corrections.
 
 ## RunPod cache safety gate
 
@@ -20,6 +31,8 @@ A read-only provider inventory at `2026-08-26T18:34:14.037Z` returned:
 - additional compute cost: USD 0.00.
 
 The targeted rerun is therefore stopped before Pod creation. Starting another Pod would require downloading the qualified model set again, contrary to the explicit targeted-run boundary. The existing signed worker digest `sha256:3b1142ede47d387a890b36e7e5e0ae212c3f2304387e128f4f7991ad5c33b0e9` also embeds the pre-fix workflow pack and cannot serve as evidence for corrected graphs.
+
+Because no Pod was created for this attempt, there is no new Pod-deletion event or provider invoice to report. The added RunPod cost is exactly USD 0.00; the empty inventory at the timestamp above is the provider-side proof that no resource was left running.
 
 ## Prepared targeted checks
 
@@ -45,6 +58,12 @@ The local copies of the five unaffected 2026-08-26 output sets were re-read and 
 | `BENCH-CREATIVE-QC` | `2ff4e5a0ddced1dee689c39d0d1229ca886ffe54f4ed3005920b0eb0b770666e` |
 
 The template-backed identity and LTX-draft workflow hashes also match the original live capability report. The voice, line-book, and assistive-QC workflows run through the direct worker runner and do not have ComfyUI template hashes. This is local artifact/definition integrity evidence, not a new GPU execution or a claim that regenerated media would be byte-identical.
+
+No new edited image or duration-test video is attached because producing one would require the blocked live run. The historical failed edit and 0.75-second video remain unchanged in the original qualification evidence.
+
+## Local verification
+
+The complete quality command passed from a clean detached checkout of this branch: documentation checks, type checking, repository-wide formatting, lint, 9 Python tests, all six pinned-upstream validation families, model-license evidence checks, 174 Vitest tests across 33 files, and the production Electron build. The targeted baseline command also passed for all five unaffected historical output sets and both applicable ComfyUI definition hashes.
 
 ## Required completion evidence
 
